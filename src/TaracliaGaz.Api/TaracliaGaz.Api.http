@@ -1,6 +1,0 @@
-@TaracliaGaz.Api_HostAddress = http://localhost:5031
-
-GET {{TaracliaGaz.Api_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###
