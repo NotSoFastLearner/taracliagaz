@@ -22,7 +22,14 @@ from ..schemas import (
     MenuCategoryRead,
 )
 
+
+
 router = APIRouter(prefix="/api/public", tags=["public"])
+
+@router.get("/pages", response_model=list[PageRead])
+def get_pages(lang: str = Query(default="ru", regex="^(ru|ro)$"), db: Session = Depends(get_db)):
+    stmt = select(Page).where(Page.language_code == lang).order_by(Page.id.desc())
+    return db.execute(stmt).scalars().all()
 
 
 @router.get("/pages/{slug}", response_model=PageRead)

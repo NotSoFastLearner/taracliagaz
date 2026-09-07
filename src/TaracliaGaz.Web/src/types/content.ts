@@ -39,10 +39,10 @@ export interface Tender extends BaseContent {
     publishedAt: string;
     deadlineAt: string | null;
     documentUrl: string | null;
+    externalUrl: string | null;  
     languageCode: string;
     isPublished: boolean;
 }
-
 export interface Document extends BaseContent {
     title: string;
     categorySlug: string;

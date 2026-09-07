@@ -66,6 +66,7 @@ class Tender(Base, TimestampMixin):
     published_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
     deadline_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     document_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    external_url: Mapped[str | None] = mapped_column(String(1000), nullable=True)  # 🆕 Google Docs / внешняя ссылка
     language_code: Mapped[str] = mapped_column(String(5), default="ru")
     is_published: Mapped[bool] = mapped_column(Boolean, default=True)
 
