@@ -9,9 +9,11 @@ import TendersPage from "./pages/TendersPage";
 import ContactsPage from "./pages/ContactsPage";
 import GalleryPage from "./pages/GalleryPage";
 import TransparencyPage from "./pages/TransparencyPage";
+import NotFoundPage from "./pages/NotFoundPage";
 import AdminLoginPage from "./pages/admin/AdminLoginPage";
 import AdminDashboardPage from "./pages/admin/AdminDashboardPage";
 import ProtectedRoute from "./components/ProtectedRoute";
+import TenderDetailPage from "./pages/TenderDetailPage";
 
 function App() {
     return (
@@ -27,11 +29,11 @@ function App() {
                 <Route path="/gallery" element={<GalleryPage />} />
                 <Route path="/transparency/:slug?" element={<TransparencyPage />} />
                 <Route path="/contacts" element={<ContactsPage />} />
+                <Route path="/tenders" element={<TendersPage />} />
+                <Route path="/tenders/:id" element={<TenderDetailPage />} />  {}
 
-                {/* Админка - логин публичный */}
+                {/* Админка */}
                 <Route path="/admin/login" element={<AdminLoginPage />} />
-
-                {/* Админка - защищённые роуты */}
                 <Route
                     path="/admin/*"
                     element={
@@ -40,6 +42,9 @@ function App() {
                         </ProtectedRoute>
                     }
                 />
+
+                {/* 404 — должен быть последним! */}
+                <Route path="*" element={<NotFoundPage />} />
             </Route>
         </Routes>
     );

@@ -13,7 +13,12 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
     REFRESH_TOKEN_EXPIRE_DAYS: int = 30
     ALGORITHM: str = "HS256"
-    CORS_ORIGINS: list[str] = ["http://localhost:5173"]
+    CORS_ORIGINS: list[str] = [
+    "http://localhost:5173",  # dev
+    "http://localhost:4173",  # preview
+    "https://taraclia-gaz.md",  # production
+    "https://www.taraclia-gaz.md",  # production www
+    ]
     UPLOAD_DIR: str = "uploads"
 
 

@@ -2,6 +2,7 @@ import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { getPage } from "../api/contentApi";
 import type { Page } from "../types/content";
+import SEO from "../components/SEO";
 
 export default function StaticPage() {
     const { slug } = useParams<{ slug: string }>();
@@ -25,12 +26,28 @@ export default function StaticPage() {
     if (error) return <p className="error">{error}</p>;
     if (!page) return <p>Страница не найдена.</p>;
 
+    const plainText = page.bodyHtml.replace(/<[^>]*>/g, "").trim();
+    const description =
+        plainText.length > 160
+            ? plainText.slice(0, 157) + "..."
+            : plainText || `Страница "${page.title}" на сайте Тараклия-ГАЗ`;
+
     return (
-        <section className="section">
-            <div className="container">
-                <h1>{page.title}</h1>
-                <div className="content-body" dangerouslySetInnerHTML={{ __html: page.bodyHtml }} />
-            </div>
-        </section>
+        <>
+            <SEO
+                title={page.title}
+                description={description}
+                path={`/page/${page.slug}`}
+            />
+            <section className="section">
+                <div className="container">
+                    <h1>{page.title}</h1>
+                    <div
+                        className="content-body"
+                        dangerouslySetInnerHTML={{ __html: page.bodyHtml }}
+                    />
+                </div>
+            </section>
+        </>
     );
 }

@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, EmailStr, ConfigDict
 
 import re
 
@@ -174,3 +174,27 @@ class MenuCategoryUpdate(BaseInput):
 
 class MenuCategoryRead(MenuCategoryBase, BaseRead):
     pass
+
+class ContactMessageCreate(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    
+    name: str
+    email: str
+    phone: str | None = None
+    message: str
+    #  Honeypot — поле для ботов (должно быть пустым)
+    website_url: str | None = None
+
+
+class ContactMessageRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    
+    id: int
+    name: str
+    email: str
+    phone: str | None
+    message: str
+    ip_address: str | None
+    is_read: bool
+    is_spam: bool
+    created_at: datetime

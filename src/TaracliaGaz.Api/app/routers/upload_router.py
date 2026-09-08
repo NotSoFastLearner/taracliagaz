@@ -3,11 +3,10 @@
 """
 import uuid
 from pathlib import Path
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, status
-
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, status, Request
 from ..config import get_settings
 from .auth_router import get_current_admin
-
+from ..security.rate_limit import limiter
 settings = get_settings()
 router = APIRouter(prefix="/api/admin/upload", tags=["upload"], dependencies=[Depends(get_current_admin)])
 

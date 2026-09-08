@@ -66,8 +66,14 @@ export default function PagesManager() {
             setEditing(null);
             setShowForm(false);
             loadPages();
-        } catch (err) {
-            alert("Ошибка сохранения");
+        } catch (err: unknown) {
+            // 🆕 Понятное сообщение для дубликатов slug
+            const msg = err instanceof Error ? err.message : "Ошибка сохранения";
+            if (msg.includes("uq_pages_slug_lang") || msg.includes("UNIQUE constraint") || msg.includes("Duplicate entry")) {
+                alert("Страница с таким URL (slug) уже существует. Измените slug и попробуйте снова.");
+            } else {
+                alert("Ошибка сохранения: " + msg);
+            }
             console.error(err);
         }
     };
@@ -99,19 +105,96 @@ export default function PagesManager() {
         setShowForm(true);
     };
 
+    const handleNewFromTemplate = (templateId: string) => {
+        const template = PAGE_TEMPLATES.find(t => t.id === templateId);
+        if (!template) return;
+
+        setEditing({
+            slug: template.slug,
+            title: template.title,
+            bodyHtml: template.bodyHtml,
+            languageCode: "ru",
+            isPublished: true,
+        });
+        setShowForm(true);
+    };
+
     const handleCancel = () => {
         setEditing(null);
         setShowForm(false);
     };
+
+    const PAGE_TEMPLATES = [
+        {
+            id: "privacy",
+            name: "🔒 Политика конфиденциальности",
+            slug: "privacy",
+            title: "Политика конфиденциальности",
+            bodyHtml: `<h2>1. Общие положения</h2>
+<p>Настоящая Политика конфиденциальности определяет порядок обработки и защиты персональных данных пользователей сайта taraclia-gaz.md...</p>
+<p><em>Шаблон — заполните содержимое через редактор</em></p>`
+        },
+        {
+            id: "terms",
+            name: "📜 Условия использования",
+            slug: "terms",
+            title: "Условия использования сайта",
+            bodyHtml: `<h2>1. Общие положения</h2>
+<p>Настоящие Условия использования регулируют доступ и использование сайта taraclia-gaz.md...</p>
+<p><em>Шаблон — заполните содержимое через редактор</em></p>`
+        },
+        {
+            id: "cookies",
+            name: "🍪 Политика cookies",
+            slug: "cookies",
+            title: "Политика использования cookies",
+            bodyHtml: `<h2>1. Что такое cookies</h2>
+<p>Cookies (куки) — это небольшие текстовые файлы...</p>
+<p><em>Шаблон — заполните содержимое через редактор</em></p>`
+        },
+        {
+            id: "about",
+            name: "ℹ️ О компании",
+            slug: "about",
+            title: "О компании",
+            bodyHtml: `<h2>О нас</h2>
+<p>Расскажите о вашей компании...</p>`
+        },
+    ];
 
     if (loading) return <p>Загрузка...</p>;
     if (error) return <p className="error">{error}</p>;
 
     return (
         <div>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px", gap: "10px", flexWrap: "wrap" }}>
                 <h2>Страницы</h2>
-                <button onClick={handleNew}>+ Добавить страницу</button>
+                <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+                    {/* 🆕 Dropdown с шаблонами */}
+                    <select
+                        onChange={(e) => {
+                            if (e.target.value) {
+                                handleNewFromTemplate(e.target.value);
+                                e.target.value = ""; // сбрасываем выбор
+                            }
+                        }}
+                        style={{
+                            padding: "10px 15px",
+                            border: "1px solid #ddd",
+                            borderRadius: "4px",
+                            background: "white",
+                            cursor: "pointer",
+                            fontSize: "14px"
+                        }}
+                    >
+                        <option value="">📋 Создать из шаблона...</option>
+                        {PAGE_TEMPLATES.map(t => (
+                            <option key={t.id} value={t.id}>{t.name}</option>
+                        ))}
+                    </select>
+
+                    <button onClick={handleNew}>+ Пустая страница</button>
+                </div>
             </div>
 
             {showForm && editing && (

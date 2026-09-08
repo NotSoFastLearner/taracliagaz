@@ -1,61 +1,59 @@
 import { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
-import type { Document } from "../types/content";
 import { getDocuments } from "../api/contentApi";
-
-const categories: Record<string, string> = {
-  "technical-economic": "Технико-экономические показатели",
-  "investment-plan": "Инвестиционный план",
-  "compliance-program": "Программа соответствия",
-  "financial-reports": "Финансовые отчёты",
-  vacancies: "Вакансии",
-  charter: "УСТАВ",
-  "auditor-report": "Отчёт независимого аудитора",
-  "internal-info": "Внутренняя информация",
-};
+import type { Document } from "../types/content";
+import SEO from "../components/SEO";
 
 export default function TransparencyPage() {
-  const { slug } = useParams<{ slug: string }>();
-  const [documents, setDocuments] = useState<Document[]>([]);
+    const [docs, setDocs] = useState<Document[]>([]);
+    const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    getDocuments()
-      .then(setDocuments)
-      .catch(() => setDocuments([]));
-  }, []);
+    useEffect(() => {
+        getDocuments("transparency")
+            .then(setDocs)
+            .catch(console.error)
+            .finally(() => setLoading(false));
+    }, []);
 
-  const activeCategory = slug ?? "technical-economic";
-  const filtered = documents.filter((d) => d.categorySlug === activeCategory);
+    const getFileUrl = (url: string) => {
+        if (!url) return "";
+        if (url.startsWith("/uploads/")) return `http://localhost:8000${url}`;
+        return url;
+    };
 
-  return (
-    <section className="section">
-      <div className="container transparency-layout">
-        <aside className="transparency-menu">
-          <h2>Прозрачность</h2>
-          <ul>
-            {Object.entries(categories).map(([key, label]) => (
-              <li key={key}>
-                <Link to={`/transparency/${key}`} className={key === activeCategory ? "active" : ""}>
-                  {label}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </aside>
-        <div className="transparency-content">
-          <h1>{categories[activeCategory] ?? "Прозрачность"}</h1>
-          <ul className="document-list">
-            {filtered.map((doc) => (
-              <li key={doc.id}>
-                <a href={doc.fileUrl} target="_blank" rel="noreferrer">
-                  {doc.title}
-                </a>
-                <time dateTime={doc.publishedAt}>{new Date(doc.publishedAt).toLocaleDateString("ru-RU")}</time>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </div>
-    </section>
-  );
+    return (
+        <>
+            <SEO
+                title="Прозрачность"
+                description="Информация о прозрачности деятельности SRL «Taraclia Gaz»: отчёты, финансовая информация, нормативные документы."
+                path="/transparency"
+            />
+
+            <section className="section">
+                <div className="container">
+                    <h1>🔍 Прозрачность</h1>
+                    <p>
+                        SRL «Taraclia Gaz» стремится к открытости и публикует информацию
+                        о своей деятельности в соответствии с требованиями законодательства
+                        Республики Молдова.
+                    </p>
+
+                    {loading ? (
+                        <p>Загрузка...</p>
+                    ) : docs.length === 0 ? (
+                        <p>Документы в этом разделе пока отсутствуют.</p>
+                    ) : (
+                        <ul className="documents-list">
+                            {docs.map((doc) => (
+                                <li key={doc.id}>
+                                    <a href={getFileUrl(doc.fileUrl)} target="_blank" rel="noopener noreferrer">
+                                        📄 {doc.title}
+                                    </a>
+                                </li>
+                            ))}
+                        </ul>
+                    )}
+                </div>
+            </section>
+        </>
+    );
 }

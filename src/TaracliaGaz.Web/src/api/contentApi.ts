@@ -38,3 +38,16 @@ export const getGallery = () =>
 
 export const getMenu = (lang = DEFAULT_LANG) =>
     http.get<MenuCategory[]>(`/public/menu?lang=${lang}`);
+
+// ===== CONTACTS =====
+export interface ContactFormData {
+    name: string;
+    email: string;
+    phone?: string;
+    message: string;
+    websiteUrl?: string;  // honeypot
+}
+
+export const submitContact = async (data: ContactFormData): Promise<{ success: boolean; message: string }> => {
+    return http.post<{ success: boolean; message: string }>("/public/contact", data);
+};

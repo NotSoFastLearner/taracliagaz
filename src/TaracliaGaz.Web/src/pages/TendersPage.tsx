@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { getTenders } from "../api/contentApi";
 import type { Tender } from "../types/content";
+import SEO from "../components/SEO";
 
 export default function TendersPage() {
     const [tenders, setTenders] = useState<Tender[]>([]);
@@ -36,48 +38,49 @@ export default function TendersPage() {
     if (error) return <p className="error">{error}</p>;
 
     return (
-        <section className="section">
-            <div className="container">
-                <h1>Тендеры</h1>
+        <>
+            <SEO
+                title="Тендеры"
+                description="Актуальные тендеры SRL «Taraclia Gaz». Закупки, конкурсы, документация для участия. Информация о дедлайнах и условиях."
+                path="/tenders"
+            />
 
-                {tenders.length === 0 ? (
-                    <p>Нет активных тендеров</p>
-                ) : (
-                    <ul className="admin-list">
-                        {tenders.map((t) => (
-                            <li key={t.id}>
-                                <div style={{ flex: 1 }}>
-                                    <h3 style={{ margin: "0 0 5px 0" }}>{t.title}</h3>
+            <section className="section">
+                <div className="container">
+                    <h1>Тендеры</h1>
+
+                    {tenders.length === 0 ? (
+                        <p>Нет активных тендеров</p>
+                    ) : (
+                        <ul className="tenders-list">
+                            {tenders.map((t) => (
+                                <li key={t.id}>
+                                    <h2>
+                                        <Link to={`/tenders/${t.id}`} style={{ color: "inherit", textDecoration: "none" }}>
+                                            {t.title}
+                                        </Link>
+                                    </h2>
                                     <small>
-                                        📅 Опубликовано: {formatDate(t.publishedAt)}
+                                         Опубликовано: {formatDate(t.publishedAt)}
                                         {t.deadlineAt && (
-                                            <> | 🕐 Дедлайн: <strong>{formatDate(t.deadlineAt)}</strong></>
+                                            <> |  Дедлайн: <strong>{formatDate(t.deadlineAt)}</strong></>
                                         )}
                                     </small>
                                     <div
-                                        style={{ marginTop: "10px", color: "#333" }}
+                                        className="tender-body content-body"
                                         dangerouslySetInnerHTML={{ __html: t.bodyHtml }}
                                     />
 
-                                    {/* 🆕 Кнопки документации */}
                                     {(t.documentUrl || t.externalUrl) && (
-                                        <div style={{ marginTop: "15px", display: "flex", gap: "10px", flexWrap: "wrap" }}>
+                                        <div className="tender-docs">
                                             {t.documentUrl && (
                                                 <a
                                                     href={getFileUrl(t.documentUrl)}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
-                                                    style={{
-                                                        display: "inline-block",
-                                                        padding: "8px 16px",
-                                                        background: "#007bff",
-                                                        color: "white",
-                                                        textDecoration: "none",
-                                                        borderRadius: "4px",
-                                                        fontSize: "14px"
-                                                    }}
+                                                    className="btn btn-primary"
                                                 >
-                                                    📥 Скачать документацию
+                                                    Скачать документацию
                                                 </a>
                                             )}
                                             {t.externalUrl && (
@@ -85,27 +88,19 @@ export default function TendersPage() {
                                                     href={t.externalUrl}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
-                                                    style={{
-                                                        display: "inline-block",
-                                                        padding: "8px 16px",
-                                                        background: "#28a745",
-                                                        color: "white",
-                                                        textDecoration: "none",
-                                                        borderRadius: "4px",
-                                                        fontSize: "14px"
-                                                    }}
+                                                    className="btn btn-secondary"
                                                 >
-                                                    🔗 Документация онлайн
+                                                    Документация онлайн
                                                 </a>
                                             )}
                                         </div>
                                     )}
-                                </div>
-                            </li>
-                        ))}
-                    </ul>
-                )}
-            </div>
-        </section>
+                                </li>
+                            ))}
+                        </ul>
+                    )}
+                </div>
+            </section>
+        </>
     );
 }

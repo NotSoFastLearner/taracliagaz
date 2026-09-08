@@ -1,25 +1,13 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, status, Request
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from ..database import get_db
-from ..models import (
-    Announcement,
-    Document,
-    GalleryImage,
-    NewsPost,
-    Page,
-    Tender,
-    MenuCategory,
-)
+from ..models import Page, NewsPost, Announcement, Tender, Document, GalleryImage, MenuCategory, ContactMessage
 from ..schemas import (
-    AnnouncementRead,
-    DocumentRead,
-    GalleryImageRead,
-    NewsPostRead,
-    PageRead,
-    TenderRead,
-    MenuCategoryRead,
+    PageRead, NewsPostRead, AnnouncementRead, TenderRead,
+    DocumentRead, GalleryImageRead, MenuCategoryRead,
+    ContactMessageCreate,
 )
 
 
@@ -91,3 +79,57 @@ def get_menu(
         .order_by(MenuCategory.order)
     )
     return db.execute(stmt).scalars().all()
+
+@router.post("/contact", status_code=status.HTTP_201_CREATED)
+def submit_contact(
+    request: Request,
+    item: ContactMessageCreate,
+    db: Session = Depends(get_db)
+):
+    """
+    Приём сообщения с формы контактов.
+    
+    Honeypot-защита: если поле website_url заполнено — это бот,
+    сообщение помечаем как спам (но не отклоняем явно, чтобы бот не догадался).
+    """
+    # Проверка honeypot
+    is_spam = bool(item.website_url and item.website_url.strip())
+    
+    if is_spam:
+        # Бот попался!
+        print(f"Honeypot triggered from {request.client.host}")
+    
+    # Базовая валидация длины (Pydantic уже проверяет типы)
+    if len(item.name.strip()) < 2:
+        raise HTTPException(422, "Имя слишком короткое")
+    if len(item.message.strip()) < 10:
+        raise HTTPException(422, "Сообщение слишком короткое (мин. 10 символов)")
+    if len(item.message) > 5000:
+        raise HTTPException(422, "Сообщение слишком длинное (макс. 5000 символов)")
+    
+    # Email валидация (базовая)
+    if "@" not in item.email or "." not in item.email:
+        raise HTTPException(422, "Некорректный email")
+    
+    # Сохраняем в БД
+    contact = ContactMessage(
+        name=item.name.strip(),
+        email=item.email.strip().lower(),
+        phone=item.phone.strip() if item.phone else None,
+        message=item.message.strip(),
+        ip_address=request.client.host if request.client else None,
+        user_agent=request.headers.get("user-agent")[:500] if request.headers.get("user-agent") else None,
+        is_spam=is_spam,
+    )
+    db.add(contact)
+    db.commit()
+    db.refresh(contact)
+    
+    # TODO: здесь можно добавить отправку email администратору
+    # from ..services.email_service import send_contact_email
+    # send_contact_email(contact)
+    
+    return {
+        "success": True,
+        "message": "Сообщение отправлено! Мы свяжемся с вами в ближайшее время.",
+    }
