@@ -7,6 +7,7 @@ import {
 } from "../../api/adminApi";
 import type { GalleryImage } from "../../types/content";
 import FileUpload from "../../components/FileUpload";
+import { resolveUploadUrl } from "../../utils/urls";
 
 type EditingImage = Partial<GalleryImage> | null;
 
@@ -90,12 +91,6 @@ export default function GalleryManager() {
         setShowForm(false);
     };
 
-    const getImageUrl = (url: string) => {
-        if (!url) return "";
-        if (url.startsWith("/uploads/")) return `http://localhost:8000${url}`;
-        return url;
-    };
-
     if (loading) return <p>Загрузка...</p>;
     if (error) return <p className="error">{error}</p>;
 
@@ -160,7 +155,7 @@ export default function GalleryManager() {
                         <div style={{ display: "flex", alignItems: "center", gap: "15px" }}>
                             {img.imageUrl && (
                                 <img
-                                    src={getImageUrl(img.imageUrl)}
+                                    src={resolveUploadUrl(img.imageUrl)}
                                     alt={img.caption}
                                     style={{ width: "80px", height: "80px", objectFit: "cover", borderRadius: "4px" }}
                                 />

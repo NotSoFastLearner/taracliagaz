@@ -7,6 +7,7 @@ import {
 } from "../../api/adminApi";
 import type { Document } from "../../types/content";
 import FileUpload from "../../components/FileUpload";
+import { resolveUploadUrl } from "../../utils/urls";
 
 type EditingDoc = Partial<Document> | null;
 
@@ -94,12 +95,6 @@ export default function DocumentsManager() {
     const handleCancel = () => {
         setEditing(null);
         setShowForm(false);
-    };
-
-    const getFileUrl = (url: string) => {
-        if (!url) return "";
-        if (url.startsWith("/uploads/")) return `http://localhost:8000${url}`;
-        return url;
     };
 
     const formatDate = (iso: string) => {
@@ -203,7 +198,7 @@ export default function DocumentsManager() {
                             </small>
                             {doc.fileUrl && (
                                 <div style={{ marginTop: "5px" }}>
-                                    <a href={getFileUrl(doc.fileUrl)} target="_blank" rel="noopener noreferrer">
+                                    <a href={resolveUploadUrl(doc.fileUrl)} target="_blank" rel="noopener noreferrer">
                                         🔗 Открыть файл
                                     </a>
                                 </div>

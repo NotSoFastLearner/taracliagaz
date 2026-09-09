@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { z } from "zod";
-import SEO from "../components/SEO";
 import { submitContact } from "../api/contentApi";
-
+import { Link } from "react-router-dom";
+import SEO from "../components/SEO";
+import { COMPANY_ADDRESS, COMPANY_PHONES, COMPANY_EMAIL } from "../utils/site";
 //  Zod-схема валидации
 const contactSchema = z.object({
     name: z
@@ -112,38 +113,46 @@ export default function ContactsPage() {
 
                     <div className="contacts-grid">
                         <div className="contact-info">
-                            <h2>SRL «Taraclia Gaz»</h2>
+                            <h2>{/* COMPANY_NAME если нужно */}Контактная информация</h2>
 
-                            <p><strong>📍 Адрес:</strong><br />
-                                MD-7401, Республика Молдова<br />
-                                г. Тараклия, ул. Ленина 110А<br />
+                            <p>
+                                <strong>Адрес:</strong><br />
+                                {COMPANY_ADDRESS.postalCode}, {COMPANY_ADDRESS.country}<br />
+                                {COMPANY_ADDRESS.city}, {COMPANY_ADDRESS.street}<br />
                                 <a
-                                    href="https://maps.google.com/?q=Тараклия+Тараклия-Газ"
+                                    href={`https://maps.google.com/?q=${encodeURIComponent(COMPANY_ADDRESS.full)}`}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                 >
-                                    🗺️ Открыть на карте
+                                    Открыть на карте
                                 </a>
                             </p>
 
-                            <p><strong>📞 Офис:</strong><br />
-                                <a href="tel:+37329422404">0-294-22-4-04</a>
+                            <p>
+                                <strong>Офис:</strong><br />
+                                <a href={`tel:${COMPANY_PHONES.office}`}>{COMPANY_PHONES.office}</a>
                             </p>
 
-                            <p><strong>❓ Вопросы потребителей:</strong><br />
-                                <a href="tel:+37329422405">0-294-22-4-05</a>
+                            <p>
+                                <strong>Вопросы потребителей:</strong><br />
+                                <a href={`tel:${COMPANY_PHONES.qa}`}>{COMPANY_PHONES.qa}</a>
                             </p>
 
-                            <p><strong>🔥 Аварийная служба (24/7):</strong><br />
-                                <a href="tel:904" className="emergency">904</a>
+                            <p>
+                                <strong>Аварийная служба (24/7):</strong><br />
+                                <a href={`tel:${COMPANY_PHONES.emergency}`} className="emergency">
+                                    {COMPANY_PHONES.emergency}
+                                </a>
                             </p>
 
-                            <p><strong>✉️ Email:</strong><br />
-                                <a href="mailto:office@taraclia-gaz.md">office@taraclia-gaz.md</a>
+                            <p>
+                                <strong>Email:</strong><br />
+                                <a href={`mailto:${COMPANY_EMAIL}`}>{COMPANY_EMAIL}</a>
                             </p>
 
-                            <p><strong>🕐 График работы:</strong><br />
-                                Пн-Пт: 08:00 – 17:00<br />
+                            <p>
+                                <strong>График работы:</strong><br />
+                                Пн-Пт: 08:00 - 17:00<br />
                                 Сб-Вс: выходной
                             </p>
                         </div>

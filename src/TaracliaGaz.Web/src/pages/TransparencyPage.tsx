@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { getDocuments } from "../api/contentApi";
 import type { Document } from "../types/content";
 import SEO from "../components/SEO";
-
+import { resolveUploadUrl } from "../utils/urls";
 export default function TransparencyPage() {
     const [docs, setDocs] = useState<Document[]>([]);
     const [loading, setLoading] = useState(true);
@@ -14,11 +14,6 @@ export default function TransparencyPage() {
             .finally(() => setLoading(false));
     }, []);
 
-    const getFileUrl = (url: string) => {
-        if (!url) return "";
-        if (url.startsWith("/uploads/")) return `http://localhost:8000${url}`;
-        return url;
-    };
 
     return (
         <>
@@ -45,7 +40,7 @@ export default function TransparencyPage() {
                         <ul className="documents-list">
                             {docs.map((doc) => (
                                 <li key={doc.id}>
-                                    <a href={getFileUrl(doc.fileUrl)} target="_blank" rel="noopener noreferrer">
+                                    <a href={resolveUploadUrl(doc.fileUrl)} target="_blank" rel="noopener noreferrer">
                                         📄 {doc.title}
                                     </a>
                                 </li>

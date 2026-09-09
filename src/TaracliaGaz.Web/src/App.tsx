@@ -6,15 +6,16 @@ import NewsPage from "./pages/NewsPage";
 import NewsDetailPage from "./pages/NewsDetailPage";
 import AnnouncementsPage from "./pages/AnnouncementsPage";
 import TendersPage from "./pages/TendersPage";
+import TenderDetailPage from "./pages/TenderDetailPage";
 import ContactsPage from "./pages/ContactsPage";
 import GalleryPage from "./pages/GalleryPage";
 import TransparencyPage from "./pages/TransparencyPage";
 import NotFoundPage from "./pages/NotFoundPage";
+import CabinetComingSoonPage from "./pages/CabinetComingSoonPage";
 import AdminLoginPage from "./pages/admin/AdminLoginPage";
 import AdminDashboardPage from "./pages/admin/AdminDashboardPage";
 import ProtectedRoute from "./components/ProtectedRoute";
-import TenderDetailPage from "./pages/TenderDetailPage";
-import CabinetComingSoonPage from "./pages/CabinetComingSoonPage";
+
 function App() {
     return (
         <Routes>
@@ -26,12 +27,12 @@ function App() {
                 <Route path="/news/:id" element={<NewsDetailPage />} />
                 <Route path="/announcements" element={<AnnouncementsPage />} />
                 <Route path="/tenders" element={<TendersPage />} />
+                <Route path="/tenders/:id" element={<TenderDetailPage />} />
                 <Route path="/gallery" element={<GalleryPage />} />
                 <Route path="/transparency/:slug?" element={<TransparencyPage />} />
                 <Route path="/contacts" element={<ContactsPage />} />
-                <Route path="/tenders" element={<TendersPage />} />
-                <Route path="/tenders/:id" element={<TenderDetailPage />} />  {}
                 <Route path="/cabinet" element={<CabinetComingSoonPage />} />
+
                 {/* Админка */}
                 <Route path="/admin/login" element={<AdminLoginPage />} />
                 <Route
@@ -43,7 +44,7 @@ function App() {
                     }
                 />
 
-                {/* 404 — должен быть последним! */}
+                {/* 404 — должен быть последним */}
                 <Route path="*" element={<NotFoundPage />} />
             </Route>
         </Routes>

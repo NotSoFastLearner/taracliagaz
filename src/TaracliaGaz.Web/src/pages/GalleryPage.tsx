@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { getGallery } from "../api/contentApi";
 import type { GalleryImage } from "../types/content";
 import SEO from "../components/SEO";
-
+import { resolveUploadUrl } from "../utils/urls";
 export default function GalleryPage() {
     const [images, setImages] = useState<GalleryImage[]>([]);
     const [loading, setLoading] = useState(true);
@@ -19,11 +19,7 @@ export default function GalleryPage() {
             .finally(() => setLoading(false));
     }, []);
 
-    const getImageUrl = (url: string) => {
-        if (!url) return "";
-        if (url.startsWith("/uploads/")) return `http://localhost:8000${url}`;
-        return url;
-    };
+
 
     if (loading) return <p>Загрузка...</p>;
     if (error) return <p className="error">{error}</p>;
@@ -51,7 +47,7 @@ export default function GalleryPage() {
                                     onClick={() => setSelectedImage(img)}
                                 >
                                     <img
-                                        src={getImageUrl(img.imageUrl)}
+                                        src={resolveUploadUrl(img.imageUrl)}
                                         alt={img.caption || "Фото"}
                                         loading="lazy"
                                     />
@@ -77,7 +73,7 @@ export default function GalleryPage() {
                 >
                     <div onClick={(e) => e.stopPropagation()}>
                         <img
-                            src={getImageUrl(selectedImage.imageUrl)}
+                            src={resolveUploadUrl(selectedImage.imageUrl)}
                             alt={selectedImage.caption}
                             style={{ maxWidth: "90vw", maxHeight: "85vh" }}
                         />

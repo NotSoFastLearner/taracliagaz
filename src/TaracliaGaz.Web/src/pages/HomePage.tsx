@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { getNews, getAnnouncements, getGallery } from "../api/contentApi";
 import type { NewsPostSummary, Announcement, GalleryImage } from "../types/content";
 import SEO from "../components/SEO";
+import { resolveUploadUrl } from "../utils/urls";
 
 export default function HomePage() {
     const [news, setNews] = useState<NewsPostSummary[]>([]);
@@ -15,18 +16,16 @@ export default function HomePage() {
         getGallery().then(setGallery).catch(console.error);
     }, []);
 
-    const getImageUrl = (url: string) => {
-        if (!url) return "";
-        if (url.startsWith("/uploads/")) return `http://localhost:8000${url}`;
-        return url;
-    };
-
     const formatDate = (iso: string) => {
         try {
             return new Date(iso).toLocaleDateString("ru-RU", {
-                day: "2-digit", month: "2-digit", year: "numeric",
+                day: "2-digit",
+                month: "2-digit",
+                year: "numeric",
             });
-        } catch { return iso; }
+        } catch {
+            return iso;
+        }
     };
 
     return (
@@ -37,71 +36,99 @@ export default function HomePage() {
                 path="/"
             />
 
-            {/* Hero-блок */}
             <section className="hero">
                 <div className="container">
                     <h1>Тараклия-ГАЗ</h1>
-                    <p>Надёжный поставщик природного газа с 1990-х годов</p>
+                    <p className="hero-subtitle">
+                        Надёжное газоснабжение для жителей и предприятий Тараклийского района
+                    </p>
                     <div className="hero-actions">
-                        <a href="tel:904" className="btn btn-primary">Номер аварийной службы: 904  </a>
-                        <Link to="/page/contacts" className="btn btn-secondary">Контакты</Link>
+                        <a href="tel:904" className="btn btn-hero-primary">
+                            Аварийная служба: 904
+                        </a>
+                        <Link to="/contacts" className="btn btn-hero-secondary">
+                            Контакты
+                        </Link>
                     </div>
                 </div>
             </section>
 
-            {/* Объявления */}
             {announcements.length > 0 && (
                 <section className="section">
                     <div className="container">
-                        <h2>📢 Объявления</h2>
+                        <h2>Объявления</h2>
                         <ul className="announcements-list">
                             {announcements.slice(0, 3).map((a) => (
-                                <li key={a.id}>
-                                    {a.isPinned && "📌 "}
-                                    <strong>{a.title}</strong>
-                                    <div dangerouslySetInnerHTML={{ __html: a.bodyHtml }} />
+                                <li key={a.id} className={a.isPinned ? "pinned" : ""}>
+                                    <div className="announcement-header">
+                                        <h3>
+                                            {a.isPinned && "📌 "}
+                                            {a.title}
+                                        </h3>
+                                        <small>{formatDate(a.publishedAt)}</small>
+                                    </div>
+                                    <div
+                                        className="announcement-body content-body"
+                                        dangerouslySetInnerHTML={{ __html: a.bodyHtml }}
+                                    />
                                 </li>
                             ))}
                         </ul>
-                        <Link to="/announcements">Все объявления →</Link>
+                        <Link to="/announcements" className="read-more">
+                            Все объявления →
+                        </Link>
                     </div>
                 </section>
             )}
 
-            {/* Новости */}
             <section className="section">
                 <div className="container">
-                    <h2>📰 Новости</h2>
-                    <div className="news-grid">
-                        {news.slice(0, 3).map((post) => (
-                            <article key={post.id} className="news-card">
-                                <h3>{post.title}</h3>
-                                <small>📅 {formatDate(post.publishedAt)}</small>
-                                <p>{post.summary}</p>
-                                <Link to={`/news/${post.id}`}>Читать далее →</Link>
-                            </article>
-                        ))}
-                    </div>
-                    <Link to="/news">Все новости →</Link>
+                    <h2>Новости</h2>
+                    {news.length === 0 ? (
+                        <p>Новостей пока нет</p>
+                    ) : (
+                        <>
+                            <div className="news-grid">
+                                {news.slice(0, 3).map((post) => (
+                                    <article key={post.id} className="news-card">
+                                        <h3>
+                                            <Link to={`/news/${post.id}`}>{post.title}</Link>
+                                        </h3>
+                                        <small>{formatDate(post.publishedAt)}</small>
+                                        <p>{post.summary}</p>
+                                        <Link to={`/news/${post.id}`} className="read-more">
+                                            Читать далее →
+                                        </Link>
+                                    </article>
+                                ))}
+                            </div>
+                            <Link to="/news" className="read-more">
+                                Все новости →
+                            </Link>
+                        </>
+                    )}
                 </div>
             </section>
 
-            {/* Галерея */}
             {gallery.length > 0 && (
                 <section className="section">
                     <div className="container">
-                        <h2>🖼️ Галерея</h2>
+                        <h2>Галерея</h2>
                         <div className="gallery-grid">
                             {gallery.slice(0, 6).map((img) => (
-                                <img
-                                    key={img.id}
-                                    src={getImageUrl(img.imageUrl)}
-                                    alt={img.caption}
-                                    loading="lazy"
-                                />
+                                <figure key={img.id} className="gallery-item">
+                                    <img
+                                        src={resolveUploadUrl(img.imageUrl)}
+                                        alt={img.caption}
+                                        loading="lazy"
+                                    />
+                                    {img.caption && <figcaption>{img.caption}</figcaption>}
+                                </figure>
                             ))}
                         </div>
-                        <Link to="/gallery">Вся галерея →</Link>
+                        <Link to="/gallery" className="read-more">
+                            Вся галерея →
+                        </Link>
                     </div>
                 </section>
             )}

@@ -1,5 +1,6 @@
 import { useState, useRef } from "react";
 import { uploadImage, uploadDocument } from "../api/uploadApi";
+import { resolveUploadUrl } from "../utils/urls";
 
 interface FileUploadProps {
     type: "image" | "document";
@@ -32,20 +33,10 @@ export default function FileUpload({ type, value, onChange, label = "Файл" }
             }
         } finally {
             setUploading(false);
-            // Сбрасываем input чтобы можно было загрузить тот же файл снова
             if (fileInputRef.current) {
                 fileInputRef.current.value = "";
             }
         }
-    };
-
-    const getFileUrl = (url: string): string => {
-        if (!url) return "";
-        // Если URL относительный (/uploads/...) — добавляем базовый URL API
-        if (url.startsWith("/uploads/")) {
-            return `http://localhost:8000${url}`;
-        }
-        return url;
     };
 
     return (
@@ -56,13 +47,13 @@ export default function FileUpload({ type, value, onChange, label = "Файл" }
                 <div className="file-preview">
                     {type === "image" ? (
                         <img
-                            src={getFileUrl(value)}
+                            src={resolveUploadUrl(value)}
                             alt="Preview"
                             style={{ maxWidth: "200px", maxHeight: "200px", display: "block", marginBottom: "10px" }}
                         />
                     ) : (
                         <a
-                            href={getFileUrl(value)}
+                            href={resolveUploadUrl(value)}
                             target="_blank"
                             rel="noopener noreferrer"
                             style={{ display: "block", marginBottom: "10px" }}

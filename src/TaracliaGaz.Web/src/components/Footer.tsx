@@ -1,4 +1,6 @@
 import { Link } from "react-router-dom";
+import { getApiOrigin } from "../utils/urls";
+import { COMPANY_ADDRESS, COMPANY_PHONES, COMPANY_EMAIL } from "../utils/site";
 
 export default function Footer() {
     const currentYear = new Date().getFullYear();
@@ -6,28 +8,41 @@ export default function Footer() {
     return (
         <footer className="footer">
             <div className="container footer-inner">
-                {/* Основная информация */}
                 <div className="footer-section">
                     <h4>SRL «Taraclia Gaz»</h4>
                     <p>© {currentYear}</p>
-                    <p>📍 г. Тараклия, ул. Мира, 45</p>
-                    <p>📞 <a href="tel:+37329422404">0-294-22-4-04</a></p>
-                    <p>❓ <a href="tel:+37329422405">0-294-22-4-05</a></p>
-                    <p>🔥 Аварийная служба (24/7): <strong><a href="tel:904">904</a></strong></p>
-                    <p>✉️ <a href="mailto:office@taraclia-gaz.md">office@taraclia-gaz.md</a></p>
+                    <p>
+                        {COMPANY_ADDRESS.city}, {COMPANY_ADDRESS.street}
+                    </p>
+                    <p>
+                        <a href={`tel:${COMPANY_PHONES.office}`}>{COMPANY_PHONES.office}</a>
+                    </p>
+                    <p>
+                        <a href={`tel:${COMPANY_PHONES.qa}`}>{COMPANY_PHONES.qa}</a>
+                    </p>
+                    <p>
+                        Аварийная служба (24/7):{" "}
+                        <strong>
+                            <a href={`tel:${COMPANY_PHONES.emergency}`}>
+                                {COMPANY_PHONES.emergency}
+                            </a>
+                        </strong>
+                    </p>
+                    <p>
+                        <a href={`mailto:${COMPANY_EMAIL}`}>{COMPANY_EMAIL}</a>
+                    </p>
                 </div>
 
-                {/* Юридические ссылки */}
                 <nav className="footer-legal">
                     <Link to="/page/privacy">Политика конфиденциальности</Link>
                     <Link to="/page/terms">Условия использования</Link>
                     <Link to="/page/cookies">Политика cookies</Link>
                     <a
-                        href="http://localhost:8000/sitemap.xml"
+                        href={`${getApiOrigin()}/sitemap.xml`}
                         target="_blank"
                         rel="noopener noreferrer"
                     >
-                        🗺️ Карта сайта
+                        Карта сайта
                     </a>
                 </nav>
             </div>

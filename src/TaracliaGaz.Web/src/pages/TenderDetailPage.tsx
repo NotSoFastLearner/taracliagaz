@@ -3,7 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import { getTenders } from "../api/contentApi";
 import type { Tender } from "../types/content";
 import SEO from "../components/SEO";
-
+import { resolveUploadUrl } from "../utils/urls";
 export default function TenderDetailPage() {
     const { id } = useParams<{ id: string }>();
     const [tender, setTender] = useState<Tender | null>(null);
@@ -33,11 +33,6 @@ export default function TenderDetailPage() {
         } catch { return iso; }
     };
 
-    const getFileUrl = (url: string) => {
-        if (!url) return "";
-        if (url.startsWith("/uploads/")) return `http://localhost:8000${url}`;
-        return url;
-    };
 
     if (loading) return <p>Загрузка...</p>;
     if (error || !tender) return <p className="error">{error || "Тендер не найден"}</p>;
@@ -72,7 +67,7 @@ export default function TenderDetailPage() {
                             <div className="tender-docs" style={{ marginTop: "30px", display: "flex", gap: "10px", flexWrap: "wrap" }}>
                                 {tender.documentUrl && (
                                     <a
-                                        href={getFileUrl(tender.documentUrl)}
+                                        href={resolveUploadUrl(tender.documentUrl)}
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         className="btn btn-primary"

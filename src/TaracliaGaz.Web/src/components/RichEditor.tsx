@@ -4,6 +4,7 @@ import Image from "@tiptap/extension-image";
 import Link from "@tiptap/extension-link";
 import { useEffect, useRef } from "react";
 import { uploadImage } from "../api/uploadApi";
+import { resolveUploadUrl } from "../utils/urls";
 
 interface RichEditorProps {
     value: string;
@@ -36,7 +37,6 @@ export default function RichEditor({ value, onChange }: RichEditorProps) {
         },
     });
 
-    // Синхронизация value извне (например, при редактировании существующей новости)
     useEffect(() => {
         if (editor && value !== editor.getHTML()) {
             editor.commands.setContent(value);
@@ -55,7 +55,7 @@ export default function RichEditor({ value, onChange }: RichEditorProps) {
 
         try {
             const response = await uploadImage(file);
-            const fullUrl = `http://localhost:8000${response.url}`;
+            const fullUrl = resolveUploadUrl(response.url);
             editor.chain().focus().setImage({ src: fullUrl }).run();
         } catch (err) {
             alert("Ошибка загрузки изображения");
@@ -76,7 +76,6 @@ export default function RichEditor({ value, onChange }: RichEditorProps) {
 
     return (
         <div className="rich-editor">
-            {/* Панель инструментов */}
             <div className="editor-toolbar">
                 <ToolBtn
                     onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
@@ -139,7 +138,6 @@ export default function RichEditor({ value, onChange }: RichEditorProps) {
                 </ToolBtn>
             </div>
 
-            {/* Скрытый input для выбора файла */}
             <input
                 ref={fileInputRef}
                 type="file"
@@ -148,13 +146,11 @@ export default function RichEditor({ value, onChange }: RichEditorProps) {
                 onChange={handleFileChange}
             />
 
-            {/* Редактор */}
             <EditorContent editor={editor} className="editor-content" />
         </div>
     );
 }
 
-// Вспомогательная кнопка тулбара
 function ToolBtn({
     onClick,
     active = false,
