@@ -3,7 +3,7 @@ import { useCookieConsent } from "../hooks/useCookieConsent";
 import { IconCookie } from "./icons";
 
 export default function CookieBanner() {
-    const { consent, acceptAll, rejectOptional } = useCookieConsent();
+    const { consent, acceptAll, rejectAll } = useCookieConsent();
     const [show, setShow] = useState(!consent);
 
     if (!show) return null;
@@ -21,7 +21,7 @@ export default function CookieBanner() {
                 </div>
                 <div className="cookie-actions">
                     <button
-                        onClick={() => { rejectOptional(); setShow(false); }}
+                        onClick={() => { rejectAll(); setShow(false); }}
                         className="btn-cookie btn-reject"
                     >
                         Только необходимые

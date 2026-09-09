@@ -376,13 +376,24 @@ h3 {
     color: white;
 }
 
+.sidebar-title {
+    font-weight: 600;
+    font-size: 16px;
+}
+
 .sidebar-close {
     background: transparent;
     border: none;
     color: white;
     font-size: 1.5rem;
     cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
 }
+
+    .sidebar-close:hover {
+        background: rgba(255, 255, 255, 0.15);
+    }
 
 .sidebar-list {
     list-style: none;
@@ -390,18 +401,88 @@ h3 {
     padding: 0;
 }
 
-    .sidebar-list a {
-        display: block;
-        padding: 0.75rem 1rem;
+.sidebar-link {
+    display: block;
+    padding: 0.75rem 1rem;
+    color: #1a202c;
+    text-decoration: none;
+    border-bottom: 1px solid #e2e8f0;
+    transition: background 0.15s;
+}
+
+    .sidebar-link:hover {
+        background: #f0f4f8;
         text-decoration: none;
     }
 
-    .sidebar-list ul {
-        list-style: none;
-        margin: 0;
-        padding: 0;
+    .sidebar-link.active {
+        background: #e9f2ff;
+        color: #0057b8;
+        font-weight: 600;
     }
 
+/* Dropdown group (кнопка с выпадающим подменю) */
+.sidebar-group {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    padding: 0.75rem 1rem;
+    background: #f8f9fa;
+    border: none;
+    border-bottom: 1px solid #e2e8f0;
+    font-weight: 600;
+    font-size: 15px;
+    color: #1a202c;
+    cursor: pointer;
+    text-align: left;
+    font-family: inherit;
+    transition: background 0.15s;
+}
+
+    .sidebar-group:hover {
+        background: #e9ecef;
+    }
+
+    .sidebar-group.expanded {
+        background: #e9f2ff;
+        color: #0057b8;
+    }
+
+.sidebar-arrow {
+    font-size: 10px;
+    opacity: 0.6;
+}
+
+/* Вложенное подменю */
+.sidebar-submenu {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    background: #f8f9fa;
+}
+
+    .sidebar-submenu a {
+        display: block;
+        padding: 0.65rem 1rem 0.65rem 2rem;
+        color: #4a5568;
+        text-decoration: none;
+        border-bottom: 1px solid #e2e8f0;
+        font-size: 14px;
+        transition: all 0.15s;
+    }
+
+        .sidebar-submenu a:hover {
+            background: #e9ecef;
+            color: #0057b8;
+            padding-left: 2.25rem;
+        }
+
+        .sidebar-submenu a.active {
+            background: #dbeafe;
+            color: #0057b8;
+            font-weight: 600;
+        }
 /* ============================================
    HERO SECTION
    ============================================ */

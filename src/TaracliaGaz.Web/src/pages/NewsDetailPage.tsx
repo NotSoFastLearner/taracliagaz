@@ -1,13 +1,18 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { getNews } from "../api/contentApi";
-import type { NewsPost } from "../types/content";
+import type { NewsPostSummary } from "../types/content";
 import SEO from "../components/SEO";
 import { IconCalendar } from "../components/icons";
 
+// Расширяем тип для детальной страницы — включает bodyHtml
+interface NewsDetail extends NewsPostSummary {
+    bodyHtml: string;
+}
+
 export default function NewsDetailPage() {
     const { id } = useParams<{ id: string }>();
-    const [post, setPost] = useState<NewsPost | null>(null);
+    const [post, setPost] = useState<NewsDetail | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -16,7 +21,7 @@ export default function NewsDetailPage() {
         getNews()
             .then((items) => {
                 const found = items.find((p) => p.id === parseInt(id));
-                if (found) setPost(found);
+                if (found) setPost(found as NewsDetail);
                 else setError("Новость не найдена");
             })
             .catch(() => setError("Ошибка загрузки"))
