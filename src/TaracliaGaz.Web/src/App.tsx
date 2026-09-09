@@ -14,7 +14,7 @@ import AdminLoginPage from "./pages/admin/AdminLoginPage";
 import AdminDashboardPage from "./pages/admin/AdminDashboardPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import TenderDetailPage from "./pages/TenderDetailPage";
-
+import CabinetComingSoonPage from "./pages/CabinetComingSoonPage";
 function App() {
     return (
         <Routes>
@@ -31,7 +31,7 @@ function App() {
                 <Route path="/contacts" element={<ContactsPage />} />
                 <Route path="/tenders" element={<TendersPage />} />
                 <Route path="/tenders/:id" element={<TenderDetailPage />} />  {}
-
+                <Route path="/cabinet" element={<CabinetComingSoonPage />} />
                 {/* Админка */}
                 <Route path="/admin/login" element={<AdminLoginPage />} />
                 <Route

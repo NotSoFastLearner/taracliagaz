@@ -113,17 +113,36 @@ export default function ContactsPage() {
                     <div className="contacts-grid">
                         <div className="contact-info">
                             <h2>SRL «Taraclia Gaz»</h2>
-                            <p><strong>📍 Адрес:</strong><br />г. Тараклия, Moldova</p>
+
+                            <p><strong>📍 Адрес:</strong><br />
+                                MD-7401, Республика Молдова<br />
+                                г. Тараклия, ул. Ленина 110А<br />
+                                <a
+                                    href="https://maps.google.com/?q=Тараклия+Тараклия-Газ"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                >
+                                    🗺️ Открыть на карте
+                                </a>
+                            </p>
+
                             <p><strong>📞 Офис:</strong><br />
                                 <a href="tel:+37329422404">0-294-22-4-04</a>
                             </p>
-                            <p><strong>Аварийная служба (24/7):</strong><br />
+
+                            <p><strong>❓ Вопросы потребителей:</strong><br />
+                                <a href="tel:+37329422405">0-294-22-4-05</a>
+                            </p>
+
+                            <p><strong>🔥 Аварийная служба (24/7):</strong><br />
                                 <a href="tel:904" className="emergency">904</a>
                             </p>
+
                             <p><strong>✉️ Email:</strong><br />
                                 <a href="mailto:office@taraclia-gaz.md">office@taraclia-gaz.md</a>
                             </p>
-                            <p><strong>График работы:</strong><br />
+
+                            <p><strong>🕐 График работы:</strong><br />
                                 Пн-Пт: 08:00 – 17:00<br />
                                 Сб-Вс: выходной
                             </p>

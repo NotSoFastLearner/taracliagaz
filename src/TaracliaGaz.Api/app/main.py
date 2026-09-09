@@ -15,7 +15,7 @@ from .middleware.security import SecurityHeadersMiddleware
 from .security.rate_limit import limiter
 
 settings = get_settings()
-
+print("🌐 CORS Origins:", settings.CORS_ORIGINS)
 # Автоматическое создание папок
 Path(settings.UPLOAD_DIR).mkdir(parents=True, exist_ok=True)
 Path(settings.UPLOAD_DIR + "/images").mkdir(parents=True, exist_ok=True)
@@ -33,7 +33,7 @@ app = FastAPI(
 app.state.limiter = limiter
 
 
-@app.exception_handler(RateLimitExceeded)
+@app.exception_handler(RateLimitExceeded)   
 async def _rate_limit_exceeded_handler(request: Request, exc: RateLimitExceeded):
     """Обработчик превышения лимита запросов"""
     # slowapi уже формирует понятное сообщение в exc.detail
@@ -45,8 +45,7 @@ async def _rate_limit_exceeded_handler(request: Request, exc: RateLimitExceeded)
     )
 
 
-# Security headers middleware
-app.add_middleware(SecurityHeadersMiddleware)
+
 
 # CORS middleware
 app.add_middleware(
@@ -56,6 +55,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Security headers middleware
+app.add_middleware(SecurityHeadersMiddleware)
 
 # Статические файлы
 app.mount("/static", StaticFiles(directory="app/static"), name="static")

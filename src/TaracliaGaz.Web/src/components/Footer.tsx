@@ -7,15 +7,14 @@ export default function Footer() {
         <footer className="footer">
             <div className="container footer-inner">
                 {/* Основная информация */}
-                <div className="footer-main">
-                    <p className="footer-copyright">
-                        SRL «Taraclia Gaz» © {currentYear}
-                    </p>
-                    <address className="footer-contacts">
-                        <span>📞 тел: 0-294-22-4-04</span>
-                        <span>Аварийная служба: <strong>904</strong></span>
-                        <a href="mailto:office@taraclia-gaz.md">✉️ office@taraclia-gaz.md</a>
-                    </address>
+                <div className="footer-section">
+                    <h4>SRL «Taraclia Gaz»</h4>
+                    <p>© {currentYear}</p>
+                    <p>📍 г. Тараклия, ул. Мира, 45</p>
+                    <p>📞 <a href="tel:+37329422404">0-294-22-4-04</a></p>
+                    <p>❓ <a href="tel:+37329422405">0-294-22-4-05</a></p>
+                    <p>🔥 Аварийная служба (24/7): <strong><a href="tel:904">904</a></strong></p>
+                    <p>✉️ <a href="mailto:office@taraclia-gaz.md">office@taraclia-gaz.md</a></p>
                 </div>
 
                 {/* Юридические ссылки */}
