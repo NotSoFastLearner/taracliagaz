@@ -13,7 +13,7 @@ export type NavItem =
 const FALLBACK_NAV: NavItem[] = [
     { to: "/", label: "Главная" },
     {
-        label: "О Нас", children: [
+        label: "О нас", children: [
             { to: "/page/history", label: "История" },
             { to: "/page/leadership", label: "Структура и руководство" },
         ]
@@ -25,18 +25,18 @@ const FALLBACK_NAV: NavItem[] = [
             { to: "/page/legislation", label: "Законодательство" },
             { to: "/page/faq", label: "Вопросы-Ответы" },
             { to: "/page/safety", label: "Правила безопасности" },
-            { to: "/page/contracts", label: "ДОГОВОРА" },
+            { to: "/page/contracts", label: "Договоры" },
             { to: "/page/network-development", label: "Руководство по процедуре развития сетей" },
         ]
     },
     { to: "/tenders", label: "Тендеры" },
     {
         label: "Новости", children: [
-            { to: "/news", label: "новости" },
+            { to: "/news", label: "Новости" },
             { to: "/gallery", label: "Галерея" },
         ]
     },
-    { to: "/announcements", label: "ОБЪЯВЛЕНИЯ" },
+    { to: "/announcements", label: "Объявления" },
     { to: "/transparency", label: "Прозрачность" },
     { to: "/contacts", label: "Контакты" },
 ];
@@ -56,7 +56,6 @@ export default function Header() {
             })
             .catch((err) => {
                 console.error("Не удалось загрузить меню:", err);
-                // При ошибке остаётся fallback
             })
             .finally(() => setLoading(false));
     }, []);
@@ -65,12 +64,22 @@ export default function Header() {
         <>
             <header className="header">
                 <div className="container header-inner">
-                    <HamburgerButton onClick={() => setSidebarOpen(true)} />
                     <Link to="/" className="brand">
-                        <span className="brand-title">Тараклия-ГАЗ</span>
+                        <div>
+                            <div className="brand-title">Тараклия-ГАЗ</div>
+                            <div className="brand-subtitle">SRL «Taraclia Gaz»</div>
+                        </div>
                     </Link>
+
+                    <a href="tel:904" className="header-emergency">
+                        <span className="header-emergency-label">Аварийная служба 24/7</span>
+                        <strong className="header-emergency-number">904</strong>
+                    </a>
+
+                    <HamburgerButton onClick={() => setSidebarOpen(true)} />
                 </div>
             </header>
+
             <nav className="main-nav">
                 <div className="container">
                     {loading ? (
@@ -118,6 +127,7 @@ export default function Header() {
                     )}
                 </div>
             </nav>
+
             <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} items={navItems} />
         </>
     );
