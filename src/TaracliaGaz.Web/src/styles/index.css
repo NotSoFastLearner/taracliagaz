@@ -1676,6 +1676,136 @@ img {
     color: #dc3545;
 }
 
+
+/* ============================================
+   TRANSPARENCY
+   ============================================ */
+.transparency-filters {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin: 1.5rem 0;
+}
+
+.transparency-filter-btn {
+    padding: 8px 16px;
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    color: #4a5568;
+    transition: all 0.2s;
+    font-family: inherit;
+}
+
+    .transparency-filter-btn:hover {
+        background: #f0f4f8;
+        border-color: #0057b8;
+        color: #0057b8;
+    }
+
+    .transparency-filter-btn.active {
+        background: #0057b8;
+        border-color: #0057b8;
+        color: white;
+    }
+
+.transparency-empty {
+    color: #718096;
+    font-style: italic;
+    text-align: center;
+    padding: 2rem;
+}
+
+.document-list {
+    list-style: none;
+    padding: 0;
+}
+
+    .document-list li {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid #e0e0e0;
+    }
+
+        .document-list li:last-child {
+            border-bottom: none;
+        }
+
+    .document-list strong {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        color: #1a202c;
+    }
+
+    .document-list small {
+        color: #718096;
+        margin-top: 4px;
+        display: inline-block;
+    }
+
+.btn-sm {
+    padding: 6px 12px;
+    font-size: 13px;
+}
+
+/* ============================================
+   NOT FOUND PAGE
+   ============================================ */
+.not-found-page {
+    text-align: center;
+    padding: 4rem 0;
+}
+
+.not-found-code {
+    font-size: 96px;
+    margin: 0;
+    color: #0057b8;
+    font-weight: 800;
+    letter-spacing: 4px;
+    line-height: 1;
+}
+
+.not-found-page h2 {
+    margin: 0.5rem 0 1rem;
+    color: #1a202c;
+}
+
+.not-found-page p {
+    color: #4a5568;
+    margin-bottom: 2rem;
+}
+
+.not-found-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+    .not-found-actions .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+@media (max-width: 480px) {
+    .not-found-code {
+        font-size: 72px;
+    }
+
+    .not-found-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+}
+
 /* ============================================
    RESPONSIVE
    ============================================ */
@@ -1727,9 +1857,6 @@ img {
         text-align: center;
     }
 
-    .transparency-layout {
-        grid-template-columns: 1fr;
-    }
 
     .contacts-grid {
         grid-template-columns: 1fr;
