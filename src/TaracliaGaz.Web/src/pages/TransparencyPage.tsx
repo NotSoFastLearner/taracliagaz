@@ -1,52 +1,92 @@
 import { useEffect, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import { getDocuments } from "../api/contentApi";
 import type { Document } from "../types/content";
 import SEO from "../components/SEO";
 import { resolveUploadUrl } from "../utils/urls";
+import { IconSearch, IconDocument } from "../components/icons";
+
+const CATEGORIES = [
+    { slug: "transparency", name: "Прозрачность" },
+    { slug: "reports", name: "Отчёты" },
+    { slug: "contracts", name: "Договоры" },
+    { slug: "legislation", name: "Законодательство" },
+];
+
 export default function TransparencyPage() {
-    const [docs, setDocs] = useState<Document[]>([]);
+    const { slug } = useParams<{ slug?: string }>();
+    const navigate = useNavigate();
+    const [documents, setDocuments] = useState<Document[]>([]);
     const [loading, setLoading] = useState(true);
+    const currentSlug = slug || CATEGORIES[0].slug;
 
     useEffect(() => {
-        getDocuments("transparency")
-            .then(setDocs)
+        setLoading(true);
+        getDocuments(currentSlug)
+            .then(setDocuments)
             .catch(console.error)
             .finally(() => setLoading(false));
-    }, []);
+    }, [currentSlug]);
 
+    const formatDate = (iso: string) => {
+        try {
+            return new Date(iso).toLocaleDateString("ru-RU");
+        } catch { return iso; }
+    };
 
     return (
         <>
-            <SEO
-                title="Прозрачность"
-                description="Информация о прозрачности деятельности SRL «Taraclia Gaz»: отчёты, финансовая информация, нормативные документы."
-                path="/transparency"
-            />
-
+            <SEO title="Прозрачность" description="Публичные документы SRL «Taraclia Gaz»" path="/transparency" />
             <section className="section">
                 <div className="container">
-                    <h1>🔍 Прозрачность</h1>
-                    <p>
-                        SRL «Taraclia Gaz» стремится к открытости и публикует информацию
-                        о своей деятельности в соответствии с требованиями законодательства
-                        Республики Молдова.
-                    </p>
+                    <h1><IconSearch width={32} height={32} /> Прозрачность</h1>
+                    <div className="transparency-layout">
+                        <aside className="transparency-menu">
+                            <ul>
+                                {CATEGORIES.map((cat) => (
+                                    <li key={cat.slug}>
+                                        <a
+                                            href="#"
+                                            className={currentSlug === cat.slug ? "active" : ""}
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                navigate(`/transparency/${cat.slug}`);
+                                            }}
+                                        >
+                                            {cat.name}
+                                        </a>
+                                    </li>
+                                ))}
+                            </ul>
+                        </aside>
 
-                    {loading ? (
-                        <p>Загрузка...</p>
-                    ) : docs.length === 0 ? (
-                        <p>Документы в этом разделе пока отсутствуют.</p>
-                    ) : (
-                        <ul className="documents-list">
-                            {docs.map((doc) => (
-                                <li key={doc.id}>
-                                    <a href={resolveUploadUrl(doc.fileUrl)} target="_blank" rel="noopener noreferrer">
-                                        📄 {doc.title}
-                                    </a>
-                                </li>
-                            ))}
-                        </ul>
-                    )}
+                        <div>
+                            {loading ? (
+                                <p>Загрузка...</p>
+                            ) : documents.length === 0 ? (
+                                <p>Документов пока нет</p>
+                            ) : (
+                                <ul className="document-list">
+                                    {documents.map((doc) => (
+                                        <li key={doc.id}>
+                                            <div>
+                                                <strong><IconDocument /> {doc.title}</strong>
+                                                <br />
+                                                <small>{formatDate(doc.publishedAt)}</small>
+                                            </div>
+                                            <a
+                                                href={resolveUploadUrl(doc.fileUrl)}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                            >
+                                                Открыть
+                                            </a>
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
+                        </div>
+                    </div>
                 </div>
             </section>
         </>

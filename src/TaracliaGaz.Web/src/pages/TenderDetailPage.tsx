@@ -4,6 +4,8 @@ import { getTenders } from "../api/contentApi";
 import type { Tender } from "../types/content";
 import SEO from "../components/SEO";
 import { resolveUploadUrl } from "../utils/urls";
+import { IconCalendar, IconClock, IconDownload, IconExternalLink } from "../components/icons";
+
 export default function TenderDetailPage() {
     const { id } = useParams<{ id: string }>();
     const [tender, setTender] = useState<Tender | null>(null);
@@ -15,11 +17,8 @@ export default function TenderDetailPage() {
         getTenders()
             .then((items) => {
                 const found = items.find((t) => t.id === parseInt(id));
-                if (found) {
-                    setTender(found);
-                } else {
-                    setError("Тендер не найден");
-                }
+                if (found) setTender(found);
+                else setError("Тендер не найден");
             })
             .catch(() => setError("Ошибка загрузки"))
             .finally(() => setLoading(false));
@@ -33,7 +32,6 @@ export default function TenderDetailPage() {
         } catch { return iso; }
     };
 
-
     if (loading) return <p>Загрузка...</p>;
     if (error || !tender) return <p className="error">{error || "Тендер не найден"}</p>;
 
@@ -44,7 +42,6 @@ export default function TenderDetailPage() {
                 description={`Тендер: ${tender.title}. ${tender.deadlineAt ? `Дедлайн: ${formatDate(tender.deadlineAt)}.` : ""}`}
                 path={`/tenders/${tender.id}`}
             />
-
             <section className="section">
                 <div className="container">
                     <Link to="/tenders" className="back-link">← Все тендеры</Link>
@@ -52,19 +49,16 @@ export default function TenderDetailPage() {
                         <h1>{tender.title}</h1>
                         <div className="tender-meta">
                             <small>
-                                 Опубликовано: {formatDate(tender.publishedAt)}
+                                <IconCalendar /> Опубликовано: {formatDate(tender.publishedAt)}
                                 {tender.deadlineAt && (
-                                    <> | Дедлайн: <strong>{formatDate(tender.deadlineAt)}</strong></>
+                                    <> | <IconClock /> Дедлайн: <strong>{formatDate(tender.deadlineAt)}</strong></>
                                 )}
                             </small>
                         </div>
-                        <div
-                            className="tender-body content-body"
-                            dangerouslySetInnerHTML={{ __html: tender.bodyHtml }}
-                        />
+                        <div className="tender-body content-body" dangerouslySetInnerHTML={{ __html: tender.bodyHtml }} />
 
                         {(tender.documentUrl || tender.externalUrl) && (
-                            <div className="tender-docs" style={{ marginTop: "30px", display: "flex", gap: "10px", flexWrap: "wrap" }}>
+                            <div className="tender-docs">
                                 {tender.documentUrl && (
                                     <a
                                         href={resolveUploadUrl(tender.documentUrl)}
@@ -72,7 +66,7 @@ export default function TenderDetailPage() {
                                         rel="noopener noreferrer"
                                         className="btn btn-primary"
                                     >
-                                        Скачать документацию
+                                        <IconDownload /> Скачать документацию
                                     </a>
                                 )}
                                 {tender.externalUrl && (
@@ -82,7 +76,7 @@ export default function TenderDetailPage() {
                                         rel="noopener noreferrer"
                                         className="btn btn-secondary"
                                     >
-                                        🔗 Документация онлайн
+                                        <IconExternalLink /> Документация онлайн
                                     </a>
                                 )}
                             </div>

@@ -3,41 +3,37 @@ import { getGallery } from "../api/contentApi";
 import type { GalleryImage } from "../types/content";
 import SEO from "../components/SEO";
 import { resolveUploadUrl } from "../utils/urls";
+import { IconGallery, IconClose } from "../components/icons";
+
 export default function GalleryPage() {
     const [images, setImages] = useState<GalleryImage[]>([]);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
     const [selectedImage, setSelectedImage] = useState<GalleryImage | null>(null);
 
     useEffect(() => {
-        getGallery()
-            .then(setImages)
-            .catch((err) => {
-                setError("Не удалось загрузить галерею");
-                console.error(err);
-            })
-            .finally(() => setLoading(false));
+        getGallery().then(setImages).catch(console.error).finally(() => setLoading(false));
     }, []);
 
-
-
-    if (loading) return <p>Загрузка...</p>;
-    if (error) return <p className="error">{error}</p>;
+    useEffect(() => {
+        const handleKey = (e: KeyboardEvent) => {
+            if (e.key === "Escape") setSelectedImage(null);
+        };
+        if (selectedImage) {
+            document.addEventListener("keydown", handleKey);
+            return () => document.removeEventListener("keydown", handleKey);
+        }
+    }, [selectedImage]);
 
     return (
         <>
-            <SEO
-                title="Галерея"
-                description="Фотогалерея SRL «Taraclia Gaz». Фотографии объектов, мероприятий, инфраструктуры газовой сети Тараклийского района."
-                path="/gallery"
-            />
-
+            <SEO title="Галерея" description="Фотогалерея SRL «Taraclia Gaz»" path="/gallery" />
             <section className="section">
                 <div className="container">
-                    <h1>🖼️ Галерея</h1>
-
-                    {images.length === 0 ? (
-                        <p>Галерея пуста</p>
+                    <h1><IconGallery width={32} height={32} /> Галерея</h1>
+                    {loading ? (
+                        <p>Загрузка...</p>
+                    ) : images.length === 0 ? (
+                        <p>Изображений пока нет</p>
                     ) : (
                         <div className="gallery-grid">
                             {images.map((img) => (
@@ -45,10 +41,13 @@ export default function GalleryPage() {
                                     key={img.id}
                                     className="gallery-item"
                                     onClick={() => setSelectedImage(img)}
+                                    role="button"
+                                    tabIndex={0}
+                                    onKeyDown={(e) => { if (e.key === "Enter") setSelectedImage(img); }}
                                 >
                                     <img
                                         src={resolveUploadUrl(img.imageUrl)}
-                                        alt={img.caption || "Фото"}
+                                        alt={img.caption}
                                         loading="lazy"
                                     />
                                     {img.caption && <figcaption>{img.caption}</figcaption>}
@@ -59,30 +58,27 @@ export default function GalleryPage() {
                 </div>
             </section>
 
-            {/* Lightbox */}
             {selectedImage && (
                 <div
                     className="lightbox"
                     onClick={() => setSelectedImage(null)}
-                    style={{
-                        position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
-                        background: "rgba(0,0,0,0.9)", display: "flex",
-                        alignItems: "center", justifyContent: "center",
-                        zIndex: 1000, padding: "20px", cursor: "pointer",
-                    }}
+                    role="dialog"
+                    aria-modal="true"
+                    aria-label={selectedImage.caption}
                 >
-                    <div onClick={(e) => e.stopPropagation()}>
-                        <img
-                            src={resolveUploadUrl(selectedImage.imageUrl)}
-                            alt={selectedImage.caption}
-                            style={{ maxWidth: "90vw", maxHeight: "85vh" }}
-                        />
-                        {selectedImage.caption && (
-                            <p style={{ color: "white", textAlign: "center", marginTop: "10px" }}>
-                                {selectedImage.caption}
-                            </p>
-                        )}
-                    </div>
+                    <button
+                        className="lightbox-close"
+                        onClick={() => setSelectedImage(null)}
+                        aria-label="Закрыть"
+                    >
+                        <IconClose width={32} height={32} />
+                    </button>
+                    <img
+                        src={resolveUploadUrl(selectedImage.imageUrl)}
+                        alt={selectedImage.caption}
+                        onClick={(e) => e.stopPropagation()}
+                    />
+                    {selectedImage.caption && <p>{selectedImage.caption}</p>}
                 </div>
             )}
         </>

@@ -3,95 +3,68 @@ import { Link } from "react-router-dom";
 import { getTenders } from "../api/contentApi";
 import type { Tender } from "../types/content";
 import SEO from "../components/SEO";
-import { resolveUploadUrl } from "../utils/urls";
+import { IconCalendar, IconClock } from "../components/icons";
+
 export default function TendersPage() {
     const [tenders, setTenders] = useState<Tender[]>([]);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        getTenders()
-            .then(setTenders)
-            .catch((err) => {
-                setError("Не удалось загрузить тендеры");
-                console.error(err);
-            })
-            .finally(() => setLoading(false));
+        getTenders().then(setTenders).catch(console.error).finally(() => setLoading(false));
     }, []);
 
     const formatDate = (iso: string) => {
         try {
             return new Date(iso).toLocaleDateString("ru-RU", {
                 day: "2-digit", month: "2-digit", year: "numeric",
-                hour: "2-digit", minute: "2-digit",
             });
         } catch { return iso; }
     };
 
-
-    if (loading) return <p>Загрузка...</p>;
-    if (error) return <p className="error">{error}</p>;
+    const getStatusBadge = (deadline?: string) => {
+        if (!deadline) return { label: "Активный", className: "badge optional" };
+        const dl = new Date(deadline);
+        const now = new Date();
+        if (dl < now) return { label: "Приём заявок завершён", className: "badge required" };
+        return { label: `До ${formatDate(deadline)}`, className: "badge optional" };
+    };
 
     return (
         <>
-            <SEO
-                title="Тендеры"
-                description="Актуальные тендеры SRL «Taraclia Gaz». Закупки, конкурсы, документация для участия. Информация о дедлайнах и условиях."
-                path="/tenders"
-            />
-
+            <SEO title="Тендеры" description="Тендеры SRL «Taraclia Gaz»" path="/tenders" />
             <section className="section">
                 <div className="container">
                     <h1>Тендеры</h1>
-
-                    {tenders.length === 0 ? (
-                        <p>Нет активных тендеров</p>
+                    {loading ? (
+                        <p>Загрузка...</p>
+                    ) : tenders.length === 0 ? (
+                        <p>Тендеров пока нет</p>
                     ) : (
                         <ul className="tenders-list">
-                            {tenders.map((t) => (
-                                <li key={t.id}>
-                                    <h2>
-                                        <Link to={`/tenders/${t.id}`} style={{ color: "inherit", textDecoration: "none" }}>
-                                            {t.title}
-                                        </Link>
-                                    </h2>
-                                    <small>
-                                         Опубликовано: {formatDate(t.publishedAt)}
+                            {tenders.map((t) => {
+                                const badge = getStatusBadge(t.deadlineAt);
+                                return (
+                                    <li key={t.id}>
+                                        <h2>
+                                            <Link to={`/tenders/${t.id}`}>{t.title}</Link>
+                                        </h2>
+                                        <small>
+                                            <IconCalendar /> Опубликовано: {formatDate(t.publishedAt)}
+                                        </small>
                                         {t.deadlineAt && (
-                                            <> |  Дедлайн: <strong>{formatDate(t.deadlineAt)}</strong></>
+                                            <>
+                                                {" | "}
+                                                <small>
+                                                    <IconClock /> Дедлайн: {formatDate(t.deadlineAt)}
+                                                </small>
+                                            </>
                                         )}
-                                    </small>
-                                    <div
-                                        className="tender-body content-body"
-                                        dangerouslySetInnerHTML={{ __html: t.bodyHtml }}
-                                    />
-
-                                    {(t.documentUrl || t.externalUrl) && (
-                                        <div className="tender-docs">
-                                            {t.documentUrl && (
-                                                <a
-                                                    href={resolveUploadUrl(t.documentUrl)}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="btn btn-primary"
-                                                >
-                                                    Скачать документацию
-                                                </a>
-                                            )}
-                                            {t.externalUrl && (
-                                                <a
-                                                    href={t.externalUrl}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="btn btn-secondary"
-                                                >
-                                                    Документация онлайн
-                                                </a>
-                                            )}
+                                        <div style={{ marginTop: "8px" }}>
+                                            <span className={badge.className}>{badge.label}</span>
                                         </div>
-                                    )}
-                                </li>
-                            ))}
+                                    </li>
+                                );
+                            })}
                         </ul>
                     )}
                 </div>

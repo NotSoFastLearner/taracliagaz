@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { getApiOrigin } from "../utils/urls";
 import { COMPANY_ADDRESS, COMPANY_PHONES, COMPANY_EMAIL } from "../utils/site";
+import { IconMapPin, IconPhone, IconHelpCircle, IconFire, IconMail, IconMap } from "../components/icons";
 
 export default function Footer() {
     const currentYear = new Date().getFullYear();
@@ -11,24 +12,16 @@ export default function Footer() {
                 <div className="footer-section">
                     <strong className="footer-heading">SRL «Taraclia Gaz»</strong>
                     <p>© {currentYear}</p>
+                    <p><IconMapPin /> {COMPANY_ADDRESS.city}, {COMPANY_ADDRESS.street}</p>
+                    <p><IconPhone /> <a href={`tel:${COMPANY_PHONES.office}`}>{COMPANY_PHONES.office}</a></p>
+                    <p><IconHelpCircle /> <a href={`tel:${COMPANY_PHONES.qa}`}>{COMPANY_PHONES.qa}</a></p>
                     <p>
-                        {COMPANY_ADDRESS.city}, {COMPANY_ADDRESS.street}
-                    </p>
-                    <p>
-                        <a href={`tel:${COMPANY_PHONES.office}`}>{COMPANY_PHONES.office}</a>
-                    </p>
-                    <p>
-                        <a href={`tel:${COMPANY_PHONES.qa}`}>{COMPANY_PHONES.qa}</a>
-                    </p>
-                    <p>
-                        Аварийная служба (24/7):{" "}
+                        <IconFire /> Аварийная служба (24/7):{" "}
                         <a href={`tel:${COMPANY_PHONES.emergency}`} className="emergency">
                             {COMPANY_PHONES.emergency}
                         </a>
                     </p>
-                    <p>
-                        <a href={`mailto:${COMPANY_EMAIL}`}>{COMPANY_EMAIL}</a>
-                    </p>
+                    <p><IconMail /> <a href={`mailto:${COMPANY_EMAIL}`}>{COMPANY_EMAIL}</a></p>
                 </div>
 
                 <nav className="footer-legal">
@@ -40,7 +33,7 @@ export default function Footer() {
                         target="_blank"
                         rel="noopener noreferrer"
                     >
-                        Карта сайта
+                        <IconMap /> Карта сайта
                     </a>
                 </nav>
             </div>

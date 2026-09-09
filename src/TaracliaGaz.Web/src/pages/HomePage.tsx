@@ -4,6 +4,7 @@ import { getNews, getAnnouncements, getGallery } from "../api/contentApi";
 import type { NewsPostSummary, Announcement, GalleryImage } from "../types/content";
 import SEO from "../components/SEO";
 import { resolveUploadUrl } from "../utils/urls";
+import { IconMegaphone, IconNews, IconGallery, IconCalendar } from "../components/icons";
 
 export default function HomePage() {
     const [news, setNews] = useState<NewsPostSummary[]>([]);
@@ -19,13 +20,9 @@ export default function HomePage() {
     const formatDate = (iso: string) => {
         try {
             return new Date(iso).toLocaleDateString("ru-RU", {
-                day: "2-digit",
-                month: "2-digit",
-                year: "numeric",
+                day: "2-digit", month: "2-digit", year: "numeric",
             });
-        } catch {
-            return iso;
-        }
+        } catch { return iso; }
     };
 
     return (
@@ -56,21 +53,15 @@ export default function HomePage() {
             {announcements.length > 0 && (
                 <section className="section">
                     <div className="container">
-                        <h2>Объявления</h2>
+                        <h2><IconMegaphone /> Объявления</h2>
                         <ul className="announcements-list">
                             {announcements.slice(0, 3).map((a) => (
                                 <li key={a.id} className={a.isPinned ? "pinned" : ""}>
                                     <div className="announcement-header">
-                                        <h3>
-                                            {a.isPinned && "📌 "}
-                                            {a.title}
-                                        </h3>
-                                        <small>{formatDate(a.publishedAt)}</small>
+                                        <h3>{a.title}</h3>
+                                        <small><IconCalendar /> {formatDate(a.publishedAt)}</small>
                                     </div>
-                                    <div
-                                        className="announcement-body content-body"
-                                        dangerouslySetInnerHTML={{ __html: a.bodyHtml }}
-                                    />
+                                    <div className="announcement-body content-body" dangerouslySetInnerHTML={{ __html: a.bodyHtml }} />
                                 </li>
                             ))}
                         </ul>
@@ -83,7 +74,7 @@ export default function HomePage() {
 
             <section className="section">
                 <div className="container">
-                    <h2>Новости</h2>
+                    <h2><IconNews /> Новости</h2>
                     {news.length === 0 ? (
                         <p>Новостей пока нет</p>
                     ) : (
@@ -94,7 +85,7 @@ export default function HomePage() {
                                         <h3>
                                             <Link to={`/news/${post.id}`}>{post.title}</Link>
                                         </h3>
-                                        <small>{formatDate(post.publishedAt)}</small>
+                                        <small><IconCalendar /> {formatDate(post.publishedAt)}</small>
                                         <p>{post.summary}</p>
                                         <Link to={`/news/${post.id}`} className="read-more">
                                             Читать далее →
@@ -113,7 +104,7 @@ export default function HomePage() {
             {gallery.length > 0 && (
                 <section className="section">
                     <div className="container">
-                        <h2>Галерея</h2>
+                        <h2><IconGallery /> Галерея</h2>
                         <div className="gallery-grid">
                             {gallery.slice(0, 6).map((img) => (
                                 <figure key={img.id} className="gallery-item">

@@ -4,36 +4,28 @@ import { submitContact } from "../api/contentApi";
 import { Link } from "react-router-dom";
 import SEO from "../components/SEO";
 import { COMPANY_ADDRESS, COMPANY_PHONES, COMPANY_EMAIL } from "../utils/site";
-//  Zod-схема валидации
+import {
+    IconPhone,
+    IconMapPin,
+    IconMail,
+    IconClock,
+    IconMap,
+    IconHelpCircle,
+    IconFire,
+} from "../components/icons";
+
 const contactSchema = z.object({
-    name: z
-        .string()
-        .min(2, "Имя должно быть не менее 2 символов")
-        .max(100, "Имя слишком длинное"),
-    email: z
-        .string()
-        .email("Некорректный email")
-        .max(150, "Email слишком длинный"),
-    phone: z
-        .string()
-        .max(30, "Телефон слишком длинный")
-        .optional()
-        .or(z.literal("")),
-    message: z
-        .string()
-        .min(10, "Сообщение должно быть не менее 10 символов")
-        .max(5000, "Сообщение слишком длинное (макс. 5000 символов)"),
+    name: z.string().min(2, "Имя должно быть не менее 2 символов").max(100, "Имя слишком длинное"),
+    email: z.string().email("Некорректный email").max(150, "Email слишком длинный"),
+    phone: z.string().max(30, "Телефон слишком длинный").optional().or(z.literal("")),
+    message: z.string().min(10, "Сообщение должно быть не менее 10 символов").max(5000, "Сообщение слишком длинное (макс. 5000 символов)"),
 });
 
 type ContactForm = z.infer<typeof contactSchema>;
 
 export default function ContactsPage() {
     const [form, setForm] = useState<ContactForm & { websiteUrl: string }>({
-        name: "",
-        email: "",
-        phone: "",
-        message: "",
-        websiteUrl: "",  // honeypot (невидимое поле)
+        name: "", email: "", phone: "", message: "", websiteUrl: "",
     });
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [submitting, setSubmitting] = useState(false);
@@ -44,13 +36,10 @@ export default function ContactsPage() {
         const result = contactSchema.safeParse(form);
         if (!result.success) {
             const fieldErrors: Record<string, string> = {};
-            // В Zod v3 ошибки доступны через .issues, а не .errors
             const issues = result.error?.issues ?? [];
             issues.forEach((err) => {
                 const field = err.path[0] as string;
-                if (field && !fieldErrors[field]) {
-                    fieldErrors[field] = err.message;
-                }
+                if (field && !fieldErrors[field]) fieldErrors[field] = err.message;
             });
             setErrors(fieldErrors);
             return false;
@@ -63,40 +52,28 @@ export default function ContactsPage() {
         e.preventDefault();
         setSuccessMessage(null);
         setSubmitError(null);
-
         if (!validate()) return;
-
         setSubmitting(true);
         try {
             const response = await submitContact({
-                name: form.name,
-                email: form.email,
+                name: form.name, email: form.email,
                 phone: form.phone || undefined,
-                message: form.message,
-                websiteUrl: form.websiteUrl,  // отправляем honeypot
+                message: form.message, websiteUrl: form.websiteUrl,
             });
             setSuccessMessage(response.message);
             setForm({ name: "", email: "", phone: "", message: "", websiteUrl: "" });
         } catch (err: unknown) {
             const msg = err instanceof Error ? err.message : "Ошибка отправки";
-            // Попробуем распарсить JSON-ошибку с бэкенда
             try {
                 const parsed = JSON.parse(msg);
                 setSubmitError(parsed.detail || "Ошибка отправки");
-            } catch {
-                setSubmitError(msg);
-            }
-        } finally {
-            setSubmitting(false);
-        }
+            } catch { setSubmitError(msg); }
+        } finally { setSubmitting(false); }
     };
 
     const updateField = (field: keyof ContactForm, value: string) => {
         setForm({ ...form, [field]: value });
-        // Убираем ошибку для этого поля при изменении
-        if (errors[field]) {
-            setErrors({ ...errors, [field]: "" });
-        }
+        if (errors[field]) setErrors({ ...errors, [field]: "" });
     };
 
     return (
@@ -109,14 +86,14 @@ export default function ContactsPage() {
 
             <section className="section">
                 <div className="container">
-                    <h1>📞 Контакты</h1>
+                    <h1><IconPhone width={32} height={32} /> Контакты</h1>
 
                     <div className="contacts-grid">
                         <div className="contact-info">
-                            <h2>{/* COMPANY_NAME если нужно */}Контактная информация</h2>
+                            <h2>Контактная информация</h2>
 
                             <p>
-                                <strong>Адрес:</strong><br />
+                                <strong><IconMapPin /> Адрес:</strong><br />
                                 {COMPANY_ADDRESS.postalCode}, {COMPANY_ADDRESS.country}<br />
                                 {COMPANY_ADDRESS.city}, {COMPANY_ADDRESS.street}<br />
                                 <a
@@ -124,34 +101,34 @@ export default function ContactsPage() {
                                     target="_blank"
                                     rel="noopener noreferrer"
                                 >
-                                    Открыть на карте
+                                    <IconMap /> Открыть на карте
                                 </a>
                             </p>
 
                             <p>
-                                <strong>Офис:</strong><br />
+                                <strong><IconPhone /> Офис:</strong><br />
                                 <a href={`tel:${COMPANY_PHONES.office}`}>{COMPANY_PHONES.office}</a>
                             </p>
 
                             <p>
-                                <strong>Вопросы потребителей:</strong><br />
+                                <strong><IconHelpCircle /> Вопросы потребителей:</strong><br />
                                 <a href={`tel:${COMPANY_PHONES.qa}`}>{COMPANY_PHONES.qa}</a>
                             </p>
 
                             <p>
-                                <strong>Аварийная служба (24/7):</strong><br />
+                                <strong><IconFire /> Аварийная служба (24/7):</strong><br />
                                 <a href={`tel:${COMPANY_PHONES.emergency}`} className="emergency">
                                     {COMPANY_PHONES.emergency}
                                 </a>
                             </p>
 
                             <p>
-                                <strong>Email:</strong><br />
+                                <strong><IconMail /> Email:</strong><br />
                                 <a href={`mailto:${COMPANY_EMAIL}`}>{COMPANY_EMAIL}</a>
                             </p>
 
                             <p>
-                                <strong>График работы:</strong><br />
+                                <strong><IconClock /> График работы:</strong><br />
                                 Пн-Пт: 08:00 - 17:00<br />
                                 Сб-Вс: выходной
                             </p>
@@ -161,18 +138,13 @@ export default function ContactsPage() {
                             <h2>Написать нам</h2>
 
                             {successMessage && (
-                                <div className="alert alert-success">
-                                     {successMessage}
-                                </div>
+                                <div className="alert alert-success">{successMessage}</div>
                             )}
                             {submitError && (
-                                <div className="alert alert-error">
-                                    ❌ {submitError}
-                                </div>
+                                <div className="alert alert-error">{submitError}</div>
                             )}
 
                             <form onSubmit={handleSubmit} noValidate>
-                                {/*  HONEYPOT — невидимое поле для ботов */}
                                 <div style={{ position: "absolute", left: "-9999px" }} aria-hidden="true">
                                     <label>
                                         Не заполняйте это поле
@@ -188,46 +160,35 @@ export default function ContactsPage() {
                                 </div>
 
                                 <div className="form-field">
-                                    <label htmlFor="contact-name">
-                                        Имя <span className="required">*</span>
-                                    </label>
+                                    <label htmlFor="contact-name">Имя <span className="required">*</span></label>
                                     <input
-                                        id="contact-name"
-                                        type="text"
+                                        id="contact-name" type="text"
                                         value={form.name}
                                         onChange={(e) => updateField("name", e.target.value)}
                                         disabled={submitting}
                                         aria-invalid={!!errors.name}
                                         aria-describedby={errors.name ? "name-error" : undefined}
                                     />
-                                    {errors.name && (
-                                        <span id="name-error" className="field-error">{errors.name}</span>
-                                    )}
+                                    {errors.name && <span id="name-error" className="field-error">{errors.name}</span>}
                                 </div>
 
                                 <div className="form-field">
-                                    <label htmlFor="contact-email">
-                                        Email <span className="required">*</span>
-                                    </label>
+                                    <label htmlFor="contact-email">Email <span className="required">*</span></label>
                                     <input
-                                        id="contact-email"
-                                        type="email"
+                                        id="contact-email" type="email"
                                         value={form.email}
                                         onChange={(e) => updateField("email", e.target.value)}
                                         disabled={submitting}
                                         aria-invalid={!!errors.email}
                                         aria-describedby={errors.email ? "email-error" : undefined}
                                     />
-                                    {errors.email && (
-                                        <span id="email-error" className="field-error">{errors.email}</span>
-                                    )}
+                                    {errors.email && <span id="email-error" className="field-error">{errors.email}</span>}
                                 </div>
 
                                 <div className="form-field">
                                     <label htmlFor="contact-phone">Телефон (необязательно)</label>
                                     <input
-                                        id="contact-phone"
-                                        type="tel"
+                                        id="contact-phone" type="tel"
                                         value={form.phone}
                                         onChange={(e) => updateField("phone", e.target.value)}
                                         disabled={submitting}
@@ -236,9 +197,7 @@ export default function ContactsPage() {
                                 </div>
 
                                 <div className="form-field">
-                                    <label htmlFor="contact-message">
-                                        Сообщение <span className="required">*</span>
-                                    </label>
+                                    <label htmlFor="contact-message">Сообщение <span className="required">*</span></label>
                                     <textarea
                                         id="contact-message"
                                         value={form.message}
@@ -251,9 +210,7 @@ export default function ContactsPage() {
                                     {errors.message ? (
                                         <span id="message-error" className="field-error">{errors.message}</span>
                                     ) : (
-                                        <small id="message-hint">
-                                            {form.message.length}/5000 символов
-                                        </small>
+                                        <small id="message-hint">{form.message.length}/5000 символов</small>
                                     )}
                                 </div>
 

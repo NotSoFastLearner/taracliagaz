@@ -1,33 +1,22 @@
 import { Link } from "react-router-dom";
-import SEO from "../components/SEO";
+import { IconHome, IconPhone } from "../components/icons";
 
 export default function NotFoundPage() {
     return (
-        <>
-            <SEO
-                title="Страница не найдена"
-                description="Запрошенная страница не существует на сайте Тараклия-ГАЗ"
-                path="/404"
-                noindex
-            />
-
-            <section className="section">
-                <div className="container" style={{ textAlign: "center", padding: "60px 20px" }}>
-                    <h1 style={{ fontSize: "120px", margin: 0, color: "#1e40af" }}>404</h1>
-                    <h2>Страница не найдена</h2>
-                    <p>
-                        К сожалению, запрошенная страница не существует или была перемещена.
-                    </p>
-                    <div style={{ marginTop: "30px", display: "flex", gap: "15px", justifyContent: "center" }}>
-                        <Link to="/" className="btn btn-primary">
-                            🏠 На главную
-                        </Link>
-                        <Link to="/page/contacts" className="btn btn-secondary">
-                            📞 Контакты
-                        </Link>
-                    </div>
+        <section className="section" style={{ textAlign: "center", padding: "4rem 0" }}>
+            <div className="container">
+                <h1 style={{ fontSize: "96px", margin: 0, color: "#0057b8" }}>404</h1>
+                <h2>Страница не найдена</h2>
+                <p>Запрошенная страница не существует или была перемещена.</p>
+                <div style={{ display: "flex", gap: "1rem", justifyContent: "center", flexWrap: "wrap", marginTop: "2rem" }}>
+                    <Link to="/" className="btn btn-primary">
+                        <IconHome /> На главную
+                    </Link>
+                    <a href="tel:904" className="btn btn-secondary">
+                        <IconPhone /> Позвонить
+                    </a>
                 </div>
-            </section>
-        </>
+            </div>
+        </section>
     );
 }

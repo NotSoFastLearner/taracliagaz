@@ -2,20 +2,14 @@ import { useEffect, useState } from "react";
 import { getAnnouncements } from "../api/contentApi";
 import type { Announcement } from "../types/content";
 import SEO from "../components/SEO";
+import { IconMegaphone, IconCalendar, IconPin } from "../components/icons";
 
 export default function AnnouncementsPage() {
     const [items, setItems] = useState<Announcement[]>([]);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        getAnnouncements()
-            .then(setItems)
-            .catch((err) => {
-                setError("Не удалось загрузить объявления");
-                console.error(err);
-            })
-            .finally(() => setLoading(false));
+        getAnnouncements().then(setItems).catch(console.error).finally(() => setLoading(false));
     }, []);
 
     const formatDate = (iso: string) => {
@@ -26,38 +20,27 @@ export default function AnnouncementsPage() {
         } catch { return iso; }
     };
 
-    if (loading) return <p>Загрузка...</p>;
-    if (error) return <p className="error">{error}</p>;
-
     return (
         <>
-            <SEO
-                title="Объявления"
-                description="Актуальные объявления SRL «Taraclia Gaz» для потребителей природного газа. Отключения, профилактические работы, важные сообщения."
-                path="/announcements"
-            />
-
+            <SEO title="Объявления" description="Объявления SRL «Taraclia Gaz»" path="/announcements" />
             <section className="section">
                 <div className="container">
-                    <h1>📢 Объявления</h1>
-
-                    {items.length === 0 ? (
-                        <p>Активных объявлений нет</p>
+                    <h1><IconMegaphone width={32} height={32} /> Объявления</h1>
+                    {loading ? (
+                        <p>Загрузка...</p>
+                    ) : items.length === 0 ? (
+                        <p>Объявлений пока нет</p>
                     ) : (
                         <ul className="announcements-list">
-                            {items.map((item) => (
-                                <li key={item.id} className={item.isPinned ? "pinned" : ""}>
+                            {items.map((a) => (
+                                <li key={a.id} className={a.isPinned ? "pinned" : ""}>
                                     <div className="announcement-header">
                                         <h2>
-                                            {item.isPinned && "📌 "}
-                                            {item.title}
+                                            {a.isPinned && <IconPin />} {a.title}
                                         </h2>
-                                        <small>📅 {formatDate(item.publishedAt)}</small>
+                                        <small><IconCalendar /> {formatDate(a.publishedAt)}</small>
                                     </div>
-                                    <div
-                                        className="announcement-body content-body"
-                                        dangerouslySetInnerHTML={{ __html: item.bodyHtml }}
-                                    />
+                                    <div className="announcement-body content-body" dangerouslySetInnerHTML={{ __html: a.bodyHtml }} />
                                 </li>
                             ))}
                         </ul>
