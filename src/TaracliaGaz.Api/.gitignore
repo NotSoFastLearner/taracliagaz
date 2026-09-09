@@ -1,7 +1,7 @@
-# Python
+﻿# Python
 __pycache__/
 *.py[cod]
-*$py.class
+*\.class
 *.so
 *.egg-info/
 .eggs/
@@ -13,12 +13,12 @@ build/
 venv/
 env/
 
-# Environment variables (НЕ коммитим секреты)
+# Environment variables
 .env
 .env.local
 .env.*.local
 
-# Database (слишком большая и содержит приватные данные)
+# Database
 *.db
 *.sqlite
 *.sqlite3
@@ -26,13 +26,14 @@ env/
 # Uploads (user-generated content)
 uploads/
 
-# Остатки от .NET проекта
+# .NET remnants
 bin/
 obj/
 *.csproj.user
 Controllers/
 
 # IDE
+.vs/
 .vscode/
 .idea/
 *.swp
