@@ -10,19 +10,26 @@ from ..schemas import (
     ContactMessageCreate,
 )
 
-
-
 router = APIRouter(prefix="/api/public", tags=["public"])
+
 
 @router.get("/pages", response_model=list[PageRead])
 def get_pages(lang: str = Query(default="ru", regex="^(ru|ro)$"), db: Session = Depends(get_db)):
-    stmt = select(Page).where(Page.language_code == lang).order_by(Page.id.desc())
+    stmt = (
+        select(Page)
+        .where(Page.language_code == lang, Page.is_published == True)  # ✅
+        .order_by(Page.id.desc())
+    )
     return db.execute(stmt).scalars().all()
 
 
 @router.get("/pages/{slug}", response_model=PageRead)
 def get_page(slug: str, lang: str = Query(default="ru", regex="^(ru|ro)$"), db: Session = Depends(get_db)):
-    stmt = select(Page).where(Page.slug == slug, Page.language_code == lang)
+    stmt = select(Page).where(
+        Page.slug == slug,
+        Page.language_code == lang,
+        Page.is_published == True,  # ✅
+    )
     page = db.execute(stmt).scalar_one_or_none()
     if page is None:
         raise HTTPException(status_code=404, detail="Page not found")
@@ -31,33 +38,53 @@ def get_page(slug: str, lang: str = Query(default="ru", regex="^(ru|ro)$"), db: 
 
 @router.get("/news", response_model=list[NewsPostRead])
 def get_news(lang: str = Query(default="ru", regex="^(ru|ro)$"), db: Session = Depends(get_db)):
-    stmt = select(NewsPost).where(NewsPost.language_code == lang).order_by(NewsPost.published_at.desc())
+    stmt = (
+        select(NewsPost)
+        .where(NewsPost.language_code == lang, NewsPost.is_published == True)  # ✅
+        .order_by(NewsPost.published_at.desc())
+    )
     return db.execute(stmt).scalars().all()
 
 
 @router.get("/news/{id}", response_model=NewsPostRead)
 def get_news_item(id: int, db: Session = Depends(get_db)):
     post = db.get(NewsPost, id)
-    if post is None:
+    if post is None or not post.is_published:  # ✅
         raise HTTPException(status_code=404, detail="News post not found")
     return post
 
 
 @router.get("/announcements", response_model=list[AnnouncementRead])
 def get_announcements(lang: str = Query(default="ru", regex="^(ru|ro)$"), db: Session = Depends(get_db)):
-    stmt = select(Announcement).where(Announcement.language_code == lang).order_by(Announcement.is_pinned.desc(), Announcement.published_at.desc())
+    stmt = (
+        select(Announcement)
+        .where(Announcement.language_code == lang, Announcement.is_published == True)  # ✅
+        .order_by(Announcement.is_pinned.desc(), Announcement.published_at.desc())
+    )
     return db.execute(stmt).scalars().all()
 
 
 @router.get("/tenders", response_model=list[TenderRead])
 def get_tenders(lang: str = Query(default="ru", regex="^(ru|ro)$"), db: Session = Depends(get_db)):
-    stmt = select(Tender).where(Tender.language_code == lang).order_by(Tender.published_at.desc())
+    stmt = (
+        select(Tender)
+        .where(Tender.language_code == lang, Tender.is_published == True)  # ✅
+        .order_by(Tender.published_at.desc())
+    )
     return db.execute(stmt).scalars().all()
 
 
 @router.get("/documents", response_model=list[DocumentRead])
-def get_documents(category_slug: str | None = Query(default=None), lang: str = Query(default="ru", regex="^(ru|ro)$"), db: Session = Depends(get_db)):
-    stmt = select(Document).where(Document.language_code == lang).order_by(Document.published_at.desc())
+def get_documents(
+    category_slug: str | None = Query(default=None),
+    lang: str = Query(default="ru", regex="^(ru|ro)$"),
+    db: Session = Depends(get_db),
+):
+    stmt = (
+        select(Document)
+        .where(Document.language_code == lang, Document.is_published == True)  # ✅
+        .order_by(Document.published_at.desc())
+    )
     if category_slug:
         stmt = stmt.where(Document.category_slug == category_slug)
     return db.execute(stmt).scalars().all()
@@ -65,8 +92,13 @@ def get_documents(category_slug: str | None = Query(default=None), lang: str = Q
 
 @router.get("/gallery", response_model=list[GalleryImageRead])
 def get_gallery(db: Session = Depends(get_db)):
-    stmt = select(GalleryImage).order_by(GalleryImage.sort_order)
+    stmt = (
+        select(GalleryImage)
+        .where(GalleryImage.is_published == True)  # ✅
+        .order_by(GalleryImage.sort_order)
+    )
     return db.execute(stmt).scalars().all()
+
 
 @router.get("/menu", response_model=list[MenuCategoryRead])
 def get_menu(
@@ -80,38 +112,28 @@ def get_menu(
     )
     return db.execute(stmt).scalars().all()
 
+
 @router.post("/contact", status_code=status.HTTP_201_CREATED)
 def submit_contact(
     request: Request,
     item: ContactMessageCreate,
     db: Session = Depends(get_db)
 ):
-    """
-    Приём сообщения с формы контактов.
-    
-    Honeypot-защита: если поле website_url заполнено — это бот,
-    сообщение помечаем как спам (но не отклоняем явно, чтобы бот не догадался).
-    """
-    # Проверка honeypot
+    """Приём сообщения с формы контактов с honeypot-защитой"""
     is_spam = bool(item.website_url and item.website_url.strip())
     
     if is_spam:
-        # Бот попался!
         print(f"Honeypot triggered from {request.client.host}")
-    
-    # Базовая валидация длины (Pydantic уже проверяет типы)
+
     if len(item.name.strip()) < 2:
         raise HTTPException(422, "Имя слишком короткое")
     if len(item.message.strip()) < 10:
         raise HTTPException(422, "Сообщение слишком короткое (мин. 10 символов)")
     if len(item.message) > 5000:
         raise HTTPException(422, "Сообщение слишком длинное (макс. 5000 символов)")
-    
-    # Email валидация (базовая)
     if "@" not in item.email or "." not in item.email:
         raise HTTPException(422, "Некорректный email")
-    
-    # Сохраняем в БД
+
     contact = ContactMessage(
         name=item.name.strip(),
         email=item.email.strip().lower(),
@@ -124,11 +146,7 @@ def submit_contact(
     db.add(contact)
     db.commit()
     db.refresh(contact)
-    
-    # TODO: здесь можно добавить отправку email администратору
-    # from ..services.email_service import send_contact_email
-    # send_contact_email(contact)
-    
+
     return {
         "success": True,
         "message": "Сообщение отправлено! Мы свяжемся с вами в ближайшее время.",

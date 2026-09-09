@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { getNews } from "../api/contentApi";
+import { http } from "../api/http"; // ✅
 import type { NewsPostSummary } from "../types/content";
 import SEO from "../components/SEO";
 import { IconCalendar } from "../components/icons";
+import { sanitizeHtml } from "../utils/sanitize"; // ✅
 
-// Расширяем тип для детальной страницы — включает bodyHtml
 interface NewsDetail extends NewsPostSummary {
     bodyHtml: string;
 }
@@ -18,13 +18,11 @@ export default function NewsDetailPage() {
 
     useEffect(() => {
         if (!id) return;
-        getNews()
-            .then((items) => {
-                const found = items.find((p) => p.id === parseInt(id));
-                if (found) setPost(found as NewsDetail);
-                else setError("Новость не найдена");
-            })
-            .catch(() => setError("Ошибка загрузки"))
+
+        // ✅ Используем эндпоинт конкретной новости вместо загрузки всех
+        http.get<NewsDetail>(`/public/news/${id}`)
+            .then(setPost)
+            .catch(() => setError("Новость не найдена"))
             .finally(() => setLoading(false));
     }, [id]);
 
@@ -50,7 +48,10 @@ export default function NewsDetailPage() {
                         <div className="news-meta">
                             <small><IconCalendar /> {formatDate(post.publishedAt)}</small>
                         </div>
-                        <div className="content-body" dangerouslySetInnerHTML={{ __html: post.bodyHtml }} />
+                        <div
+                            className="content-body"
+                            dangerouslySetInnerHTML={{ __html: sanitizeHtml(post.bodyHtml) }} // ✅
+                        />
                     </article>
                 </div>
             </section>

@@ -13,7 +13,7 @@ export default function SEO({
     title,
     description,
     path = "",
-    image = "/og-image.jpg",
+    image = "/og-image.png",  // ✅ Было "/og-image.jpg"
     noindex = false,
 }: SEOProps) {
     const fullTitle = title === "Главная"

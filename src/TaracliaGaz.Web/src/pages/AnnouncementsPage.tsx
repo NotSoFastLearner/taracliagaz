@@ -3,6 +3,7 @@ import { getAnnouncements } from "../api/contentApi";
 import type { Announcement } from "../types/content";
 import SEO from "../components/SEO";
 import { IconMegaphone, IconCalendar, IconPin } from "../components/icons";
+import { sanitizeHtml } from "../utils/sanitize"; // ✅
 
 export default function AnnouncementsPage() {
     const [items, setItems] = useState<Announcement[]>([]);
@@ -40,7 +41,10 @@ export default function AnnouncementsPage() {
                                         </h2>
                                         <small><IconCalendar /> {formatDate(a.publishedAt)}</small>
                                     </div>
-                                    <div className="announcement-body content-body" dangerouslySetInnerHTML={{ __html: a.bodyHtml }} />
+                                    <div
+                                        className="announcement-body content-body"
+                                        dangerouslySetInnerHTML={{ __html: sanitizeHtml(a.bodyHtml) }} // ✅
+                                    />
                                 </li>
                             ))}
                         </ul>

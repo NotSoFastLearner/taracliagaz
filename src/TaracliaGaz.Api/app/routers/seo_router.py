@@ -9,15 +9,15 @@ from sqlalchemy import select
 from ..database import get_db
 from ..models import Page, NewsPost, Announcement, Tender, Document
 from ..config import get_settings
+
 router = APIRouter(tags=["seo"])
 
 settings = get_settings()
 
+
 def get_site_url() -> str:
     """Возвращает публичный URL сайта"""
-    # Можно добавить в .env: SITE_URL=https://taraclia-gaz.md
     return getattr(settings, "SITE_URL", "https://taraclia-gaz.md")
-
 
 
 @router.get("/robots.txt", response_class=PlainTextResponse)
@@ -41,20 +41,15 @@ async def sitemap(request: Request, db: Session = Depends(get_db)):
     Динамический XML sitemap для поисковых систем.
     Автоматически включает все опубликованные страницы, новости, тендеры и т.д.
     """
-    # Используем базовый URL из запроса (localhost:5173 в dev, реальный домен в prod)
-    base_url = str(request.base_url).rstrip("/")
-    # Для dev-окружения подменяем на публичный URL если нужно
-    # В production будет автоматически SITE_URL
-    
     urls = []
-    
+
     # 1. Главная страница (высокий приоритет)
     urls.append({
         "loc": f"{get_site_url()}/",
         "changefreq": "daily",
         "priority": "1.0",
     })
-    
+
     # 2. Основные разделы
     static_routes = [
         ("/news", "daily", "0.8"),
@@ -70,7 +65,7 @@ async def sitemap(request: Request, db: Session = Depends(get_db)):
             "changefreq": freq,
             "priority": prio,
         })
-    
+
     # 3. Статические страницы из БД
     pages = db.execute(
         select(Page).where(Page.is_published == True)
@@ -82,7 +77,7 @@ async def sitemap(request: Request, db: Session = Depends(get_db)):
             "changefreq": "monthly",
             "priority": "0.6",
         })
-    
+
     # 4. Новости (каждая новость - отдельный URL)
     news = db.execute(
         select(NewsPost).where(NewsPost.is_published == True)
@@ -95,8 +90,8 @@ async def sitemap(request: Request, db: Session = Depends(get_db)):
             "changefreq": "monthly",
             "priority": "0.7",
         })
-    
-    # 5. Тендеры
+
+    # 5. Тендеры (каждый тендер - отдельный URL)
     tenders = db.execute(
         select(Tender).where(Tender.is_published == True)
     ).scalars().all()
@@ -107,19 +102,10 @@ async def sitemap(request: Request, db: Session = Depends(get_db)):
             "changefreq": "weekly",
             "priority": "0.7",
         })
-    
-    # 6. Объявления
-    announcements = db.execute(
-        select(Announcement).where(Announcement.is_published == True)
-    ).scalars().all()
-    for a in announcements:
-        urls.append({
-            "loc": f"{get_site_url()}/announcements/{a.id}",
-            "lastmod": a.updated_at.strftime("%Y-%m-%d") if a.updated_at else None,
-            "changefreq": "weekly",
-            "priority": "0.6",
-        })
-    
+
+    # 6. Объявления - ТОЛЬКО список (детальных страниц нет в App.tsx)
+    # Убрано: /announcements/{a.id} — роута не существует в frontend
+
     # Формируем XML
     xml_urls = []
     for u in urls:
@@ -130,12 +116,12 @@ async def sitemap(request: Request, db: Session = Depends(get_db)):
         url_xml += f'    <priority>{u["priority"]}</priority>\n'
         url_xml += '  </url>'
         xml_urls.append(url_xml)
-    
+
     xml_content = f"""<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 {chr(10).join(xml_urls)}
 </urlset>"""
-    
+
     return Response(
         content=xml_content,
         media_type="application/xml",

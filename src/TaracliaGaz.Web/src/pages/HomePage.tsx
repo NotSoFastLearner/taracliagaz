@@ -5,6 +5,7 @@ import type { NewsPostSummary, Announcement, GalleryImage } from "../types/conte
 import SEO from "../components/SEO";
 import { resolveUploadUrl } from "../utils/urls";
 import { IconMegaphone, IconNews, IconGallery, IconCalendar } from "../components/icons";
+import { sanitizeHtml } from "../utils/sanitize"; // ✅
 
 export default function HomePage() {
     const [news, setNews] = useState<NewsPostSummary[]>([]);
@@ -61,7 +62,10 @@ export default function HomePage() {
                                         <h3>{a.title}</h3>
                                         <small><IconCalendar /> {formatDate(a.publishedAt)}</small>
                                     </div>
-                                    <div className="announcement-body content-body" dangerouslySetInnerHTML={{ __html: a.bodyHtml }} />
+                                    <div
+                                        className="announcement-body content-body"
+                                        dangerouslySetInnerHTML={{ __html: sanitizeHtml(a.bodyHtml) }} // ✅
+                                    />
                                 </li>
                             ))}
                         </ul>

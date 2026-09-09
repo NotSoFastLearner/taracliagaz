@@ -6,11 +6,12 @@ import type {
     NewsPostDetail,
     Page,
     Tender,
+    MenuCategory,
 } from "../types/content";
 
 // ===== GALLERY =====
 export const getGalleryAdmin = () =>
-    http.get<GalleryImage[]>("/public/gallery");
+    http.get<GalleryImage[]>("/admin/gallery"); // ✅ Было /public/gallery
 
 export const createGalleryImage = (data: Omit<GalleryImage, "id" | "createdAt" | "updatedAt">) =>
     http.post<GalleryImage>("/admin/gallery", data);
@@ -23,7 +24,7 @@ export const deleteGalleryImage = (id: number) =>
 
 // ===== PAGES =====
 export const getPagesAdmin = (lang = "ru") =>
-    http.get<Page[]>(`/public/pages?lang=${lang}`);
+    http.get<Page[]>(`/admin/pages?lang=${lang}`); // ✅ Было /public/pages
 
 export const createPage = (data: Omit<Page, "id" | "createdAt" | "updatedAt">) =>
     http.post<Page>("/admin/pages", data);
@@ -36,7 +37,7 @@ export const deletePage = (id: number) =>
 
 // ===== NEWS =====
 export const getNewsAdmin = (lang = "ru") =>
-    http.get<NewsPostDetail[]>(`/public/news?lang=${lang}`);
+    http.get<NewsPostDetail[]>(`/admin/news?lang=${lang}`); // ✅ Было /public/news
 
 export const createNews = (data: Omit<NewsPostDetail, "id" | "createdAt" | "updatedAt">) =>
     http.post<NewsPostDetail>("/admin/news", data);
@@ -49,7 +50,7 @@ export const deleteNews = (id: number) =>
 
 // ===== DOCUMENTS =====
 export const getDocumentsAdmin = (lang = "ru") =>
-    http.get<Document[]>(`/public/documents?lang=${lang}`);
+    http.get<Document[]>(`/admin/documents?lang=${lang}`); // ✅ Было /public/documents
 
 export const createDocument = (data: Omit<Document, "id" | "createdAt" | "updatedAt">) =>
     http.post<Document>("/admin/documents", data);
@@ -62,7 +63,7 @@ export const deleteDocument = (id: number) =>
 
 // ===== ANNOUNCEMENTS =====
 export const getAnnouncementsAdmin = (lang = "ru") =>
-    http.get<Announcement[]>(`/public/announcements?lang=${lang}`);
+    http.get<Announcement[]>(`/admin/announcements?lang=${lang}`); // ✅ Было /public/announcements
 
 export const createAnnouncement = (data: Omit<Announcement, "id" | "createdAt" | "updatedAt">) =>
     http.post<Announcement>("/admin/announcements", data);
@@ -75,7 +76,7 @@ export const deleteAnnouncement = (id: number) =>
 
 // ===== TENDERS =====
 export const getTendersAdmin = (lang = "ru") =>
-    http.get<Tender[]>(`/public/tenders?lang=${lang}`);
+    http.get<Tender[]>(`/admin/tenders?lang=${lang}`); // ✅ Было /public/tenders
 
 export const createTender = (data: Omit<Tender, "id" | "createdAt" | "updatedAt">) =>
     http.post<Tender>("/admin/tenders", data);
@@ -87,10 +88,8 @@ export const deleteTender = (id: number) =>
     http.delete<void>(`/admin/tenders/${id}`);
 
 // ===== MENU =====
-import type { MenuCategory } from "../types/content";
-
 export const getMenuAdmin = (lang = "ru") =>
-    http.get<MenuCategory[]>(`/public/menu?lang=${lang}`);
+    http.get<MenuCategory[]>(`/admin/menu?lang=${lang}`); // ✅ Было /public/menu
 
 export const createMenuCategory = (data: Omit<MenuCategory, "id" | "createdAt" | "updatedAt">) =>
     http.post<MenuCategory>("/admin/menu", data);

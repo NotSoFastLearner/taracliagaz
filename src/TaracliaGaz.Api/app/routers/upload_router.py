@@ -1,114 +1,201 @@
 """
-Роутер для загрузки файлов (документы, изображения)
+Загрузка файлов (изображения и документы).
 """
+import os
 import uuid
 from pathlib import Path
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, status, Request
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, status
+from sqlalchemy.orm import Session
+
+from ..database import get_db
 from ..config import get_settings
 from .auth_router import get_current_admin
-from ..security.rate_limit import limiter
+from ..models import User
+
+router = APIRouter(prefix="/api/uploads", tags=["uploads"])
+
 settings = get_settings()
-router = APIRouter(prefix="/api/admin/upload", tags=["upload"], dependencies=[Depends(get_current_admin)])
 
-# Создаём папку для загрузок при старте
-UPLOAD_DIR = Path(settings.UPLOAD_DIR)
-UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+# Разрешённые типы файлов
+ALLOWED_IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp", ".gif"}
+ALLOWED_IMAGE_CONTENT_TYPES = {
+    "image/jpeg",
+    "image/png",
+    "image/webp",
+    "image/gif",
+}
 
-ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/gif", "image/webp"}
-ALLOWED_DOC_TYPES = {
+ALLOWED_DOCUMENT_EXTENSIONS = {".pdf", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".txt", ".rtf"}
+ALLOWED_DOCUMENT_CONTENT_TYPES = {
     "application/pdf",
     "application/msword",
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     "application/vnd.ms-excel",
-    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "application/vnd.ms-powerpoint",
+    "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+    "text/plain",
+    "application/rtf",
 }
 
-MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB
+MAX_IMAGE_SIZE = 10 * 1024 * 1024  # 10 MB
+MAX_DOCUMENT_SIZE = 25 * 1024 * 1024  # 25 MB
+
+
+def validate_image(file: UploadFile) -> None:
+    """Проверка файла изображения"""
+    if not file.filename:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Filename is required",
+        )
+    
+    ext = Path(file.filename).suffix.lower()
+    if ext not in ALLOWED_IMAGE_EXTENSIONS:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid image extension: {ext}. Allowed: {', '.join(ALLOWED_IMAGE_EXTENSIONS)}",
+        )
+    
+    if file.content_type and file.content_type not in ALLOWED_IMAGE_CONTENT_TYPES:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid image content type: {file.content_type}",
+        )
+
+
+def validate_document(file: UploadFile) -> None:
+    """Проверка файла документа"""
+    if not file.filename:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Filename is required",
+        )
+    
+    ext = Path(file.filename).suffix.lower()
+    if ext not in ALLOWED_DOCUMENT_EXTENSIONS:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid document extension: {ext}. Allowed: {', '.join(ALLOWED_DOCUMENT_EXTENSIONS)}",
+        )
+    
+    # content_type может отсутствовать — проверяем только если есть
+    if file.content_type and file.content_type not in ALLOWED_DOCUMENT_CONTENT_TYPES:
+        # Разрешаем application/octet-stream как fallback
+        if file.content_type != "application/octet-stream":
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid document content type: {file.content_type}",
+            )
+
+
+def get_safe_filename(original: str, ext: str) -> str:
+    """Генерирует безопасное имя файла с UUID"""
+    # Убираем пробелы и спецсимволы из оригинального имени
+    safe_name = "".join(
+        c for c in Path(original).stem if c.isalnum() or c in ("-", "_")
+    )[:50]
+    
+    if not safe_name:
+        safe_name = "file"
+    
+    unique_id = uuid.uuid4().hex[:8]
+    return f"{safe_name}_{unique_id}{ext}"
+
+
+async def save_file(file: UploadFile, subfolder: str) -> str:
+    """Сохраняет файл и возвращает относительный URL"""
+    ext = Path(file.filename).suffix.lower()
+    filename = get_safe_filename(file.filename, ext)
+    
+    upload_dir = Path(settings.UPLOAD_DIR) / subfolder
+    upload_dir.mkdir(parents=True, exist_ok=True)
+    
+    file_path = upload_dir / filename
+    
+    # Читаем и сохраняем
+    contents = await file.read()
+    
+    # Проверка размера
+    max_size = MAX_IMAGE_SIZE if subfolder == "images" else MAX_DOCUMENT_SIZE
+    if len(contents) > max_size:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"File too large. Maximum size: {max_size // (1024*1024)} MB",
+        )
+    
+    with open(file_path, "wb") as f:
+        f.write(contents)
+    
+    # Возвращаем относительный путь для URL
+    return f"/uploads/{subfolder}/{filename}"
 
 
 @router.post("/image")
-async def upload_image(file: UploadFile = File(...)):
-    """Загрузка изображения (для галереи, новостей, страниц)"""
-    
-    # Проверка типа
-    if file.content_type not in ALLOWED_IMAGE_TYPES:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Недопустимый тип файла: {file.content_type}. Разрешены: {', '.join(ALLOWED_IMAGE_TYPES)}"
-        )
-    
-    # Читаем содержимое
-    content = await file.read()
-    
-    # Проверка размера
-    if len(content) > MAX_FILE_SIZE:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Файл слишком большой. Максимум: {MAX_FILE_SIZE // (1024*1024)} MB"
-        )
-    
-    # Генерируем уникальное имя
-    file_ext = Path(file.filename).suffix.lower()
-    unique_filename = f"{uuid.uuid4()}{file_ext}"
-    
-    # Создаём подпапку images если её нет
-    images_dir = UPLOAD_DIR / "images"
-    images_dir.mkdir(exist_ok=True)
-    
-    # Сохраняем файл
-    file_path = images_dir / unique_filename
-    with open(file_path, "wb") as f:
-        f.write(content)
-    
-    # Возвращаем URL (относительный путь для фронтенда)
-    file_url = f"/uploads/images/{unique_filename}"
-    
-    return {
-        "url": file_url,
-        "filename": file.filename,
-        "size": len(content)
-    }
+async def upload_image(
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_admin),
+):
+    """Загрузить изображение (только для администраторов)"""
+    validate_image(file)
+    url = await save_file(file, "images")
+    return {"url": url, "filename": file.filename}
 
 
 @router.post("/document")
-async def upload_document(file: UploadFile = File(...)):
-    """Загрузка документа (PDF, DOCX и т.д.)"""
-    
-    # Проверка типа
-    if file.content_type not in ALLOWED_DOC_TYPES:
+async def upload_document(
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_admin),
+):
+    """Загрузить документ (только для администраторов)"""
+    validate_document(file)
+    url = await save_file(file, "documents")
+    return {"url": url, "filename": file.filename}
+
+
+@router.delete("/image/{filename}")
+async def delete_image(
+    filename: str,
+    current_user: User = Depends(get_current_admin),
+):
+    """Удалить изображение"""
+    # Защита от path traversal
+    if "/" in filename or "\\" in filename or ".." in filename:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Недопустимый тип файла: {file.content_type}"
+            detail="Invalid filename",
         )
     
-    # Читаем содержимое
-    content = await file.read()
+    file_path = Path(settings.UPLOAD_DIR) / "images" / filename
+    if not file_path.exists():
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Image not found",
+        )
     
-    # Проверка размера
-    if len(content) > MAX_FILE_SIZE:
+    file_path.unlink()
+    return {"status": "deleted", "filename": filename}
+
+
+@router.delete("/document/{filename}")
+async def delete_document(
+    filename: str,
+    current_user: User = Depends(get_current_admin),
+):
+    """Удалить документ"""
+    # Защита от path traversal
+    if "/" in filename or "\\" in filename or ".." in filename:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Файл слишком большой. Максимум: {MAX_FILE_SIZE // (1024*1024)} MB"
+            detail="Invalid filename",
         )
     
-    # Генерируем уникальное имя
-    file_ext = Path(file.filename).suffix.lower()
-    unique_filename = f"{uuid.uuid4()}{file_ext}"
+    file_path = Path(settings.UPLOAD_DIR) / "documents" / filename
+    if not file_path.exists():
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Document not found",
+        )
     
-    # Создаём подпапку documents если её нет
-    docs_dir = UPLOAD_DIR / "documents"
-    docs_dir.mkdir(exist_ok=True)
-    
-    # Сохраняем файл
-    file_path = docs_dir / unique_filename
-    with open(file_path, "wb") as f:
-        f.write(content)
-    
-    # Возвращаем URL
-    file_url = f"/uploads/documents/{unique_filename}"
-    
-    return {
-        "url": file_url,
-        "filename": file.filename,
-        "size": len(content)
-    }
+    file_path.unlink()
+    return {"status": "deleted", "filename": filename}

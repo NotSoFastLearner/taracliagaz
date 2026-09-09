@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { getTenders } from "../api/contentApi";
+import { http } from "../api/http"; // ✅
 import type { Tender } from "../types/content";
 import SEO from "../components/SEO";
 import { resolveUploadUrl } from "../utils/urls";
 import { IconCalendar, IconClock, IconDownload, IconExternalLink } from "../components/icons";
+import { sanitizeHtml } from "../utils/sanitize"; // ✅
 
 export default function TenderDetailPage() {
     const { id } = useParams<{ id: string }>();
@@ -14,13 +15,11 @@ export default function TenderDetailPage() {
 
     useEffect(() => {
         if (!id) return;
-        getTenders()
-            .then((items) => {
-                const found = items.find((t) => t.id === parseInt(id));
-                if (found) setTender(found);
-                else setError("Тендер не найден");
-            })
-            .catch(() => setError("Ошибка загрузки"))
+
+        // ✅ Используем эндпоинт конкретного тендера
+        http.get<Tender>(`/public/tenders/${id}`)
+            .then(setTender)
+            .catch(() => setError("Тендер не найден"))
             .finally(() => setLoading(false));
     }, [id]);
 
@@ -55,7 +54,10 @@ export default function TenderDetailPage() {
                                 )}
                             </small>
                         </div>
-                        <div className="tender-body content-body" dangerouslySetInnerHTML={{ __html: tender.bodyHtml }} />
+                        <div
+                            className="tender-body content-body"
+                            dangerouslySetInnerHTML={{ __html: sanitizeHtml(tender.bodyHtml) }} // ✅
+                        />
 
                         {(tender.documentUrl || tender.externalUrl) && (
                             <div className="tender-docs">

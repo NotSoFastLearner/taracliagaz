@@ -7,12 +7,11 @@ from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 from fastapi import Request
 from fastapi.responses import JSONResponse
-
+import logging
 # Создаём лимитер (идентификация по IP)
 limiter = Limiter(
     key_func=get_remote_address,
-    default_limits=["100/minute"],  # базовый лимит для всех
-    storage_uri="memory://",
+    storage_uri="redis://localhost:6379/0",  # вместо memory://
 )
 
 

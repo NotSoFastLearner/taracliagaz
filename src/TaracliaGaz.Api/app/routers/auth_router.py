@@ -1,25 +1,23 @@
 """
-Авторизация: JWT-токены, логин, проверка текущего пользователя.
+Аутентификация администраторов через JWT.
 """
-from datetime import datetime, timedelta, timezone
-from typing import Optional
-
-import bcrypt
+from datetime import datetime, timedelta
+from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from jose import JWTError, jwt
-from sqlalchemy import select
 from sqlalchemy.orm import Session
+import bcrypt
+import jwt
+from jwt import PyJWTError as JWTError
 
-from ..config import get_settings
 from ..database import get_db
 from ..models import User
-from ..security.rate_limit import limiter
+from ..config import get_settings
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/token")
 
 settings = get_settings()
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/token")
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
@@ -30,109 +28,63 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     )
 
 
-def get_password_hash(password: str) -> str:
-    """Хеширование пароля через bcrypt"""
-    salt = bcrypt.gensalt()
-    return bcrypt.hashpw(password.encode("utf-8"), salt).decode("utf-8")
-
-
-def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
+def create_access_token(data: dict, expires_delta: timedelta | None = None) -> str:
     """Создание JWT токена"""
     to_encode = data.copy()
-    expire = datetime.now(timezone.utc) + (
-        expires_delta or timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-    )
+    expire = datetime.utcnow() + (expires_delta or timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES))
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
 
 
-async def get_current_user(
-    token: str = Depends(oauth2_scheme),
+async def get_current_admin(
+    token: Annotated[str, Depends(oauth2_scheme)],
     db: Session = Depends(get_db),
 ) -> User:
-    """Получение текущего пользователя из JWT токена"""
+    """Получить текущего администратора из токена"""
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Не удалось проверить учётные данные",
+        detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
-        payload = jwt.decode(
-            token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
-        )
-        username: str = payload.get("sub")
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        username: str | None = payload.get("sub")
         if username is None:
             raise credentials_exception
     except JWTError:
         raise credentials_exception
 
-    user = db.execute(
-        select(User).where(User.username == username)
-    ).scalar_one_or_none()
-
+    user = db.query(User).filter(User.username == username).first()
     if user is None:
         raise credentials_exception
     return user
 
 
-async def get_current_admin(
-    current_user: User = Depends(get_current_user),
-) -> User:
-    """Проверка что пользователь - админ"""
-    if current_user.role != "admin":
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Требуются права администратора",
-        )
-    return current_user
-
-
-class Token:
-    """Схема ответа с токеном"""
-    def __init__(self, access_token: str, token_type: str = "bearer"):
-        self.access_token = access_token
-        self.token_type = token_type
-
-
 @router.post("/token")
-@limiter.limit("5/15minutes")  # 🛡️ Максимум 5 попыток за 15 минут (защита от брутфорса)
 async def login(
-    request: Request,  # Требуется для slowapi
-    form_data: OAuth2PasswordRequestForm = Depends(),
+    request: Request,
+    form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     db: Session = Depends(get_db),
 ):
-    """
-    Получение JWT-токена по логину и паролю.
-    
-    Лимит: 5 попыток с одного IP за 15 минут.
-    """
-    # Ищем пользователя
-    user = db.execute(
-        select(User).where(User.username == form_data.username)
-    ).scalar_one_or_none()
-
-    # Проверяем пароль
+    """Получить JWT токен для администратора"""
+    user = db.query(User).filter(User.username == form_data.username).first()
     if not user or not verify_password(form_data.password, user.password_hash):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Неверный логин или пароль",
+            detail="Incorrect username or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    # Создаём токен
-    access_token = create_access_token(data={"sub": user.username})
-
-    return {
-        "access_token": access_token,
-        "token_type": "bearer",
-    }
+    access_token = create_access_token(data={"sub": user.username, "role": user.role})
+    return {"access_token": access_token, "token_type": "bearer"}
 
 
 @router.get("/me")
-async def read_users_me(current_user: User = Depends(get_current_user)):
-    """Получение информации о текущем пользователе"""
+async def read_users_me(
+    current_user: Annotated[User, Depends(get_current_admin)]
+):
+    """Получить информацию о текущем пользователе"""
     return {
-        "id": current_user.id,
         "username": current_user.username,
         "role": current_user.role,
     }

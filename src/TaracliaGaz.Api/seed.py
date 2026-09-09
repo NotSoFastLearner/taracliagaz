@@ -1,51 +1,79 @@
+
 """
 Инициализация БД: создаёт таблицы и первого админа.
 Запуск: python seed.py
+
+Пароль админа берётся из переменной окружения ADMIN_PASSWORD.
+В production использование дефолтного пароля запрещено.
 """
 import sys
+import os
 from pathlib import Path
+import bcrypt
+from datetime import datetime, timezone
 
 # Добавляем текущую директорию в sys.path
 sys.path.insert(0, str(Path(__file__).parent))
 
 # ВАЖНО: импортируем ВСЕ модели ПЕРЕД create_all
 from app.models import (
-    Base, User, Page, NewsPost, Announcement, 
+    Base, User, Page, NewsPost, Announcement,
     Tender, Document, GalleryImage, MenuCategory
 )
 from app.database import engine, SessionLocal
-from passlib.context import CryptContext
+from app.config import get_settings
 from sqlalchemy import select
-from datetime import datetime, timezone
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 def seed_database():
     """Создаёт таблицы и заполняет начальными данными"""
-    print("🔧 Создаю таблицы в БД...")
-    
+    print(" Создаю таблицы в БД...")
+
     # Создаём ВСЕ таблицы (все модели уже импортированы выше)
     Base.metadata.create_all(bind=engine)
-    print("   ✅ Таблицы созданы")
-    
+    print("Таблицы созданы")
+
+    settings = get_settings()
+    admin_password = settings.ADMIN_PASSWORD
+
+    # В production запретить дефолтный пароль
+    if admin_password == "admin123" and settings.ENVIRONMENT == "production":
+        raise RuntimeError(
+            "CRITICAL: Нельзя использовать дефолтный пароль 'admin123' в production. "
+            "Установите переменную окружения ADMIN_PASSWORD."
+        )
+
     db = SessionLocal()
     try:
         # 1. Создаём первого админа
         print("\n👤 Создаю первого админа...")
-        admin_exists = db.execute(select(User).where(User.username == "admin")).scalar_one_or_none()
-        
+        admin_exists = db.execute(
+            select(User).where(User.username == "admin")
+        ).scalar_one_or_none()
+
         if not admin_exists:
+            # Хешируем пароль через bcrypt напрямую
+            hashed_password = bcrypt.hashpw(
+                admin_password.encode("utf-8"),
+                bcrypt.gensalt()
+            ).decode("utf-8")
+
             admin = User(
                 username="admin",
-                password_hash=pwd_context.hash("admin123"),
+                password_hash=hashed_password,
                 role="admin"
             )
             db.add(admin)
             db.commit()
-            print("   ✅ Админ создан: admin / admin123")
+            print(" Админ создан: admin")
+            if admin_password == "admin123":
+                print("  WARNING: Используется ДЕФОЛТНЫЙ пароль 'admin123'")
+                print("   Установите ADMIN_PASSWORD в .env для production!")
+            else:
+                print(f" Использован пароль из окружения: {admin_password[:3]}***")
         else:
-            print("   ℹ️  Админ уже существует")
-        
+            print(" Админ уже существует")
+
         # 2. Создаём тестовые страницы
         print("\n📄 Создаю тестовые страницы...")
         test_pages = [
@@ -56,25 +84,28 @@ def seed_database():
             {"slug": "contacts", "title": "Контакты", "body_html": "<p>Адрес: г. Тараклия, ул. ...<br>Телефон: ...</p>"},
             {"slug": "faq", "title": "Вопросы-Ответы", "body_html": "<p>Часто задаваемые вопросы...</p>"},
             {"slug": "safety", "title": "Правила безопасности", "body_html": "<p>Правила безопасного использования газа...</p>"},
-            {"slug": "contracts", "title": "Договора", "body_html": "<p>Типовые договоры на газоснабжение...</p>"},
+            {"slug": "contracts", "title": "Договора", "body_html": "<p>Типовые договора на газоснабжение...</p>"},
             {"slug": "legislation", "title": "Законодательство", "body_html": "<p>Нормативные акты...</p>"},
             {"slug": "network-development", "title": "Руководство по процедуре развития сетей", "body_html": "<p>Процедура подключения к сетям...</p>"},
         ]
-        
+
         for page_data in test_pages:
             page_exists = db.execute(
-                select(Page).where(Page.slug == page_data["slug"], Page.language_code == "ru")
+                select(Page).where(
+                    Page.slug == page_data["slug"],
+                    Page.language_code == "ru"
+                )
             ).scalar_one_or_none()
-            
+
             if not page_exists:
                 page = Page(**page_data, language_code="ru")
                 db.add(page)
-                print(f"   ✅ Создана страница: {page_data['slug']}")
-        
+                print(f" Создана страница: {page_data['slug']}")
+
         db.commit()
-        
+
         # 3. Создаём тестовую новость
-        print("\n📰 Создаю тестовую новость...")
+        print("\nСоздаю тестовую новость...")
         news_count = db.query(NewsPost).count()
         if news_count == 0:
             news = NewsPost(
@@ -86,25 +117,29 @@ def seed_database():
             )
             db.add(news)
             db.commit()
-            print("   ✅ Новость создана")
-        
-        print("\n" + "="*50)
-        print("🎉 База данных инициализирована успешно!")
-        print("="*50)
-        print("\n🔑 Данные для входа в админку:")
+            print(" Новость создана")
+
+        print("\n" + "=" * 50)
+        print(" База данных инициализирована")
+        print("=" * 50)
+        print("\n Данные для входа в админку:")
         print("   URL: http://localhost:5173/admin/login")
         print("   Пользователь: admin")
-        print("   Пароль: admin123")
-        print("="*50)
-        
+        if admin_password == "admin123":
+            print("   Пароль: admin123 (ДЕФОЛТНЫЙ — смените в production!)")
+        else:
+            print(f"   Пароль: {admin_password[:3]}*** (из переменной ADMIN_PASSWORD)")
+        print("=" * 50)
+
     except Exception as e:
         db.rollback()
-        print(f"\n❌ Ошибка: {e}")
+        print(f"\n Ошибка: {e}")
         import traceback
         traceback.print_exc()
         raise
     finally:
         db.close()
+
 
 if __name__ == "__main__":
     seed_database()

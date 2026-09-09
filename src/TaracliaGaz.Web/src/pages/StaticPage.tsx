@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { getPage } from "../api/contentApi";
 import type { Page } from "../types/content";
 import SEO from "../components/SEO";
+import { sanitizeHtml } from "../utils/sanitize"; // ✅
 
 export default function StaticPage() {
     const { slug } = useParams<{ slug: string }>();
@@ -44,7 +45,7 @@ export default function StaticPage() {
                     <h1>{page.title}</h1>
                     <div
                         className="content-body"
-                        dangerouslySetInnerHTML={{ __html: page.bodyHtml }}
+                        dangerouslySetInnerHTML={{ __html: sanitizeHtml(page.bodyHtml) }} // ✅
                     />
                 </div>
             </section>

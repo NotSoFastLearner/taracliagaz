@@ -10,6 +10,8 @@ interface TokenPayload {
     exp: number;
 }
 
+const AUTH_KEY = "taracliagaz_auth"; // ✅ Единая константа
+
 function decodeJwt(token: string): TokenPayload | null {
     try {
         const parts = token.split(".");
@@ -26,8 +28,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
     const [status, setStatus] = useState<"loading" | "authorized" | "unauthorized">("loading");
 
     useEffect(() => {
-        const token = localStorage.getItem("access_token");
-
+        const token = localStorage.getItem(AUTH_KEY); // ✅ Было "access_token"
         if (!token) {
             setStatus("unauthorized");
             return;
@@ -35,14 +36,14 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
 
         const payload = decodeJwt(token);
         if (!payload) {
-            localStorage.removeItem("access_token");
+            localStorage.removeItem(AUTH_KEY);
             setStatus("unauthorized");
             return;
         }
 
         const nowSec = Math.floor(Date.now() / 1000);
         if (payload.exp && payload.exp < nowSec) {
-            localStorage.removeItem("access_token");
+            localStorage.removeItem(AUTH_KEY);
             setStatus("unauthorized");
             return;
         }

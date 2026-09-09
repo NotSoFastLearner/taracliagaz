@@ -1,225 +1,91 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+"""
+Аутентификация администраторов через JWT.
+"""
+from datetime import datetime, timedelta
+from typing import Annotated
+from fastapi import APIRouter, Depends, HTTPException, status, Request
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
+import bcrypt
+import jwt  # PyJWT
+from jwt import PyJWTError as JWTError
 
 from ..database import get_db
-from ..models import Announcement, Document, GalleryImage, NewsPost, Page, Tender, MenuCategory
-from ..schemas import (
-    AnnouncementCreate,
-    AnnouncementRead,
-    AnnouncementUpdate,
-    DocumentCreate,
-    DocumentRead,
-    DocumentUpdate,
-    GalleryImageCreate,
-    GalleryImageRead,
-    GalleryImageUpdate,
-    NewsPostCreate,
-    NewsPostRead,
-    NewsPostUpdate,
-    PageCreate,
-    PageRead,
-    PageUpdate,
-    TenderCreate,
-    TenderRead,
-    TenderUpdate,
-    MenuCategoryCreate,
-    MenuCategoryRead,
-    MenuCategoryUpdate,
-)
-from .auth_router import get_current_admin
+from ..models import User
+from ..config import get_settings
 
-router = APIRouter(prefix="/api/admin", tags=["admin"], dependencies=[Depends(get_current_admin)])
+router = APIRouter(prefix="/api/auth", tags=["auth"])
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/token")
+
+settings = get_settings()
 
 
-def get_or_404(db: Session, model, id: int):
-    obj = db.get(model, id)
-    if obj is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Item not found")
-    return obj
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    """Проверка пароля через bcrypt"""
+    return bcrypt.checkpw(
+        plain_password.encode("utf-8"),
+        hashed_password.encode("utf-8")
+    )
 
 
-# Pages
-@router.post("/pages", response_model=PageRead, status_code=status.HTTP_201_CREATED)
-def create_page(item: PageCreate, db: Session = Depends(get_db)):
-    obj = Page(**item.model_dump())
-    db.add(obj)
-    db.commit()
-    db.refresh(obj)
-    return obj
+def create_access_token(data: dict, expires_delta: timedelta | None = None) -> str:
+    """Создание JWT токена"""
+    to_encode = data.copy()
+    expire = datetime.utcnow() + (expires_delta or timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES))
+    to_encode.update({"exp": expire})
+    # PyJWT возвращает str напрямую
+    return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
 
 
-@router.put("/pages/{id}", response_model=PageRead)
-def update_page(id: int, item: PageUpdate, db: Session = Depends(get_db)):
-    obj = get_or_404(db, Page, id)
-    for k, v in item.model_dump(exclude_unset=True).items():
-        setattr(obj, k, v)
-    db.commit()
-    db.refresh(obj)
-    return obj
+async def get_current_admin(
+    token: Annotated[str, Depends(oauth2_scheme)],
+    db: Session = Depends(get_db),
+) -> User:
+    """Получить текущего администратора из токена"""
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    try:
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        username: str | None = payload.get("sub")
+        if username is None:
+            raise credentials_exception
+    except JWTError:
+        raise credentials_exception
+    
+    user = db.query(User).filter(User.username == username).first()
+    if user is None:
+        raise credentials_exception
+    return user
 
 
-@router.delete("/pages/{id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_page(id: int, db: Session = Depends(get_db)):
-    obj = get_or_404(db, Page, id)
-    db.delete(obj)
-    db.commit()
+@router.post("/token")
+async def login(
+    request: Request,
+    form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
+    db: Session = Depends(get_db),
+):
+    """Получить JWT токен для администратора"""
+    user = db.query(User).filter(User.username == form_data.username).first()
+    if not user or not verify_password(form_data.password, user.password_hash):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    access_token = create_access_token(data={"sub": user.username, "role": user.role})
+    return {"access_token": access_token, "token_type": "bearer"}
 
 
-# News
-@router.post("/news", response_model=NewsPostRead, status_code=status.HTTP_201_CREATED)
-def create_news(item: NewsPostCreate, db: Session = Depends(get_db)):
-    obj = NewsPost(**item.model_dump())
-    db.add(obj)
-    db.commit()
-    db.refresh(obj)
-    return obj
-
-
-@router.put("/news/{id}", response_model=NewsPostRead)
-def update_news(id: int, item: NewsPostUpdate, db: Session = Depends(get_db)):
-    obj = get_or_404(db, NewsPost, id)
-    for k, v in item.model_dump(exclude_unset=True).items():
-        setattr(obj, k, v)
-    db.commit()
-    db.refresh(obj)
-    return obj
-
-
-@router.delete("/news/{id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_news(id: int, db: Session = Depends(get_db)):
-    obj = get_or_404(db, NewsPost, id)
-    db.delete(obj)
-    db.commit()
-
-
-# Announcements
-@router.post("/announcements", response_model=AnnouncementRead, status_code=status.HTTP_201_CREATED)
-def create_announcement(item: AnnouncementCreate, db: Session = Depends(get_db)):
-    obj = Announcement(**item.model_dump())
-    db.add(obj)
-    db.commit()
-    db.refresh(obj)
-    return obj
-
-
-@router.put("/announcements/{id}", response_model=AnnouncementRead)
-def update_announcement(id: int, item: AnnouncementUpdate, db: Session = Depends(get_db)):
-    obj = get_or_404(db, Announcement, id)
-    for k, v in item.model_dump(exclude_unset=True).items():
-        setattr(obj, k, v)
-    db.commit()
-    db.refresh(obj)
-    return obj
-
-
-@router.delete("/announcements/{id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_announcement(id: int, db: Session = Depends(get_db)):
-    obj = get_or_404(db, Announcement, id)
-    db.delete(obj)
-    db.commit()
-
-
-# Tenders
-@router.post("/tenders", response_model=TenderRead, status_code=status.HTTP_201_CREATED)
-def create_tender(item: TenderCreate, db: Session = Depends(get_db)):
-    obj = Tender(**item.model_dump())
-    db.add(obj)
-    db.commit()
-    db.refresh(obj)
-    return obj
-
-
-@router.put("/tenders/{id}", response_model=TenderRead)
-def update_tender(id: int, item: TenderUpdate, db: Session = Depends(get_db)):
-    obj = get_or_404(db, Tender, id)
-    for k, v in item.model_dump(exclude_unset=True).items():
-        setattr(obj, k, v)
-    db.commit()
-    db.refresh(obj)
-    return obj
-
-
-@router.delete("/tenders/{id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_tender(id: int, db: Session = Depends(get_db)):
-    obj = get_or_404(db, Tender, id)
-    db.delete(obj)
-    db.commit()
-
-
-# Documents
-@router.post("/documents", response_model=DocumentRead, status_code=status.HTTP_201_CREATED)
-def create_document(item: DocumentCreate, db: Session = Depends(get_db)):
-    obj = Document(**item.model_dump())
-    db.add(obj)
-    db.commit()
-    db.refresh(obj)
-    return obj
-
-
-@router.put("/documents/{id}", response_model=DocumentRead)
-def update_document(id: int, item: DocumentUpdate, db: Session = Depends(get_db)):
-    obj = get_or_404(db, Document, id)
-    for k, v in item.model_dump(exclude_unset=True).items():
-        setattr(obj, k, v)
-    db.commit()
-    db.refresh(obj)
-    return obj
-
-
-@router.delete("/documents/{id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_document(id: int, db: Session = Depends(get_db)):
-    obj = get_or_404(db, Document, id)
-    db.delete(obj)
-    db.commit()
-
-
-# Gallery
-@router.post("/gallery", response_model=GalleryImageRead, status_code=status.HTTP_201_CREATED)
-def create_gallery_image(item: GalleryImageCreate, db: Session = Depends(get_db)):
-    obj = GalleryImage(**item.model_dump())
-    db.add(obj)
-    db.commit()
-    db.refresh(obj)
-    return obj
-
-
-@router.put("/gallery/{id}", response_model=GalleryImageRead)
-def update_gallery_image(id: int, item: GalleryImageUpdate, db: Session = Depends(get_db)):
-    obj = get_or_404(db, GalleryImage, id)
-    for k, v in item.model_dump(exclude_unset=True).items():
-        setattr(obj, k, v)
-    db.commit()
-    db.refresh(obj)
-    return obj
-
-
-@router.delete("/gallery/{id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_gallery_image(id: int, db: Session = Depends(get_db)):
-    obj = get_or_404(db, GalleryImage, id)
-    db.delete(obj)
-    db.commit()
-
-@router.post("/menu", response_model=MenuCategoryRead, status_code=status.HTTP_201_CREATED)
-def create_menu_item(item: MenuCategoryCreate, db: Session = Depends(get_db)):
-    obj = MenuCategory(**item.model_dump())
-    db.add(obj)
-    db.commit()
-    db.refresh(obj)
-    return obj
-
-
-@router.put("/menu/{id}", response_model=MenuCategoryRead)
-def update_menu_item(id: int, item: MenuCategoryUpdate, db: Session = Depends(get_db)):
-    obj = get_or_404(db, MenuCategory, id)
-    for k, v in item.model_dump(exclude_unset=True).items():
-        setattr(obj, k, v)
-    db.commit()
-    db.refresh(obj)
-    return obj
-
-
-@router.delete("/menu/{id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_menu_item(id: int, db: Session = Depends(get_db)):
-    obj = get_or_404(db, MenuCategory, id)
-    db.delete(obj)
-    db.commit()
+@router.get("/me")
+async def read_users_me(
+    current_user: Annotated[User, Depends(get_current_admin)]
+):
+    """Получить информацию о текущем пользователе"""
+    return {
+        "username": current_user.username,
+        "role": current_user.role,
+    }
