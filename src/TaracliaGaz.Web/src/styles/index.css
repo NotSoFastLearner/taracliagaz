@@ -53,10 +53,13 @@ img {
     z-index: 10000;
     border-radius: 0 0 4px 0;
     font-weight: 500;
+    transition: top 0.2s;
 }
 
     .skip-link:focus {
         top: 0;
+        outline: 3px solid #0057b8;
+        outline-offset: 2px;
     }
 
 /* Чёткий focus для всех интерактивных элементов */
@@ -1723,81 +1726,152 @@ img {
 }
 
 /* ============================================
-   FOOTER
+   FOOTER — ПРИНУДИТЕЛЬНЫЙ КОНТРАСТ
    ============================================ */
 .footer {
-    background: #1a202c;
-    color: #cbd5e1;
-    padding: 2rem 0 1.5rem;
-    font-size: 0.9rem;
-    margin-top: auto;
+    background: #1a202c !important;
+    color: #e2e8f0 !important;
+    padding: 2rem 0 1.5rem !important;
+    font-size: 0.9rem !important;
+    margin-top: auto !important;
 }
 
+    .footer * {
+        color: #e2e8f0 !important;
+    }
+
 .footer-inner {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 20px !important;
 }
 
 .footer-main {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important;
 }
 
 .footer-copyright {
-    margin: 0;
-    font-weight: 500;
-    font-size: 14px;
-    color: white;
+    margin: 0 !important;
+    font-weight: 500 !important;
+    font-size: 14px !important;
+    color: #ffffff !important;
 }
 
 .footer-contacts {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 15px;
-    font-style: normal;
-    font-size: 13px;
-    margin: 0;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 15px !important;
+    font-style: normal !important;
+    font-size: 13px !important;
+    margin: 0 !important;
 }
 
-    .footer-contacts span,
-    .footer-contacts a {
-        color: inherit;
+    .footer-contacts span {
+        color: #e2e8f0 !important;
     }
 
-    .footer-contacts a {
-        text-decoration: none;
-        transition: color 0.2s;
+    /* ВСЕ ссылки в footer — БЕЛЫЕ */
+    .footer a,
+    .footer-contacts a,
+    .footer-legal a {
+        color: #ffffff !important;
+        text-decoration: underline !important;
+        text-decoration-color: rgba(255, 255, 255, 0.5) !important;
+        text-underline-offset: 2px !important;
+        transition: all 0.2s !important;
     }
 
-        .footer-contacts a:hover {
-            color: white;
-            text-decoration: underline;
+        .footer a:hover,
+        .footer-contacts a:hover,
+        .footer-legal a:hover {
+            color: #ffffff !important;
+            text-decoration-color: #ffffff !important;
         }
+
+        /* Emergency — белый на красном */
+        .footer a.emergency,
+        .footer-contacts a.emergency {
+            color: #ffffff !important;
+            font-weight: 700 !important;
+            font-size: 1.2em !important;
+            text-decoration: none !important;
+            background: #dc2626 !important;
+            padding: 4px 12px !important;
+            border-radius: 4px !important;
+            display: inline-block !important;
+            border: 2px solid #fca5a5 !important;
+        }
+
+            .footer a.emergency:hover,
+            .footer-contacts a.emergency:hover {
+                background: #b91c1c !important;
+                border-color: #ffffff !important;
+            }
 
 .footer-legal {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 15px;
-    padding-top: 15px;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
-    font-size: 13px;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 15px !important;
+    padding-top: 15px !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.2) !important;
+    font-size: 13px !important;
 }
 
-    .footer-legal a {
-        color: #90cdf4;
-        text-decoration: none;
-        opacity: 0.9;
-        transition: all 0.2s;
+/* ============================================
+   FOOTER — DESKTOP LAYOUT
+   ============================================ */
+@media (min-width: 769px) {
+    .footer-inner {
+        flex-direction: row !important;
+        justify-content: space-between !important;
+        align-items: flex-start !important;
     }
 
-        .footer-legal a:hover {
-            color: white;
-            opacity: 1;
-            text-decoration: underline;
-        }
+    .footer-section {
+        flex: 0 1 auto !important;
+        max-width: 50% !important;
+    }
 
+    .footer-legal {
+        justify-content: flex-end !important;
+        border-top: none !important;
+        padding-top: 0 !important;
+        border-left: 1px solid rgba(255, 255, 255, 0.2) !important;
+        padding-left: 30px !important;
+        max-width: 45% !important;
+        flex-direction: column !important;
+        gap: 10px !important;
+    }
+}
+
+@media (max-width: 768px) {
+    .footer-inner {
+        flex-direction: column !important;
+        gap: 20px !important;
+    }
+
+    .footer-contacts {
+        flex-direction: column !important;
+        gap: 8px !important;
+    }
+
+    .footer-legal {
+        flex-direction: column !important;
+        gap: 10px !important;
+    }
+}
+
+.footer-heading {
+    display: block !important;
+    font-size: 1rem !important;
+    font-weight: 700 !important;
+    color: #ffffff !important;
+    margin-bottom: 0.75rem !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+}
 /* ============================================
    RESPONSIVE
    ============================================ */
@@ -2024,3 +2098,4 @@ img {
         text-align: center;
     }
 }
+

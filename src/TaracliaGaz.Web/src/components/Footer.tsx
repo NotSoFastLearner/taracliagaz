@@ -9,7 +9,7 @@ export default function Footer() {
         <footer className="footer">
             <div className="container footer-inner">
                 <div className="footer-section">
-                    <h4>SRL «Taraclia Gaz»</h4>
+                    <strong className="footer-heading">SRL «Taraclia Gaz»</strong>
                     <p>© {currentYear}</p>
                     <p>
                         {COMPANY_ADDRESS.city}, {COMPANY_ADDRESS.street}
@@ -22,11 +22,9 @@ export default function Footer() {
                     </p>
                     <p>
                         Аварийная служба (24/7):{" "}
-                        <strong>
-                            <a href={`tel:${COMPANY_PHONES.emergency}`}>
-                                {COMPANY_PHONES.emergency}
-                            </a>
-                        </strong>
+                        <a href={`tel:${COMPANY_PHONES.emergency}`} className="emergency">
+                            {COMPANY_PHONES.emergency}
+                        </a>
                     </p>
                     <p>
                         <a href={`mailto:${COMPANY_EMAIL}`}>{COMPANY_EMAIL}</a>
