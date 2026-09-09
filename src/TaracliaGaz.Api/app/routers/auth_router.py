@@ -7,20 +7,18 @@ from fastapi import APIRouter, Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 import bcrypt
-import jwt
+import jwt  # PyJWT
 from jwt import PyJWTError as JWTError
 
 from ..database import get_db
 from ..models import User
-from slowapi import Limiter
-from slowapi.util import get_remote_address
 from ..config import get_settings
-
-settings = get_settings()
+from ..security.rate_limit import limiter  # ✅ ДОБАВЛЕНО
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/token")
 
+settings = get_settings()
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
@@ -36,6 +34,7 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None) -> s
     to_encode = data.copy()
     expire = datetime.utcnow() + (expires_delta or timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES))
     to_encode.update({"exp": expire})
+    # PyJWT возвращает str напрямую
     return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
 
 
@@ -64,7 +63,7 @@ async def get_current_admin(
 
 
 @router.post("/token")
-@limiter.limit("5/15minute")  # 5 попыток за 15 минут
+@limiter.limit("5/15minute")  # ✅ 5 попыток за 15 минут — защита от брутфорса
 async def login(
     request: Request,
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],

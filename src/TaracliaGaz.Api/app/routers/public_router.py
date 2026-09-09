@@ -1,7 +1,10 @@
+"""
+Публичные эндпоинты API — только чтение + форма контактов.
+"""
 from fastapi import APIRouter, Depends, HTTPException, Query, status, Request
 from sqlalchemy import select
 from sqlalchemy.orm import Session
-from ..security.rate_limit import limiter
+
 from ..database import get_db
 from ..models import Page, NewsPost, Announcement, Tender, Document, GalleryImage, MenuCategory, ContactMessage
 from ..schemas import (
@@ -9,6 +12,7 @@ from ..schemas import (
     DocumentRead, GalleryImageRead, MenuCategoryRead,
     ContactMessageCreate,
 )
+from ..security.rate_limit import limiter  # ✅ ДОБАВЛЕНО
 
 router = APIRouter(prefix="/api/public", tags=["public"])
 
@@ -17,7 +21,7 @@ router = APIRouter(prefix="/api/public", tags=["public"])
 def get_pages(lang: str = Query(default="ru", regex="^(ru|ro)$"), db: Session = Depends(get_db)):
     stmt = (
         select(Page)
-        .where(Page.language_code == lang, Page.is_published == True)  # ✅
+        .where(Page.language_code == lang, Page.is_published == True)
         .order_by(Page.id.desc())
     )
     return db.execute(stmt).scalars().all()
@@ -28,7 +32,7 @@ def get_page(slug: str, lang: str = Query(default="ru", regex="^(ru|ro)$"), db: 
     stmt = select(Page).where(
         Page.slug == slug,
         Page.language_code == lang,
-        Page.is_published == True,  # ✅
+        Page.is_published == True,
     )
     page = db.execute(stmt).scalar_one_or_none()
     if page is None:
@@ -40,7 +44,7 @@ def get_page(slug: str, lang: str = Query(default="ru", regex="^(ru|ro)$"), db: 
 def get_news(lang: str = Query(default="ru", regex="^(ru|ro)$"), db: Session = Depends(get_db)):
     stmt = (
         select(NewsPost)
-        .where(NewsPost.language_code == lang, NewsPost.is_published == True)  # ✅
+        .where(NewsPost.language_code == lang, NewsPost.is_published == True)
         .order_by(NewsPost.published_at.desc())
     )
     return db.execute(stmt).scalars().all()
@@ -49,7 +53,7 @@ def get_news(lang: str = Query(default="ru", regex="^(ru|ro)$"), db: Session = D
 @router.get("/news/{id}", response_model=NewsPostRead)
 def get_news_item(id: int, db: Session = Depends(get_db)):
     post = db.get(NewsPost, id)
-    if post is None or not post.is_published:  # ✅
+    if post is None or not post.is_published:
         raise HTTPException(status_code=404, detail="News post not found")
     return post
 
@@ -58,7 +62,7 @@ def get_news_item(id: int, db: Session = Depends(get_db)):
 def get_announcements(lang: str = Query(default="ru", regex="^(ru|ro)$"), db: Session = Depends(get_db)):
     stmt = (
         select(Announcement)
-        .where(Announcement.language_code == lang, Announcement.is_published == True)  # ✅
+        .where(Announcement.language_code == lang, Announcement.is_published == True)
         .order_by(Announcement.is_pinned.desc(), Announcement.published_at.desc())
     )
     return db.execute(stmt).scalars().all()
@@ -68,7 +72,7 @@ def get_announcements(lang: str = Query(default="ru", regex="^(ru|ro)$"), db: Se
 def get_tenders(lang: str = Query(default="ru", regex="^(ru|ro)$"), db: Session = Depends(get_db)):
     stmt = (
         select(Tender)
-        .where(Tender.language_code == lang, Tender.is_published == True)  # ✅
+        .where(Tender.language_code == lang, Tender.is_published == True)
         .order_by(Tender.published_at.desc())
     )
     return db.execute(stmt).scalars().all()
@@ -82,7 +86,7 @@ def get_documents(
 ):
     stmt = (
         select(Document)
-        .where(Document.language_code == lang, Document.is_published == True)  # ✅
+        .where(Document.language_code == lang, Document.is_published == True)
         .order_by(Document.published_at.desc())
     )
     if category_slug:
@@ -94,7 +98,7 @@ def get_documents(
 def get_gallery(db: Session = Depends(get_db)):
     stmt = (
         select(GalleryImage)
-        .where(GalleryImage.is_published == True)  # ✅
+        .where(GalleryImage.is_published == True)
         .order_by(GalleryImage.sort_order)
     )
     return db.execute(stmt).scalars().all()
@@ -114,27 +118,39 @@ def get_menu(
 
 
 @router.post("/contact", status_code=status.HTTP_201_CREATED)
-@limiter.limit("3/minute")  # 3 сообщения в минуту с IP
+@limiter.limit("3/minute")  # ✅ 3 сообщения в минуту — защита от спама
 def submit_contact(
     request: Request,
     item: ContactMessageCreate,
     db: Session = Depends(get_db)
 ):
-    """Приём сообщения с формы контактов с honeypot-защитой"""
+    """
+    Приём сообщения с формы контактов.
+    Honeypot-защита: если поле website_url заполнено — это бот,
+    сообщение помечаем как спам (но не отклоняем явно, чтобы бот не догадался).
+    """
+    # Проверка honeypot
     is_spam = bool(item.website_url and item.website_url.strip())
-    
-    if is_spam:
-        print(f"Honeypot triggered from {request.client.host}")
 
+    if is_spam:
+        # Бот попался!
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.warning(f"Honeypot triggered from {request.client.host if request.client else 'unknown'}")
+
+    # Базовая валидация длины (Pydantic уже проверяет типы)
     if len(item.name.strip()) < 2:
         raise HTTPException(422, "Имя слишком короткое")
     if len(item.message.strip()) < 10:
         raise HTTPException(422, "Сообщение слишком короткое (мин. 10 символов)")
     if len(item.message) > 5000:
         raise HTTPException(422, "Сообщение слишком длинное (макс. 5000 символов)")
+
+    # Email валидация (базовая)
     if "@" not in item.email or "." not in item.email:
         raise HTTPException(422, "Некорректный email")
 
+    # Сохраняем в БД
     contact = ContactMessage(
         name=item.name.strip(),
         email=item.email.strip().lower(),

@@ -11,6 +11,7 @@ settings = get_settings()
 # Storage URI из env (по умолчанию memory://)
 RATE_LIMIT_STORAGE_URI = getattr(settings, "RATE_LIMIT_STORAGE_URI", "memory://")
 
+# Создаём limiter с правильным storage
 limiter = Limiter(
     key_func=get_remote_address,
     storage_uri=RATE_LIMIT_STORAGE_URI,
