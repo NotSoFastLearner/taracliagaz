@@ -1,7 +1,7 @@
-﻿# Python
+# Python
 __pycache__/
 *.py[cod]
-*\.class
+*.class
 *.so
 *.egg-info/
 .eggs/
@@ -17,6 +17,7 @@ env/
 .env
 .env.local
 .env.*.local
+.env.production
 
 # Database
 *.db
