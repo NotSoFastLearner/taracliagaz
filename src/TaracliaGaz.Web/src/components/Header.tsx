@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { NavLink, Link } from "react-router-dom";
 import Sidebar, { HamburgerButton } from "./Sidebar";
 import { getMenu } from "../api/contentApi";
@@ -9,7 +9,6 @@ export type NavItem =
     | { to: string; label: string; children?: undefined }
     | { label: string; children: Array<{ to: string; label: string }>; to?: undefined };
 
-// Fallback на случай если API недоступен
 const FALLBACK_NAV: NavItem[] = [
     { to: "/", label: "Главная" },
     {
@@ -46,6 +45,7 @@ export default function Header() {
     const [openDropdown, setOpenDropdown] = useState<string | null>(null);
     const [navItems, setNavItems] = useState<NavItem[]>(FALLBACK_NAV);
     const [loading, setLoading] = useState(true);
+    const navRef = useRef<HTMLElement>(null);
 
     useEffect(() => {
         getMenu("ru")
@@ -59,6 +59,32 @@ export default function Header() {
             })
             .finally(() => setLoading(false));
     }, []);
+
+    // Закрытие dropdown по Escape
+    useEffect(() => {
+        const handleEscape = (e: KeyboardEvent) => {
+            if (e.key === "Escape") {
+                setOpenDropdown(null);
+            }
+        };
+        document.addEventListener("keydown", handleEscape);
+        return () => document.removeEventListener("keydown", handleEscape);
+    }, []);
+
+    // Закрытие dropdown по клику вне навигации
+    useEffect(() => {
+        const handleClickOutside = (e: MouseEvent) => {
+            if (navRef.current && !navRef.current.contains(e.target as Node)) {
+                setOpenDropdown(null);
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+
+    const toggleDropdown = (label: string) => {
+        setOpenDropdown(openDropdown === label ? null : label);
+    };
 
     return (
         <>
@@ -80,7 +106,7 @@ export default function Header() {
                 </div>
             </header>
 
-            <nav className="main-nav">
+            <nav className="main-nav" ref={navRef}>
                 <div className="container">
                     {loading ? (
                         <ul className="nav-list">
@@ -90,13 +116,17 @@ export default function Header() {
                         <ul className="nav-list">
                             {navItems.map((item) =>
                                 item.children ? (
-                                    <li
-                                        key={item.label}
-                                        className="nav-item has-dropdown"
-                                        onMouseEnter={() => setOpenDropdown(item.label)}
-                                        onMouseLeave={() => setOpenDropdown(null)}
-                                    >
-                                        <span className="nav-link">{item.label}</span>
+                                    <li key={item.label} className="nav-item has-dropdown">
+                                        <button
+                                            type="button"
+                                            className={`dropdown-toggle ${openDropdown === item.label ? "active" : ""}`}
+                                            onClick={() => toggleDropdown(item.label)}
+                                            aria-expanded={openDropdown === item.label}
+                                            aria-haspopup="true"
+                                        >
+                                            {item.label}
+                                            <span className="dropdown-arrow" aria-hidden="true">▼</span>
+                                        </button>
                                         {openDropdown === item.label && (
                                             <ul className="dropdown">
                                                 {item.children.map((child) => (
@@ -104,6 +134,7 @@ export default function Header() {
                                                         <NavLink
                                                             to={child.to}
                                                             className={({ isActive }) => (isActive ? "active" : "")}
+                                                            onClick={() => setOpenDropdown(null)}
                                                         >
                                                             {child.label}
                                                         </NavLink>

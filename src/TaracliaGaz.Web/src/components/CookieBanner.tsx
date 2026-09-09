@@ -1,5 +1,5 @@
 import { useState } from "react";
-import useCookieConsent from "../hooks/useCookieConsent";
+import { useCookieConsent } from "../hooks/useCookieConsent";
 import { IconCookie } from "./icons";
 
 export default function CookieBanner() {
