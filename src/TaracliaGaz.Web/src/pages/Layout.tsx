@@ -19,7 +19,6 @@ export default function Layout() {
             </a>
 
             <Header />
-
             <LocalBusinessSchema />
 
             <main id="main-content" className="site-main" tabIndex={-1}>
@@ -27,8 +26,8 @@ export default function Layout() {
             </main>
 
             <Footer />
-            <CookieBanner />
             <FeedbackButton />
+            <CookieBanner />
         </div>
     );
 }

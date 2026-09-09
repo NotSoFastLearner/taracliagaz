@@ -21,12 +21,19 @@ export default function TendersPage() {
         } catch { return iso; }
     };
 
-    const getStatusBadge = (deadline?: string) => {
-        if (!deadline) return { label: "Активный", className: "badge optional" };
+    const getStatusBadge = (deadline?: string | null) => {
+        if (!deadline) {
+            return { label: "Активный тендер", className: "badge optional" };
+        }
         const dl = new Date(deadline);
         const now = new Date();
-        if (dl < now) return { label: "Приём заявок завершён", className: "badge required" };
-        return { label: `До ${formatDate(deadline)}`, className: "badge optional" };
+        if (dl < now) {
+            return { label: "Приём заявок завершён", className: "badge required" };
+        }
+        return {
+            label: `Приём заявок до ${formatDate(deadline)}`,
+            className: "badge optional",
+        };
     };
 
     return (
@@ -48,17 +55,16 @@ export default function TendersPage() {
                                         <h2>
                                             <Link to={`/tenders/${t.id}`}>{t.title}</Link>
                                         </h2>
-                                        <small>
-                                            <IconCalendar /> Опубликовано: {formatDate(t.publishedAt)}
-                                        </small>
-                                        {t.deadlineAt && (
-                                            <>
-                                                {" | "}
+                                        <div className="tender-meta-inline">
+                                            <small>
+                                                <IconCalendar /> Опубликовано: {formatDate(t.publishedAt)}
+                                            </small>
+                                            {t.deadlineAt && (
                                                 <small>
                                                     <IconClock /> Дедлайн: {formatDate(t.deadlineAt)}
                                                 </small>
-                                            </>
-                                        )}
+                                            )}
+                                        </div>
                                         <div style={{ marginTop: "8px" }}>
                                             <span className={badge.className}>{badge.label}</span>
                                         </div>

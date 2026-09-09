@@ -20,10 +20,16 @@ export default function CookieBanner() {
                     </p>
                 </div>
                 <div className="cookie-actions">
-                    <button onClick={() => { rejectOptional(); setShow(false); }} className="btn-cookie btn-reject">
+                    <button
+                        onClick={() => { rejectOptional(); setShow(false); }}
+                        className="btn-cookie btn-reject"
+                    >
                         Только необходимые
                     </button>
-                    <button onClick={() => { acceptAll(); setShow(false); }} className="btn-cookie btn-accept">
+                    <button
+                        onClick={() => { acceptAll(); setShow(false); }}
+                        className="btn-cookie btn-accept"
+                    >
                         Принять все
                     </button>
                 </div>

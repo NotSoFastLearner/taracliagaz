@@ -543,6 +543,21 @@ img {
         color: inherit;
     }
 
+.tender-meta-inline {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-top: 6px;
+    color: #64748b;
+    font-size: 13px;
+}
+
+    .tender-meta-inline small {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+    }
+
 .tender-docs {
     margin-top: 15px;
     display: flex;
@@ -926,7 +941,6 @@ img {
     z-index: 9999;
     padding: 15px;
     background: rgba(0, 0, 0, 0.5);
-    backdrop-filter: blur(4px);
     animation: slideUp 0.3s ease-out;
 }
 
@@ -959,6 +973,9 @@ img {
     margin: 0 0 8px 0;
     font-size: 18px;
     color: #1a202c;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .cookie-content p {
@@ -976,7 +993,7 @@ img {
 .cookie-actions {
     display: flex;
     gap: 8px;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
 }
 
 .btn-cookie {
@@ -1008,6 +1025,23 @@ img {
         background: #004494;
     }
 
+@media (max-width: 768px) {
+    .cookie-container {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+        padding: 16px;
+    }
+
+    .cookie-actions {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .btn-cookie {
+        width: 100%;
+    }
+}
 /* ============================================
    FEEDBACK BUTTON
    ============================================ */
