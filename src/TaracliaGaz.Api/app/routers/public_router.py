@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, status, Request
 from sqlalchemy import select
 from sqlalchemy.orm import Session
-
+from ..security.rate_limit import limiter
 from ..database import get_db
 from ..models import Page, NewsPost, Announcement, Tender, Document, GalleryImage, MenuCategory, ContactMessage
 from ..schemas import (
@@ -114,6 +114,7 @@ def get_menu(
 
 
 @router.post("/contact", status_code=status.HTTP_201_CREATED)
+@limiter.limit("3/minute")  # 3 сообщения в минуту с IP
 def submit_contact(
     request: Request,
     item: ContactMessageCreate,

@@ -12,12 +12,15 @@ from jwt import PyJWTError as JWTError
 
 from ..database import get_db
 from ..models import User
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 from ..config import get_settings
+
+settings = get_settings()
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/token")
 
-settings = get_settings()
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
@@ -61,6 +64,7 @@ async def get_current_admin(
 
 
 @router.post("/token")
+@limiter.limit("5/15minute")  # 5 попыток за 15 минут
 async def login(
     request: Request,
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],

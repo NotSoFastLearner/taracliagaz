@@ -10,7 +10,7 @@ interface TokenPayload {
     exp: number;
 }
 
-const AUTH_KEY = "taracliagaz_auth"; // ✅ Единая константа
+const AUTH_KEY = "taracliagaz_auth"; // Единая константа (совпадает с AdminLoginPage)
 
 function decodeJwt(token: string): TokenPayload | null {
     try {
@@ -28,7 +28,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
     const [status, setStatus] = useState<"loading" | "authorized" | "unauthorized">("loading");
 
     useEffect(() => {
-        const token = localStorage.getItem(AUTH_KEY); // ✅ Было "access_token"
+        const token = localStorage.getItem(AUTH_KEY);
         if (!token) {
             setStatus("unauthorized");
             return;

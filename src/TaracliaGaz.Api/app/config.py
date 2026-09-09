@@ -44,26 +44,32 @@ class Settings(BaseSettings):
     # Admin bootstrap (только для dev; в prod берётся из .env)
     ADMIN_PASSWORD: str = "admin123"
 
-    @field_validator("SECRET_KEY", mode="before")
+    @field_validator("ADMIN_PASSWORD", mode="before")
     @classmethod
-    def validate_secret_key(cls, v: str | None, info) -> str:
-        # Получаем ENVIRONMENT из уже валидированных полей
+    def validate_admin_password(cls, v: str | None, info) -> str:
         environment = info.data.get("ENVIRONMENT", "development")
-        
-        if not v or v == "change-me-in-production":
+    
+        if not v or v == "admin123":
             if environment == "production":
                 raise ValueError(
-                    "SECRET_KEY must be set via environment variable in production. "
-                    "Generate: python -c 'import secrets; print(secrets.token_urlsafe(32))'"
+                    "ADMIN_PASSWORD must be changed in production. "
+                    "Use a strong password (min 12 chars, mixed case, numbers, symbols)."
                 )
-            # В dev разрешаем сгенерировать автоматически для удобства
-            import secrets
-            print("⚠️  SECRET_KEY not set, generating random key for development")
-            return secrets.token_urlsafe(32)
-        
-        if len(v) < 32:
-            raise ValueError(f"SECRET_KEY must be at least 32 characters, got {len(v)}")
-        
+            return "admin123"  # Dev default
+    
+        # Проверка сложности
+        if len(v) < 12:
+            raise ValueError("ADMIN_PASSWORD must be at least 12 characters")
+    
+        has_upper = any(c.isupper() for c in v)
+        has_lower = any(c.islower() for c in v)
+        has_digit = any(c.isdigit() for c in v)
+    
+        if not (has_upper and has_lower and has_digit):
+            raise ValueError(
+                "ADMIN_PASSWORD must contain uppercase, lowercase, and digits"
+            )
+    
         return v
 
 

@@ -1,3 +1,3 @@
-from . import public_router, admin_router, auth_router
-from . import upload_router
-from . import seo_router
+from . import public_router, auth_router, upload_router, seo_router
+
+__all__ = ["public_router", "auth_router", "upload_router", "seo_router"]
