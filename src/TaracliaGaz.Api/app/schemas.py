@@ -3,7 +3,7 @@ Pydantic схемы для валидации входных/выходных д
 """
 from datetime import datetime
 import nh3
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, EmailStr, ConfigDict, Field, field_validator
 
 
 def to_camel(snake: str) -> str:
@@ -313,10 +313,9 @@ class ContactMessageCreate(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
     name: str = Field(..., min_length=2, max_length=100)
-    email: str = Field(..., max_length=150)
+    email: EmailStr
     phone: str | None = Field(None, max_length=30)
     message: str = Field(..., min_length=10, max_length=5000)
-    # Honeypot — поле для ботов (должно быть пустым)
     website_url: str | None = Field(None, max_length=500)
 
 

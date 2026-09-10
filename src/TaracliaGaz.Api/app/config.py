@@ -31,6 +31,9 @@ class Settings(BaseSettings):
     # Environment
     ENVIRONMENT: str = "development"  # development | production
     
+    # Rate limiting storage
+    RATE_LIMIT_STORAGE_URI: str = "memory://"
+
     # CORS
     CORS_ORIGINS: list[str] = [
         "http://localhost:5173",

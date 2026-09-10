@@ -6,7 +6,7 @@ import uuid
 from pathlib import Path
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, status
 from sqlalchemy.orm import Session
-
+from ..security.rate_limit import limiter
 from ..database import get_db
 from ..config import get_settings
 from .auth_router import get_current_admin
@@ -43,25 +43,34 @@ MAX_DOCUMENT_SIZE = 25 * 1024 * 1024  # 25 MB
 
 
 def validate_image(file: UploadFile) -> None:
-    """Проверка файла изображения"""
+    """Проверка файла изображения + magic bytes"""
     if not file.filename:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Filename is required",
-        )
+        raise HTTPException(400, "Filename is required")
     
     ext = Path(file.filename).suffix.lower()
     if ext not in ALLOWED_IMAGE_EXTENSIONS:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Invalid image extension: {ext}. Allowed: {', '.join(ALLOWED_IMAGE_EXTENSIONS)}",
-        )
+        raise HTTPException(400, f"Invalid image extension: {ext}")
     
-    if file.content_type and file.content_type not in ALLOWED_IMAGE_CONTENT_TYPES:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Invalid image content type: {file.content_type}",
-        )
+    # Magic bytes проверка
+    file.file.seek(0)
+    header = file.file.read(16)
+    file.file.seek(0)
+    
+    # JPEG: FF D8 FF
+    # PNG: 89 50 4E 47
+    # WebP: 52 49 46 46 (RIFF)
+    # GIF: 47 49 46 38 (GIF8)
+    if ext in {".jpg", ".jpeg"} and not header.startswith(b"\xff\xd8\xff"):
+        raise HTTPException(400, "Invalid JPEG file")
+    if ext == ".png" and not header.startswith(b"\x89PNG"):
+        raise HTTPException(400, "Invalid PNG file")
+    if ext == ".webp" and not (header.startswith(b"RIFF") and header[8:12] == b"WEBP"):
+        raise HTTPException(400, "Invalid WebP file")
+    if ext == ".gif" and not header.startswith(b"GIF8"):
+        raise HTTPException(400, "Invalid GIF file")
+
+
+
 
 
 def validate_document(file: UploadFile) -> None:
@@ -130,8 +139,8 @@ async def save_file(file: UploadFile, subfolder: str) -> str:
     # Возвращаем относительный путь для URL
     return f"/uploads/{subfolder}/{filename}"
 
-
 @router.post("/image")
+@limiter.limit("10/minute")  # 10 загрузок в минуту
 async def upload_image(
     file: UploadFile = File(...),
     current_user: User = Depends(get_current_admin),
@@ -143,6 +152,7 @@ async def upload_image(
 
 
 @router.post("/document")
+@limiter.limit("10/minute")
 async def upload_document(
     file: UploadFile = File(...),
     current_user: User = Depends(get_current_admin),

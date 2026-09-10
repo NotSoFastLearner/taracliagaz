@@ -12,7 +12,7 @@ from fastapi.responses import JSONResponse
 from slowapi.errors import RateLimitExceeded
 
 from .config import get_settings
-from .routers import public_router, auth_router
+from .routers import public_router, auth_router, admin_router
 from .routers import upload_router, seo_router
 from .middleware.security import SecurityHeadersMiddleware
 from .security.rate_limit import limiter
@@ -92,6 +92,7 @@ app.mount("/uploads", StaticFiles(directory=settings.UPLOAD_DIR), name="uploads"
 
 # Роутеры
 app.include_router(auth_router.router)
+app.include_router(admin_router.router) 
 app.include_router(public_router.router)
 app.include_router(upload_router.router)
 app.include_router(seo_router.router)
