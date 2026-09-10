@@ -11,7 +11,7 @@ from ..database import get_db
 from ..config import get_settings
 from .auth_router import get_current_admin
 from ..models import User
-
+from ..security.rate_limit import limiter
 router = APIRouter(prefix="/api/uploads", tags=["uploads"])
 
 settings = get_settings()
@@ -140,8 +140,9 @@ async def save_file(file: UploadFile, subfolder: str) -> str:
     return f"/uploads/{subfolder}/{filename}"
 
 @router.post("/image")
-@limiter.limit("10/minute")  # 10 загрузок в минуту
+@limiter.limit("10/minute")  # Защита от DoS загрузками
 async def upload_image(
+    request: Request,  # Обязателен для slowapi
     file: UploadFile = File(...),
     current_user: User = Depends(get_current_admin),
 ):
@@ -154,6 +155,7 @@ async def upload_image(
 @router.post("/document")
 @limiter.limit("10/minute")
 async def upload_document(
+    request: Request,  # Обязателен для slowapi
     file: UploadFile = File(...),
     current_user: User = Depends(get_current_admin),
 ):

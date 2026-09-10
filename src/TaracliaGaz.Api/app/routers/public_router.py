@@ -1,24 +1,27 @@
 """
 Публичные эндпоинты API — только чтение + форма контактов.
+Все GET-эндпоинты отдают ТОЛЬКО опубликованный контент (is_published=True).
 """
 from fastapi import APIRouter, Depends, HTTPException, Query, status, Request
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from ..database import get_db
-from ..models import Page, NewsPost, Announcement, Tender, Document, GalleryImage, MenuCategory, ContactMessage
+from ..models import (
+    Page, NewsPost, Announcement, Tender, Document,
+    GalleryImage, MenuCategory, ContactMessage,
+)
 from ..schemas import (
     PageRead, NewsPostRead, AnnouncementRead, TenderRead,
     DocumentRead, GalleryImageRead, MenuCategoryRead,
     ContactMessageCreate,
 )
-from ..security.rate_limit import limiter  
+from ..security.rate_limit import limiter
 
 router = APIRouter(prefix="/api/public", tags=["public"])
 
 
 @router.get("/pages", response_model=list[PageRead])
-@limiter.limit("100/minute")  # 100 запросов в минуту
 def get_pages(lang: str = Query(default="ru", regex="^(ru|ro)$"), db: Session = Depends(get_db)):
     stmt = (
         select(Page)
@@ -29,7 +32,6 @@ def get_pages(lang: str = Query(default="ru", regex="^(ru|ro)$"), db: Session = 
 
 
 @router.get("/pages/{slug}", response_model=PageRead)
-@limiter.limit("100/minute")
 def get_page(slug: str, lang: str = Query(default="ru", regex="^(ru|ro)$"), db: Session = Depends(get_db)):
     stmt = select(Page).where(
         Page.slug == slug,
@@ -43,7 +45,6 @@ def get_page(slug: str, lang: str = Query(default="ru", regex="^(ru|ro)$"), db: 
 
 
 @router.get("/news", response_model=list[NewsPostRead])
-@limiter.limit("100/minute")
 def get_news(lang: str = Query(default="ru", regex="^(ru|ro)$"), db: Session = Depends(get_db)):
     stmt = (
         select(NewsPost)
@@ -54,7 +55,6 @@ def get_news(lang: str = Query(default="ru", regex="^(ru|ro)$"), db: Session = D
 
 
 @router.get("/news/{id}", response_model=NewsPostRead)
-@limiter.limit("100/minute")
 def get_news_item(id: int, db: Session = Depends(get_db)):
     post = db.get(NewsPost, id)
     if post is None or not post.is_published:
@@ -63,7 +63,6 @@ def get_news_item(id: int, db: Session = Depends(get_db)):
 
 
 @router.get("/announcements", response_model=list[AnnouncementRead])
-@limiter.limit("100/minute")
 def get_announcements(lang: str = Query(default="ru", regex="^(ru|ro)$"), db: Session = Depends(get_db)):
     stmt = (
         select(Announcement)
@@ -74,7 +73,6 @@ def get_announcements(lang: str = Query(default="ru", regex="^(ru|ro)$"), db: Se
 
 
 @router.get("/tenders", response_model=list[TenderRead])
-@limiter.limit("100/minute")
 def get_tenders(lang: str = Query(default="ru", regex="^(ru|ro)$"), db: Session = Depends(get_db)):
     stmt = (
         select(Tender)
@@ -84,8 +82,16 @@ def get_tenders(lang: str = Query(default="ru", regex="^(ru|ro)$"), db: Session 
     return db.execute(stmt).scalars().all()
 
 
+@router.get("/tenders/{id}", response_model=TenderRead)
+def get_tender_item(id: int, db: Session = Depends(get_db)):
+    """Детальная страница тендера"""
+    tender = db.get(Tender, id)
+    if tender is None or not tender.is_published:
+        raise HTTPException(status_code=404, detail="Tender not found")
+    return tender
+
+
 @router.get("/documents", response_model=list[DocumentRead])
-@limiter.limit("100/minute")
 def get_documents(
     category_slug: str | None = Query(default=None),
     lang: str = Query(default="ru", regex="^(ru|ro)$"),
@@ -102,7 +108,6 @@ def get_documents(
 
 
 @router.get("/gallery", response_model=list[GalleryImageRead])
-@limiter.limit("100/minute")
 def get_gallery(db: Session = Depends(get_db)):
     stmt = (
         select(GalleryImage)
@@ -113,7 +118,6 @@ def get_gallery(db: Session = Depends(get_db)):
 
 
 @router.get("/menu", response_model=list[MenuCategoryRead])
-@limiter.limit("100/minute")
 def get_menu(
     lang: str = Query(default="ru", regex="^(ru|ro)$"),
     db: Session = Depends(get_db),
@@ -127,24 +131,23 @@ def get_menu(
 
 
 @router.post("/contact", status_code=status.HTTP_201_CREATED)
-@limiter.limit("3/minute")  # ✅ 3 сообщения в минуту — защита от спама
+@limiter.limit("3/minute")  # Защита от спама формы
 def submit_contact(
-    request: Request,
+    request: Request,  # Обязателен для slowapi
     item: ContactMessageCreate,
     db: Session = Depends(get_db)
 ):
     """
     Приём сообщения с формы контактов.
-    Honeypot-защита: если поле website_url заполнено — это бот,
-    сообщение помечаем как спам (но не отклоняем явно, чтобы бот не догадался).
+    Honeypot-защита: если поле website_url заполнено — это бот.
     """
+    import logging
+    logger = logging.getLogger(__name__)
+
     # Проверка honeypot
     is_spam = bool(item.website_url and item.website_url.strip())
 
     if is_spam:
-        # Бот попался!
-        import logging
-        logger = logging.getLogger(__name__)
         logger.warning(f"Honeypot triggered from {request.client.host if request.client else 'unknown'}")
 
     # Базовая валидация длины (Pydantic уже проверяет типы)
@@ -155,7 +158,9 @@ def submit_contact(
     if len(item.message) > 5000:
         raise HTTPException(422, "Сообщение слишком длинное (макс. 5000 символов)")
 
-
+    # Email валидация (базовая)
+    if "@" not in item.email or "." not in item.email:
+        raise HTTPException(422, "Некорректный email")
 
     # Сохраняем в БД
     contact = ContactMessage(
