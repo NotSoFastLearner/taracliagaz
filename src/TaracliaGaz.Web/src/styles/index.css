@@ -486,29 +486,19 @@ h3 {
 /* ============================================
    HERO SECTION
    ============================================ */
-.hero {@media (max-width: 768px) {
+.hero {
     background: linear-gradient(135deg, #004494 0%, #0057b8 50%, #0066d4 100%);
     color: white;
     padding-block: 4rem;
     text-align: center;
-
-        .transparency-layout {
-        grid-template-columns: 1fr;
-        }
-        
-        .transparency-menu {
-        margin-bottom: 1.5rem;
-        }
-
 }
-    
 
-    
     .hero h1 {
         font-size: 3rem;
         margin: 0 0 1rem;
         font-weight: 800;
         letter-spacing: 0.5px;
+        color: white;
     }
 
 .hero-subtitle {
@@ -517,6 +507,7 @@ h3 {
     max-width: 600px;
     margin: 0 auto 2rem;
     line-height: 1.6;
+    color: white;
 }
 
 .hero-actions {
@@ -1171,6 +1162,16 @@ h3 {
 
     .btn-cookie {
         width: 100%;
+    }
+
+
+
+    .transparency-layout {
+        grid-template-columns: 1fr !important;
+    }
+
+    .transparency-menu {
+        margin-bottom: 1.5rem;
     }
 }
 /* ============================================
