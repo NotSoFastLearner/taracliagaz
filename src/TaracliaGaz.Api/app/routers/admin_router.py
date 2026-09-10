@@ -20,7 +20,6 @@ from ..schemas import (
     GalleryImageRead, GalleryImageCreate, GalleryImageUpdate,
     MenuCategoryRead, MenuCategoryCreate, MenuCategoryUpdate,
 )
-from ..security.rate_limit import limiter
 from .auth_router import get_current_admin
 from ..models import User
 

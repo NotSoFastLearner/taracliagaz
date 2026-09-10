@@ -1,18 +1,20 @@
 """
 Загрузка файлов (изображения и документы).
-Только для администраторов (JWT защита).
+Использует стриминг для защиты от DoS через большие файлы.
 """
-import os
 import uuid
 from pathlib import Path
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, status, Request
 from sqlalchemy.orm import Session
+import logging
 
 from ..database import get_db
 from ..config import get_settings
 from ..security.rate_limit import limiter
 from .auth_router import get_current_admin
 from ..models import User
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/uploads", tags=["uploads"])
 
@@ -21,13 +23,13 @@ settings = get_settings()
 # Разрешённые типы файлов
 ALLOWED_IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp", ".gif"}
 ALLOWED_IMAGE_CONTENT_TYPES = {
-    "image/jpeg",
-    "image/png",
-    "image/webp",
-    "image/gif",
+    "image/jpeg", "image/png", "image/webp", "image/gif",
 }
 
-ALLOWED_DOCUMENT_EXTENSIONS = {".pdf", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".txt", ".rtf"}
+ALLOWED_DOCUMENT_EXTENSIONS = {
+    ".pdf", ".doc", ".docx", ".xls", ".xlsx",
+    ".ppt", ".pptx", ".txt", ".rtf",
+}
 ALLOWED_DOCUMENT_CONTENT_TYPES = {
     "application/pdf",
     "application/msword",
@@ -38,142 +40,136 @@ ALLOWED_DOCUMENT_CONTENT_TYPES = {
     "application/vnd.openxmlformats-officedocument.presentationml.presentation",
     "text/plain",
     "application/rtf",
+    "application/octet-stream",
 }
 
-MAX_IMAGE_SIZE = 10 * 1024 * 1024  # 10 MB
-MAX_DOCUMENT_SIZE = 25 * 1024 * 1024  # 25 MB
+MAX_IMAGE_SIZE = settings.MAX_UPLOAD_SIZE_MB * 1024 * 1024
+MAX_DOCUMENT_SIZE = 25 * 1024 * 1024
+
+CHUNK_SIZE = 1024 * 1024  # 1 MB chunks для стриминга
 
 
-def validate_image(file: UploadFile) -> None:
-    """Проверка файла изображения + magic bytes"""
-    if not file.filename:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Filename is required",
-        )
-    
-    ext = Path(file.filename).suffix.lower()
-    if ext not in ALLOWED_IMAGE_EXTENSIONS:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Invalid image extension: {ext}. Allowed: {', '.join(ALLOWED_IMAGE_EXTENSIONS)}",
-        )
-    
-    if file.content_type and file.content_type not in ALLOWED_IMAGE_CONTENT_TYPES:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Invalid image content type: {file.content_type}",
-        )
-    
-    # Magic bytes проверка
-    file.file.seek(0)
-    header = file.file.read(16)
-    file.file.seek(0)
-    
-    # JPEG: FF D8 FF
-    # PNG: 89 50 4E 47
-    # WebP: 52 49 46 46 (RIFF) + WEBP
-    # GIF: 47 49 46 38 (GIF8)
+def validate_image_header(header: bytes, ext: str) -> None:
+    """Magic bytes проверка для изображений"""
     if ext in {".jpg", ".jpeg"} and not header.startswith(b"\xff\xd8\xff"):
         raise HTTPException(400, "Invalid JPEG file (magic bytes mismatch)")
     if ext == ".png" and not header.startswith(b"\x89PNG"):
         raise HTTPException(400, "Invalid PNG file (magic bytes mismatch)")
-    if ext == ".webp" and not (header.startswith(b"RIFF") and header[8:12] == b"WEBP"):
+    if ext == ".webp" and not (header.startswith(b"RIFF") and len(header) > 11 and header[8:12] == b"WEBP"):
         raise HTTPException(400, "Invalid WebP file (magic bytes mismatch)")
     if ext == ".gif" and not header.startswith(b"GIF8"):
         raise HTTPException(400, "Invalid GIF file (magic bytes mismatch)")
 
 
-def validate_document(file: UploadFile) -> None:
-    """Проверка файла документа"""
+def validate_extension_and_type(
+    file: UploadFile, allowed_ext: set, allowed_types: set,
+) -> str:
+    """Базовая валидация расширения и content-type"""
     if not file.filename:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Filename is required",
-        )
-    
+        raise HTTPException(400, "Filename is required")
+
     ext = Path(file.filename).suffix.lower()
-    if ext not in ALLOWED_DOCUMENT_EXTENSIONS:
+    if ext not in allowed_ext:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Invalid document extension: {ext}. Allowed: {', '.join(ALLOWED_DOCUMENT_EXTENSIONS)}",
+            400,
+            f"Invalid extension: {ext}. Allowed: {', '.join(sorted(allowed_ext))}",
         )
-    
-    # content_type может отсутствовать — проверяем только если есть
-    if file.content_type and file.content_type not in ALLOWED_DOCUMENT_CONTENT_TYPES:
-        # Разрешаем application/octet-stream как fallback
-        if file.content_type != "application/octet-stream":
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Invalid document content type: {file.content_type}",
-            )
+
+    if file.content_type and file.content_type not in allowed_types:
+        raise HTTPException(400, f"Invalid content type: {file.content_type}")
+
+    return ext
 
 
-def get_safe_filename(original: str, ext: str) -> str:
-    """Генерирует безопасное имя файла с UUID"""
-    # Убираем пробелы и спецсимволы из оригинального имени
+async def save_file_streaming(
+    file: UploadFile, subfolder: str, max_size: int, is_image: bool,
+) -> str:
+    """
+    Сохраняет файл ЧТЕНИЕМ ПО ЧАНКАМ (не в память целиком).
+    Обрывает загрузку при превышении max_size.
+    """
+    ext = Path(file.filename).suffix.lower()
     safe_name = "".join(
-        c for c in Path(original).stem if c.isalnum() or c in ("-", "_")
-    )[:50]
-    
-    if not safe_name:
-        safe_name = "file"
-    
+        c for c in Path(file.filename).stem if c.isalnum() or c in ("-", "_")
+    )[:50] or "file"
     unique_id = uuid.uuid4().hex[:8]
-    return f"{safe_name}_{unique_id}{ext}"
+    filename = f"{safe_name}_{unique_id}{ext}"
 
-
-async def save_file(file: UploadFile, subfolder: str) -> str:
-    """Сохраняет файл и возвращает относительный URL"""
-    ext = Path(file.filename).suffix.lower()
-    filename = get_safe_filename(file.filename, ext)
-    
     upload_dir = Path(settings.UPLOAD_DIR) / subfolder
     upload_dir.mkdir(parents=True, exist_ok=True)
-    
     file_path = upload_dir / filename
-    
-    # Читаем и сохраняем
-    contents = await file.read()
-    
-    # Проверка размера
-    max_size = MAX_IMAGE_SIZE if subfolder == "images" else MAX_DOCUMENT_SIZE
-    if len(contents) > max_size:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"File too large. Maximum size: {max_size // (1024*1024)} MB",
-        )
-    
-    with open(file_path, "wb") as f:
-        f.write(contents)
-    
-    # Возвращаем относительный путь для URL
+
+    total_size = 0
+    header_read = False
+    file_header = b""
+
+    try:
+        with open(file_path, "wb") as f:
+            while True:
+                chunk = await file.read(CHUNK_SIZE)
+                if not chunk:
+                    break
+
+                # Первая порция — для magic bytes
+                if not header_read:
+                    file_header = chunk[:32]
+                    header_read = True
+                    # Проверка magic bytes для изображений
+                    if is_image:
+                        validate_image_header(file_header, ext)
+
+                total_size += len(chunk)
+                if total_size > max_size:
+                    # Превышен лимит — удаляем начатый файл
+                    f.close()
+                    file_path.unlink(missing_ok=True)
+                    raise HTTPException(
+                        400,
+                        f"File too large. Maximum: {max_size // (1024*1024)} MB",
+                    )
+
+                f.write(chunk)
+    except Exception:
+        # Очистка при ошибке
+        file_path.unlink(missing_ok=True)
+        raise
+
     return f"/uploads/{subfolder}/{filename}"
 
 
 @router.post("/image")
-@limiter.limit("10/minute")  # Защита от DoS загрузками
+@limiter.limit("10/minute")
 async def upload_image(
-    request: Request,  # Обязателен для slowapi (должен быть первым!)
+    request: Request,
     file: UploadFile = File(...),
     current_user: User = Depends(get_current_admin),
 ):
-    """Загрузить изображение (только для администраторов)"""
-    validate_image(file)
-    url = await save_file(file, "images")
+    """Загрузить изображение (только админ)"""
+    validate_extension_and_type(
+        file, ALLOWED_IMAGE_EXTENSIONS, ALLOWED_IMAGE_CONTENT_TYPES
+    )
+    url = await save_file_streaming(
+        file, "images", MAX_IMAGE_SIZE, is_image=True
+    )
+    logger.info(f"Image uploaded by {current_user.username}: {url}")
     return {"url": url, "filename": file.filename}
 
 
 @router.post("/document")
-@limiter.limit("10/minute")  # Защита от DoS загрузками
+@limiter.limit("10/minute")
 async def upload_document(
-    request: Request,  # Обязателен для slowapi (должен быть первым!)
+    request: Request,
     file: UploadFile = File(...),
     current_user: User = Depends(get_current_admin),
 ):
-    """Загрузить документ (только для администраторов)"""
-    validate_document(file)
-    url = await save_file(file, "documents")
+    """Загрузить документ (только админ)"""
+    validate_extension_and_type(
+        file, ALLOWED_DOCUMENT_EXTENSIONS, ALLOWED_DOCUMENT_CONTENT_TYPES
+    )
+    url = await save_file_streaming(
+        file, "documents", MAX_DOCUMENT_SIZE, is_image=False
+    )
+    logger.info(f"Document uploaded by {current_user.username}: {url}")
     return {"url": url, "filename": file.filename}
 
 
@@ -183,21 +179,15 @@ async def delete_image(
     current_user: User = Depends(get_current_admin),
 ):
     """Удалить изображение"""
-    # Защита от path traversal
     if "/" in filename or "\\" in filename or ".." in filename:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid filename",
-        )
-    
+        raise HTTPException(400, "Invalid filename")
+
     file_path = Path(settings.UPLOAD_DIR) / "images" / filename
     if not file_path.exists():
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Image not found",
-        )
-    
+        raise HTTPException(404, "Image not found")
+
     file_path.unlink()
+    logger.info(f"Image deleted by {current_user.username}: {filename}")
     return {"status": "deleted", "filename": filename}
 
 
@@ -207,19 +197,13 @@ async def delete_document(
     current_user: User = Depends(get_current_admin),
 ):
     """Удалить документ"""
-    # Защита от path traversal
     if "/" in filename or "\\" in filename or ".." in filename:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid filename",
-        )
-    
+        raise HTTPException(400, "Invalid filename")
+
     file_path = Path(settings.UPLOAD_DIR) / "documents" / filename
     if not file_path.exists():
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Document not found",
-        )
-    
+        raise HTTPException(404, "Document not found")
+
     file_path.unlink()
+    logger.info(f"Document deleted by {current_user.username}: {filename}")
     return {"status": "deleted", "filename": filename}
