@@ -2091,3 +2091,608 @@ h3 {
     .read-more:hover {
         text-decoration: underline;
     }
+
+/* ============================================
+   TARIFFS & CALCULATOR
+   ============================================ */
+.tariff-calculator {
+    background: linear-gradient(135deg, #e9f2ff 0%, #f0f9ff 100%);
+    border: 2px solid #0057b8;
+    border-radius: 12px;
+    padding: 2rem;
+    margin: 2rem 0;
+    box-shadow: 0 4px 20px rgba(0, 87, 184, 0.1);
+}
+
+    .tariff-calculator h2 {
+        margin-top: 0;
+        color: #0057b8;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+.calc-hint {
+    color: #4a5568;
+    margin-bottom: 1.5rem;
+}
+
+.calc-form {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+@media (max-width: 600px) {
+    .calc-form {
+        grid-template-columns: 1fr;
+    }
+}
+
+.calc-field label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 500;
+    color: #1a202c;
+}
+
+.calc-field input,
+.calc-field select {
+    width: 100%;
+    padding: 12px 14px;
+    border: 2px solid #cbd5e0;
+    border-radius: 8px;
+    font-size: 16px;
+    font-family: inherit;
+    background: white;
+    transition: border-color 0.2s;
+}
+
+    .calc-field input:focus,
+    .calc-field select:focus {
+        outline: none;
+        border-color: #0057b8;
+        box-shadow: 0 0 0 3px rgba(0, 87, 184, 0.1);
+    }
+
+.calc-result {
+    background: white;
+    border-radius: 8px;
+    padding: 1.5rem;
+    border: 1px solid #e0e0e0;
+}
+
+    .calc-result.calc-loading {
+        color: #0057b8;
+        font-style: italic;
+    }
+
+    .calc-result.calc-error {
+        color: #c53030;
+        background: #fed7d7;
+        border-color: #f56565;
+    }
+
+.calc-breakdown {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.calc-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+    .calc-row:last-child {
+        border-bottom: none;
+    }
+
+    .calc-row.calc-total {
+        margin-top: 10px;
+        padding-top: 14px;
+        border-top: 2px solid #0057b8;
+        border-bottom: none;
+        font-size: 1.2rem;
+    }
+
+        .calc-row.calc-total strong {
+            color: #0057b8;
+            font-size: 1.4rem;
+        }
+
+.calc-source {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #e2e8f0;
+    color: #4a5568;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* Tariffs grid */
+.tariffs-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin: 1.5rem 0;
+}
+
+.tariff-category h3 {
+    color: #0057b8;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #e9f2ff;
+}
+
+.tariff-card {
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 1.5rem;
+    transition: box-shadow 0.2s, transform 0.2s;
+}
+
+    .tariff-card:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        transform: translateY(-2px);
+    }
+
+.tariff-price {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    margin-bottom: 0.75rem;
+}
+
+.price-value {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: #0057b8;
+    line-height: 1;
+}
+
+.price-unit {
+    font-size: 0.95rem;
+    color: #4a5568;
+    font-weight: 500;
+}
+
+.tariff-card h4 {
+    margin: 0 0 0.5rem;
+    font-size: 1.05rem;
+    color: #1a202c;
+}
+
+.tariff-desc {
+    color: #4a5568;
+    font-size: 14px;
+    margin: 0.5rem 0;
+    line-height: 1.5;
+}
+
+.tariff-meta,
+.tariff-source {
+    margin-top: 0.75rem;
+}
+
+    .tariff-meta small,
+    .tariff-source small {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        color: #64748b;
+        font-size: 13px;
+    }
+
+/* Disclaimer */
+.tariff-disclaimer {
+    background: #fffbeb;
+    border-left: 4px solid #f59e0b;
+    padding: 1.25rem 1.5rem;
+    border-radius: 4px;
+    margin-top: 2rem;
+}
+
+    .tariff-disclaimer h3 {
+        margin-top: 0;
+        color: #92400e;
+        font-size: 1.05rem;
+    }
+
+    .tariff-disclaimer ul {
+        margin: 0.5rem 0 0;
+        padding-left: 1.25rem;
+    }
+
+    .tariff-disclaimer li {
+        margin-bottom: 0.4rem;
+        color: #78350f;
+        font-size: 14px;
+        line-height: 1.5;
+    }
+
+    .tariff-disclaimer a {
+        color: #0057b8;
+        font-weight: 500;
+    }
+
+
+/* ============================================
+   PAGE UPDATE DATE
+   ============================================ */
+.page-updated {
+    display: inline-block;
+    background: #fffbeb;
+    border-left: 3px solid #f59e0b;
+    padding: 6px 14px;
+    font-size: 13px;
+    color: #78350f;
+    margin-bottom: 1.5rem;
+    border-radius: 0 4px 4px 0;
+    font-weight: 500;
+}
+
+/* ============================================
+   PRINT STYLES (печатная версия)
+   ============================================ */
+@media print {
+    /* Скрываем элементы не нужные при печати */
+    .header,
+    .main-nav,
+    .sidebar,
+    .sidebar-backdrop,
+    .footer,
+    .cookie-banner,
+    .feedback-toggle,
+    .feedback-modal,
+    .hero-actions,
+    .back-link,
+    .read-more,
+    .btn,
+    .hamburger,
+    nav,
+    aside,
+    button:not(.print-trigger),
+    .calc-form,
+    .calc-hint,
+    .tariff-disclaimer,
+    .admin-login,
+    .admin-dashboard {
+        display: none !important;
+    }
+
+    /* Сброс стилей для печати */
+    body {
+        background: white !important;
+        color: black !important;
+        font-size: 12pt !important;
+        line-height: 1.5 !important;
+    }
+
+    /* Контейнер на всю ширину */
+    .container {
+        width: 100% !important;
+        max-width: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    .section {
+        padding: 0 !important;
+    }
+
+    /* Убираем градиенты и фоны */
+    .hero {
+        background: none !important;
+        color: black !important;
+        padding: 1rem 0 !important;
+    }
+
+        .hero h1,
+        .hero-subtitle {
+            color: black !important;
+        }
+
+    /* Типографика для печати */
+    h1, h2, h3, h4, h5, h6 {
+        color: black !important;
+        page-break-after: avoid;
+        break-after: avoid;
+    }
+
+    h1 {
+        font-size: 18pt !important;
+        border-bottom: 2px solid black;
+        padding-bottom: 6pt;
+        margin-bottom: 12pt;
+    }
+
+    h2 {
+        font-size: 14pt !important;
+    }
+
+    h3 {
+        font-size: 12pt !important;
+    }
+
+    p, li {
+        orphans: 3;
+        widows: 3;
+    }
+
+    /* Ссылки — показываем URL */
+    a {
+        color: black !important;
+        text-decoration: underline !important;
+    }
+
+        a[href^="http"]:after {
+            content: " (" attr(href) ")";
+            font-size: 9pt;
+            color: #666;
+            font-weight: normal;
+        }
+
+        a[href^="tel"]:after,
+        a[href^="mailto"]:after {
+            content: "";
+        }
+
+    /* Таблицы тарифов — оптимизированные */
+    .tariff-card {
+        border: 1px solid black !important;
+        page-break-inside: avoid;
+        break-inside: avoid;
+        margin-bottom: 10pt;
+    }
+
+    .tariff-price {
+        border-bottom: 1px solid #999;
+        padding-bottom: 4pt;
+    }
+
+    .price-value {
+        font-size: 16pt !important;
+        color: black !important;
+    }
+
+    /* Калькулятор — печатаем результат */
+    .tariff-calculator {
+        border: 1px solid black !important;
+        background: white !important;
+        page-break-inside: avoid;
+    }
+
+    .calc-result {
+        border: none !important;
+        box-shadow: none !important;
+    }
+
+    .calc-row.calc-total strong {
+        color: black !important;
+    }
+
+    /* Изображения */
+    img {
+        max-width: 100% !important;
+        page-break-inside: avoid;
+    }
+
+    /* Отступы и разрывы страниц */
+    .page-updated {
+        background: none !important;
+        border: 1px solid #999 !important;
+        border-left: 3px solid black !important;
+        padding: 4pt 8pt;
+    }
+
+    /* Заголовок документа */
+    .print-header {
+        display: block !important;
+        text-align: center;
+        margin-bottom: 20pt;
+        border-bottom: 2px solid black;
+        padding-bottom: 10pt;
+    }
+
+        .print-header h1 {
+            border: none;
+            margin-bottom: 4pt;
+        }
+
+        .print-header .print-date {
+            font-size: 10pt;
+            color: #666;
+        }
+
+    /* Футер при печати */
+    .print-footer {
+        display: block !important;
+        margin-top: 30pt;
+        padding-top: 10pt;
+        border-top: 1px solid #999;
+        font-size: 9pt;
+        color: #666;
+        text-align: center;
+    }
+
+    /* Убираем тени и эффекты */
+    * {
+        box-shadow: none !important;
+        text-shadow: none !important;
+    }
+
+    /* Принудительный перенос для больших таблиц */
+    table {
+        page-break-inside: auto;
+    }
+
+    tr {
+        page-break-inside: avoid;
+    }
+}
+
+/* Кнопка "Печать" — видна только на экране */
+.print-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    background: white;
+    border: 1px solid #cbd5e0;
+    border-radius: 6px;
+    color: #4a5568;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-bottom: 1rem;
+}
+
+    .print-trigger:hover {
+        background: #f0f4f8;
+        border-color: #0057b8;
+        color: #0057b8;
+    }
+
+/* Скрываем элементы, которые показываем только при печати */
+.print-header,
+.print-footer {
+    display: none;
+}
+
+/* ============================================
+   COMPANY DETAILS (реквизиты ANRE)
+   ============================================ */
+.company-details {
+    margin-top: 3rem;
+    padding-top: 2rem;
+    border-top: 2px solid #e9f2ff;
+}
+
+    .company-details h2 {
+        color: #0057b8;
+        margin-bottom: 1.5rem;
+    }
+
+.details-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.details-card {
+    background: #f8f9fa;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 1.5rem;
+}
+
+    .details-card h3 {
+        color: #1a202c;
+        font-size: 1rem;
+        margin: 0 0 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid #0057b8;
+    }
+
+    .details-card dl {
+        margin: 0;
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 0.5rem;
+    }
+
+    .details-card dt {
+        font-size: 12px;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 600;
+        margin-top: 0.75rem;
+    }
+
+        .details-card dt:first-of-type {
+            margin-top: 0;
+        }
+
+    .details-card dd {
+        margin: 0;
+        font-size: 14px;
+        color: #1a202c;
+        line-height: 1.5;
+    }
+
+        .details-card dd.mono {
+            font-family: "Courier New", monospace;
+            background: white;
+            padding: 4px 8px;
+            border-radius: 3px;
+            border: 1px solid #e0e0e0;
+            font-size: 13px;
+            display: inline-block;
+        }
+
+    .details-card a {
+        color: #0057b8;
+        font-weight: 500;
+        word-break: break-all;
+    }
+
+        .details-card a:hover {
+            text-decoration: underline;
+        }
+
+.details-links {
+    list-style: none;
+    padding: 0;
+    margin: 0.5rem 0 0;
+}
+
+    .details-links li {
+        margin-bottom: 0.4rem;
+        padding-left: 1rem;
+        position: relative;
+        font-size: 13px;
+    }
+
+        .details-links li:before {
+            content: "→";
+            position: absolute;
+            left: 0;
+            color: #0057b8;
+        }
+
+.anre-notice {
+    background: #fffbeb;
+    border-left: 4px solid #f59e0b;
+    padding: 1rem 1.25rem;
+    border-radius: 0 8px 8px 0;
+    margin-top: 1rem;
+}
+
+    .anre-notice p {
+        margin: 0;
+        font-size: 14px;
+        color: #78350f;
+        line-height: 1.6;
+    }
+
+    .anre-notice strong {
+        color: #92400e;
+        display: block;
+        margin-bottom: 0.25rem;
+    }
+
+@media (max-width: 600px) {
+    .details-grid {
+        grid-template-columns: 1fr;
+    }
+}

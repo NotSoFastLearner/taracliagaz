@@ -69,3 +69,34 @@ export interface MenuCategory {
     createdAt: string;
     updatedAt: string;
 }
+
+// ============ TARIFFS ============
+export interface Tariff {
+    id: number;
+    name: string;
+    category: string;
+    pricePerM3: number;
+    fixedFee: number;
+    validFrom: string;
+    validUntil: string | null;
+    isActive: boolean;
+    description: string | null;
+    languageCode: string;
+    sourceDecision: string | null;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface TariffCalculation {
+    tariffId: number;
+    tariffName: string;
+    category: string;
+    pricePerM3: number;
+    fixedFee: number;
+    cubicMeters: number;
+    gasCost: number;
+    total: number;
+    currency: string;
+    validFrom: string;
+    sourceDecision: string | null;
+}

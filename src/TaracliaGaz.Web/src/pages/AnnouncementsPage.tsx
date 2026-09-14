@@ -3,14 +3,17 @@ import { getAnnouncements } from "../api/contentApi";
 import type { Announcement } from "../types/content";
 import SEO from "../components/SEO";
 import { IconMegaphone, IconCalendar, IconPin } from "../components/icons";
-import { sanitizeHtml } from "../utils/sanitize"; // ✅
+import { sanitizeHtml } from "../utils/sanitize";
 
 export default function AnnouncementsPage() {
     const [items, setItems] = useState<Announcement[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        getAnnouncements().then(setItems).catch(console.error).finally(() => setLoading(false));
+        getAnnouncements()
+            .then(setItems)
+            .catch(console.error)
+            .finally(() => setLoading(false));
     }, []);
 
     const formatDate = (iso: string) => {
@@ -43,7 +46,7 @@ export default function AnnouncementsPage() {
                                     </div>
                                     <div
                                         className="announcement-body content-body"
-                                        dangerouslySetInnerHTML={{ __html: sanitizeHtml(a.bodyHtml) }} // ✅
+                                        dangerouslySetInnerHTML={{ __html: sanitizeHtml(a.bodyHtml) }}
                                     />
                                 </li>
                             ))}

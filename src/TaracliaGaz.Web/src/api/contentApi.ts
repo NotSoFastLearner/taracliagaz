@@ -18,8 +18,6 @@ export const getPage = (slug: string, lang = DEFAULT_LANG) =>
 export const getNews = (lang = DEFAULT_LANG) =>
     http.get<NewsPostSummary[]>(`/public/news?lang=${lang}`);
 
-export const getNewsById = (id: string | number, lang = DEFAULT_LANG) =>
-    http.get<NewsPostDetail>(`/public/news/${id}?lang=${lang}`);
 
 export const getAnnouncements = (lang = DEFAULT_LANG) =>
     http.get<Announcement[]>(`/public/announcements?lang=${lang}`);
@@ -51,3 +49,26 @@ export interface ContactFormData {
 export const submitContact = async (data: ContactFormData): Promise<{ success: boolean; message: string }> => {
     return http.post<{ success: boolean; message: string }>("/public/contact", data);
 };
+
+// ============ TARIFFS ============
+export const getActiveTariffs = (lang = "ru") =>
+    http.get<Tariff[]>(`/public/tariffs?lang=${lang}`);
+
+export const getTariffsHistory = (lang = "ru", category?: string) => {
+    let url = `/public/tariffs/history?lang=${lang}`;
+    if (category) url += `&category=${category}`;
+    return http.get<Tariff[]>(url);
+};
+
+export const calculateTariff = (cubicMeters: number, category = "residential") =>
+    http.post<TariffCalculation>("/public/tariffs/calculate", {
+        cubicMeters,
+        category,
+    });
+
+// ============ DETAIL ENDPOINTS ============
+export const getNewsById = (id: number) =>
+    http.get<NewsPostDetail>(`/public/news/${id}`);
+
+export const getTenderById = (id: number) =>
+    http.get<Tender>(`/public/tenders/${id}`);

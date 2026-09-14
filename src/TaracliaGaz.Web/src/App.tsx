@@ -15,7 +15,7 @@ import CabinetComingSoonPage from "./pages/CabinetComingSoonPage";
 import AdminLoginPage from "./pages/admin/AdminLoginPage";
 import AdminDashboardPage from "./pages/admin/AdminDashboardPage";
 import ProtectedRoute from "./components/ProtectedRoute";
-
+import TariffsPage from "./pages/TariffsPage";
 function App() {
     return (
         <Routes>
@@ -32,6 +32,9 @@ function App() {
                 <Route path="/transparency/:slug?" element={<TransparencyPage />} />
                 <Route path="/contacts" element={<ContactsPage />} />
                 <Route path="/cabinet" element={<CabinetComingSoonPage />} />
+                <Route path="/tariffs" element={<TariffsPage />} />
+
+
 
                 {/* Админка */}
                 <Route path="/admin/login" element={<AdminLoginPage />} />

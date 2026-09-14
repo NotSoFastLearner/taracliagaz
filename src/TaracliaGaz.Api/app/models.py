@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint
+from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 class Base(DeclarativeBase):
@@ -119,3 +119,29 @@ class ContactMessage(Base, TimestampMixin):
     user_agent: Mapped[str | None] = mapped_column(String(500), nullable=True)
     is_read: Mapped[bool] = mapped_column(Boolean, default=False)
     is_spam: Mapped[bool] = mapped_column(Boolean, default=False)  #honeypot триггер
+
+
+
+class Tariff(Base, TimestampMixin):
+    """Тарифы на газ (публикуются по требованию ANRE)"""
+    __tablename__ = "tariffs"
+    __table_args__ = (
+        UniqueConstraint(
+            "category", "valid_from", "language_code",
+            name="uq_tariffs_category_date_lang",
+        ),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    name: Mapped[str] = mapped_column(String(200))  # "Бытовые потребители"
+    category: Mapped[str] = mapped_column(String(50), index=True)  # residential/commercial/industrial
+    price_per_m3: Mapped[float] = mapped_column(Float)  # лей за м³
+    fixed_fee: Mapped[float] = mapped_column(Float, default=0.0)  # абонплата (может быть 0)
+    valid_from: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
+    valid_until: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)  # null = бессрочно
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    language_code: Mapped[str] = mapped_column(String(5), default="ru")
+    source_decision: Mapped[str | None] = mapped_column(String(200), nullable=True)  # "Решение ANRE №123 от 01.01.2024"
+
+

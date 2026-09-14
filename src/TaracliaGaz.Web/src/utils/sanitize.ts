@@ -14,6 +14,7 @@ export function sanitizeHtml(dirty: string): string {
             "ul", "ol", "li",
             "a", "blockquote", "code", "pre",
             "img", "hr", "div", "span",
+            "table", "thead", "tbody", "tr", "th", "td",
         ],
         ALLOWED_ATTR: [
             "href", "title", "target", "rel",

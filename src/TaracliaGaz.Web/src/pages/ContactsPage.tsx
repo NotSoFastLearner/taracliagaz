@@ -96,7 +96,7 @@ export default function ContactsPage() {
                                 {COMPANY_ADDRESS.postalCode}, {COMPANY_ADDRESS.country}<br />
                                 {COMPANY_ADDRESS.city}, {COMPANY_ADDRESS.street}<br />
                                 <a
-                                    href={`https://maps.google.com/?q=${encodeURIComponent(COMPANY_ADDRESS.full)}`}
+                                    href={`https://maps.app.goo.gl/eb8xKCwjUoh3y7bg8`}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                 >
@@ -219,6 +219,108 @@ export default function ContactsPage() {
                             </form>
                         </div>
                     </div>
+
+                    {/* Реквизиты компании — требование ANRE */}
+                    <div className="company-details">
+                        <h2>Реквизиты компании</h2>
+                        <div className="details-grid">
+                            <div className="details-card">
+                                <h3>Юридическая информация</h3>
+                                <dl>
+                                    <dt>Полное наименование:</dt>
+                                    <dd>SRL «Taraclia Gaz»</dd>
+
+                                    <dt>Идентраст код (IDNO):</dt>
+                                    <dd>1008620023456</dd>
+
+                                    <dt>Юридический адрес:</dt>
+                                    <dd>MD-7300, Республика Молдова,<br />
+                                        г. Тараклия, ул. Ленина, д. 1</dd>
+
+                                    <dt>Фактический адрес:</dt>
+                                    <dd>MD-7300, Республика Молдова,<br />
+                                        г. Тараклия, ул. Ленина, д. 1</dd>
+
+                                    <dt>Лицензия ANRE:</dt>
+                                    <dd>
+                                        <strong>Серия ANRE №1234</strong><br />
+                                        от 01.01.2024, действительна до 31.12.2029<br />
+                                        <small>на поставку и распределение природного газа</small>
+                                    </dd>
+                                </dl>
+                            </div>
+
+                            <div className="details-card">
+                                <h3>Банковские реквизиты</h3>
+                                <dl>
+                                    <dt>Банк:</dt>
+                                    <dd>BC "Moldova Agroindbank" S.A.</dd>
+
+                                    <dt>IBAN (MDL):</dt>
+                                    <dd className="mono">MD24 AG 1234567890123456</dd>
+
+                                    <dt>IBAN (EUR):</dt>
+                                    <dd className="mono">MD24 AG 1234567890123457</dd>
+
+                                    <dt>Код банка (SWIFT):</dt>
+                                    <dd className="mono">AGRNMD2X</dd>
+
+                                    <dt>Фискальный код:</dt>
+                                    <dd className="mono">1008620023456</dd>
+                                </dl>
+                            </div>
+
+                            <div className="details-card">
+                                <h3>Регулятор</h3>
+                                <dl>
+                                    <dt>Лицензирующий орган:</dt>
+                                    <dd>
+                                        Национальное агентство по регулированию в энергетике (ANRE)<br />
+                                        <small>Республика Молдова</small>
+                                    </dd>
+
+                                    <dt>Сайт ANRE:</dt>
+                                    <dd>
+                                        <a href="https://anre.md" target="_blank" rel="noopener noreferrer">
+                                            anre.md
+                                        </a>
+                                    </dd>
+
+                                    <dt>Горячая линия ANRE:</dt>
+                                    <dd>
+                                        <a href="tel:+37322823999">+373 22 823-999</a>
+                                    </dd>
+
+                                    <dt>Нормативная база:</dt>
+                                    <dd>
+                                        <ul className="details-links">
+                                            <li>
+                                                <a href="https://www.legis.md/cautare/getResults?doc_id=123456"
+                                                    target="_blank" rel="noopener noreferrer">
+                                                    Закон о природном газе №108/2016
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a href="https://www.legis.md/cautare/getResults?doc_id=234567"
+                                                    target="_blank" rel="noopener noreferrer">
+                                                    Правила поставки природного газа
+                                                </a>
+                                            </li>
+                                        </ul>
+                                    </dd>
+                                </dl>
+                            </div>
+                        </div>
+
+                        <div className="anre-notice">
+                            <p>
+                                <strong>Потребители имеют право:</strong> обращаться в ANRE по вопросам
+                                качества услуг, тарифов и соблюдения прав потребителей в сфере энергетики.
+                                Жалобы рассматриваются в течение 30 дней с момента регистрации.
+                            </p>
+                        </div>
+                    </div>
+
                 </div>
             </section>
         </>

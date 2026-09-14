@@ -168,3 +168,41 @@ export const IconCookie = (props: IconProps) => (
         <path d="M7 14v.01" />
     </svg>
 );
+
+
+export function IconCalculator({ width = 20, height = 20 }: IconProps) {
+    return (
+        <svg width={width} height={height} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="4" y="2" width="16" height="20" rx="2" />
+            <line x1="8" y1="6" x2="16" y2="6" />
+            <line x1="16" y1="14" x2="16" y2="18" />
+            <line x1="8" y1="11" x2="8" y2="11.01" />
+            <line x1="12" y1="11" x2="12" y2="11.01" />
+            <line x1="16" y1="11" x2="16" y2="11.01" />
+            <line x1="8" y1="15" x2="8" y2="15.01" />
+            <line x1="12" y1="15" x2="12" y2="15.01" />
+            <line x1="8" y1="19" x2="8" y2="19.01" />
+            <line x1="12" y1="19" x2="12" y2="19.01" />
+        </svg>
+    );
+}
+
+export function IconInfo({ width = 16, height = 16 }: IconProps) {
+    return (
+        <svg width={width} height={height} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" y1="16" x2="12" y2="12" />
+            <line x1="12" y1="8" x2="12.01" y2="8" />
+        </svg>
+    );
+}
+
+export function IconPrinter({ width = 16, height = 16 }: IconProps) {
+    return (
+        <svg width={width} height={height} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="6 9 6 2 18 2 18 9" />
+            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+            <rect x="6" y="14" width="12" height="8" />
+        </svg>
+    );
+}

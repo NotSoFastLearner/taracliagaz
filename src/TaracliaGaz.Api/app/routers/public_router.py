@@ -1,7 +1,8 @@
 """
 Публичные эндпоинты API — только чтение + форма контактов.
-Все GET-эндпоинты отдают ТОЛЬКО опубликованный контент (is_published=True).
+Все GET отдают ТОЛЬКО опубликованный контент (is_published=True).
 """
+import logging
 from fastapi import APIRouter, Depends, HTTPException, Query, status, Request
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -16,7 +17,8 @@ from ..schemas import (
     DocumentRead, GalleryImageRead, MenuCategoryRead,
     ContactMessageCreate,
 )
-from ..security.rate_limit import limiter
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/public", tags=["public"])
 
@@ -131,9 +133,8 @@ def get_menu(
 
 
 @router.post("/contact", status_code=status.HTTP_201_CREATED)
-@limiter.limit("3/minute")  # Защита от спама формы
 def submit_contact(
-    request: Request,  # Обязателен для slowapi
+    request: Request,
     item: ContactMessageCreate,
     db: Session = Depends(get_db)
 ):
@@ -141,28 +142,20 @@ def submit_contact(
     Приём сообщения с формы контактов.
     Honeypot-защита: если поле website_url заполнено — это бот.
     """
-    import logging
-    logger = logging.getLogger(__name__)
-
-    # Проверка honeypot
     is_spam = bool(item.website_url and item.website_url.strip())
 
     if is_spam:
         logger.warning(f"Honeypot triggered from {request.client.host if request.client else 'unknown'}")
 
-    # Базовая валидация длины (Pydantic уже проверяет типы)
     if len(item.name.strip()) < 2:
         raise HTTPException(422, "Имя слишком короткое")
     if len(item.message.strip()) < 10:
         raise HTTPException(422, "Сообщение слишком короткое (мин. 10 символов)")
     if len(item.message) > 5000:
         raise HTTPException(422, "Сообщение слишком длинное (макс. 5000 символов)")
-
-    # Email валидация (базовая)
     if "@" not in item.email or "." not in item.email:
         raise HTTPException(422, "Некорректный email")
 
-    # Сохраняем в БД
     contact = ContactMessage(
         name=item.name.strip(),
         email=item.email.strip().lower(),

@@ -2,10 +2,10 @@ import { useEffect } from "react";
 import { useCookieConsent } from "../hooks/useCookieConsent";
 
 export default function Analytics() {
-    const { hasAnalyticsConsent } = useCookieConsent(); // ✅ Получаем согласие
+    const { hasAnalyticsConsent } = useCookieConsent();
 
     useEffect(() => {
-        // Не загружаем без согласия пользователя
+        // Не загружаем аналитику без согласия пользователя
         if (!hasAnalyticsConsent) {
             return;
         }
@@ -21,11 +21,10 @@ export default function Analytics() {
         script.setAttribute("data-domain", window.location.hostname);
         document.head.appendChild(script);
 
-        // Cleanup при размонтировании или изменении согласия
         return () => {
             script.remove();
         };
-    }, [hasAnalyticsConsent]); // ✅ Реагируем на изменение согласия
+    }, [hasAnalyticsConsent]);
 
     return null;
 }

@@ -17,7 +17,7 @@ from .routers import upload_router, seo_router
 from .middleware.security import SecurityHeadersMiddleware
 from .security.rate_limit import limiter
 from .security.xss_protection import XSSProtectionMiddleware
-
+from .routers import tariff_router
 # Игнорим предупреждения Pydantic
 warnings.filterwarnings("ignore", message=".*UnsupportedFieldAttributeWarning.*")
 
@@ -98,7 +98,7 @@ app.include_router(admin_router.router)
 app.include_router(public_router.router)
 app.include_router(upload_router.router)
 app.include_router(seo_router.router)
-
+app.include_router(tariff_router.router)
 
 @app.get("/")
 async def root():

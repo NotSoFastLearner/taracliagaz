@@ -5,7 +5,7 @@ import type { NewsPostSummary, Announcement, GalleryImage } from "../types/conte
 import SEO from "../components/SEO";
 import { resolveUploadUrl } from "../utils/urls";
 import { IconMegaphone, IconNews, IconGallery, IconCalendar } from "../components/icons";
-import { sanitizeHtml } from "../utils/sanitize"; // ✅
+import { sanitizeHtml } from "../utils/sanitize";
 
 export default function HomePage() {
     const [news, setNews] = useState<NewsPostSummary[]>([]);
@@ -33,7 +33,6 @@ export default function HomePage() {
                 description="SRL «Taraclia Gaz» — поставка природного газа в Тараклийском районе Молдовы. Актуальные тарифы, новости, объявления, тендеры. Аварийная служба 24/7: 904"
                 path="/"
             />
-
             <section className="hero">
                 <div className="container">
                     <h1>Тараклия-ГАЗ</h1>
@@ -64,7 +63,7 @@ export default function HomePage() {
                                     </div>
                                     <div
                                         className="announcement-body content-body"
-                                        dangerouslySetInnerHTML={{ __html: sanitizeHtml(a.bodyHtml) }} // ✅
+                                        dangerouslySetInnerHTML={{ __html: sanitizeHtml(a.bodyHtml) }}
                                     />
                                 </li>
                             ))}

@@ -10,7 +10,7 @@ interface TokenPayload {
     exp: number;
 }
 
-const AUTH_KEY = "taracliagaz_auth"; // Единая константа (совпадает с AdminLoginPage)
+const AUTH_KEY = "taracliagaz_auth"; // Совпадает с AdminLoginPage
 
 function decodeJwt(token: string): TokenPayload | null {
     try {

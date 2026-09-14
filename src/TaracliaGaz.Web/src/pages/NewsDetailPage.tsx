@@ -1,27 +1,25 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { http } from "../api/http"; // ✅
-import type { NewsPostSummary } from "../types/content";
+import { getNewsById } from "../api/contentApi";
+import type { NewsPostDetail } from "../types/content";
 import SEO from "../components/SEO";
 import { IconCalendar } from "../components/icons";
-import { sanitizeHtml } from "../utils/sanitize"; // ✅
-
-interface NewsDetail extends NewsPostSummary {
-    bodyHtml: string;
-}
+import { sanitizeHtml } from "../utils/sanitize";
 
 export default function NewsDetailPage() {
     const { id } = useParams<{ id: string }>();
-    const [post, setPost] = useState<NewsDetail | null>(null);
+    const [post, setPost] = useState<NewsPostDetail | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         if (!id) return;
-
-        // ✅ Используем эндпоинт конкретной новости вместо загрузки всех
-        http.get<NewsDetail>(`/public/news/${id}`)
-            .then(setPost)
+        setLoading(true);
+        setError(null);
+        getNewsById(parseInt(id))
+            .then((item) => {
+                setPost(item);
+            })
             .catch(() => setError("Новость не найдена"))
             .finally(() => setLoading(false));
     }, [id]);
@@ -50,7 +48,7 @@ export default function NewsDetailPage() {
                         </div>
                         <div
                             className="content-body"
-                            dangerouslySetInnerHTML={{ __html: sanitizeHtml(post.bodyHtml) }} // ✅
+                            dangerouslySetInnerHTML={{ __html: sanitizeHtml(post.bodyHtml) }}
                         />
                     </article>
                 </div>

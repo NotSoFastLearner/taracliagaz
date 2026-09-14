@@ -13,7 +13,7 @@ export default function SEO({
     title,
     description,
     path = "",
-    image = "/og-image.png",  // ✅ Было "/og-image.jpg"
+    image = "/og-image.png", // Было /og-image.jpg (404)
     noindex = false,
 }: SEOProps) {
     const fullTitle = title === "Главная"
@@ -29,10 +29,8 @@ export default function SEO({
             <meta name="description" content={description} />
             {noindex && <meta name="robots" content="noindex,nofollow" />}
 
-            {/* Canonical */}
             <link rel="canonical" href={url} />
 
-            {/* Open Graph */}
             <meta property="og:type" content="website" />
             <meta property="og:site_name" content="Тараклия-ГАЗ" />
             <meta property="og:title" content={fullTitle} />
@@ -43,7 +41,6 @@ export default function SEO({
             <meta property="og:image:height" content="630" />
             <meta property="og:locale" content="ru_RU" />
 
-            {/* Twitter Card */}
             <meta name="twitter:card" content="summary_large_image" />
             <meta name="twitter:title" content={fullTitle} />
             <meta name="twitter:description" content={description} />
