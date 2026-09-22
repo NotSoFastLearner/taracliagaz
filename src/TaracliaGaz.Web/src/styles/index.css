@@ -390,29 +390,76 @@ h3 {
     }
 
 /* Мобильная версия */
+/* Мобильная версия */
 @media (max-width: 1024px) {
     .header-inner {
         position: relative;
-        justify-content: space-between;
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        gap: clamp(4px, 2vw, 12px);
+        padding: 0.5rem clamp(6px, 2vw, 16px);
+        width: 100%;
+        min-width: 0;
     }
 
+    /* Гамбургер слева */
     .menu-toggle {
         display: flex;
         order: 1;
-        margin-left: 0;
-        margin-right: 1rem;
+        flex: 0 0 auto;
+        margin: 0;
+        padding: 0.4rem;
     }
 
+        .menu-toggle span {
+            width: clamp(20px, 6vw, 24px);
+            height: clamp(2px, 0.8vw, 3px);
+        }
+
+    /* Логотип */
     .logo {
         order: 2;
+        flex: 1 1 auto;
+        min-width: 0;
+        overflow: hidden;
     }
 
+    .logo-main {
+        font-size: clamp(0.95rem, 4.5vw, 1.5rem);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .logo-sub {
+        font-size: clamp(0.55rem, 2.3vw, 0.85rem);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    /* Аварийная служба */
     .emergency-btn {
         order: 3;
-        margin-left: auto;
-        margin-right: 0;
+        flex: 0 1 auto;
+        min-width: 0;
+        margin: 0;
+        padding: clamp(3px, 1.2vw, 8px) clamp(5px, 2vw, 16px);
+        border-radius: 6px;
     }
 
+    .emergency-label {
+        font-size: clamp(0.5rem, 2vw, 0.75rem);
+        white-space: nowrap;
+    }
+
+    .emergency-number {
+        font-size: clamp(1rem, 5vw, 1.5rem);
+        line-height: 1;
+    }
+
+    /* Мобильное меню */
     .main-nav {
         position: fixed;
         top: 70px;
