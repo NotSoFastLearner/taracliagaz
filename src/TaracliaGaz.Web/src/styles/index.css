@@ -7,6 +7,18 @@
     box-sizing: border-box;
 }
 
+html {
+    /* Защита от горизонтального переполнения.
+       hidden — фолбэк, clip — не ломает position: sticky шапки */
+    overflow-x: hidden;
+}
+
+@supports (overflow-x: clip) {
+    html {
+        overflow-x: clip;
+    }
+}
+
 html, body {
     height: 100%;
     margin: 0;
@@ -14,6 +26,7 @@ html, body {
 }
 
 body {
+    width: 100%;
     font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     line-height: 1.5;
     color: #222;
@@ -22,6 +35,14 @@ body {
 
 #root {
     min-height: 100vh;
+    min-height: 100dvh;
+    width: 100%;
+}
+
+@supports (min-height: 100dvh) {
+    #root {
+        min-height: 100dvh;
+    }
 }
 
 a {
@@ -74,7 +95,7 @@ img {
    LAYOUT (Sticky Footer)
    ============================================ */
 .container {
-    width: min(1200px, 100% - 2rem);
+    width: min(1200px, calc(100% - 2rem));
     margin-inline: auto;
 }
 
@@ -82,24 +103,34 @@ img {
     display: flex;
     flex-direction: column;
     min-height: 100vh;
+    min-height: 100dvh;
+    width: 100%;
+    /* На случай переполнения — сайт не шире вьюпорта */
+    max-width: 100vw;
+    overflow-x: clip;
 }
 
 .site-main {
     flex: 1 0 auto;
     display: flex;
     flex-direction: column;
+    min-width: 0; /* защита от flex-blowout */
+    width: 100%;
 }
 
     .site-main > .section {
         flex: 1 0 auto;
+        min-width: 0;
     }
 
 .section {
     padding-block: 2.5rem;
+    min-width: 0;
 }
 
 .footer {
     flex-shrink: 0;
+    width: 100%; /* футер всегда во всю ширину */
 }
 
 /* ============================================
@@ -133,7 +164,21 @@ h3 {
 .content-body {
     max-width: 75ch;
     line-height: 1.7;
+    /* HTML из админки: длинные ссылки/слова переносятся, а не рвут вёрстку */
+    overflow-wrap: break-word;
+    word-break: break-word;
 }
+
+    .content-body table {
+        max-width: 100%;
+        display: block;
+        overflow-x: auto;
+    }
+
+    .content-body img {
+        max-width: 100%;
+        height: auto;
+    }
 
 .hero h1 {
     color: white;
@@ -153,6 +198,7 @@ h3 {
     position: sticky;
     top: 0;
     z-index: 1000;
+    width: 100%;
 }
 
 .header-inner {
@@ -218,6 +264,7 @@ h3 {
 /* Меню */
 .main-nav {
     flex: 1;
+    min-width: 0;
 }
 
 .nav-list {
@@ -274,6 +321,7 @@ h3 {
     left: 0;
     background: #fff;
     min-width: 280px;
+    max-width: calc(100vw - 1rem);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     border-radius: 4px;
     list-style: none;
@@ -299,6 +347,7 @@ h3 {
     text-decoration: none;
     font-size: 0.9rem;
     transition: background 0.2s, color 0.2s;
+    overflow-wrap: break-word;
 }
 
     .dropdown-link:hover,
@@ -316,6 +365,7 @@ h3 {
     border: none;
     cursor: pointer;
     padding: 0.5rem;
+    flex-shrink: 0;
 }
 
     .menu-toggle span {
@@ -370,6 +420,7 @@ h3 {
     .nav-link {
         padding: 0.75rem 1rem;
         font-size: 1rem;
+        text-align: left;
     }
 
     .dropdown-menu {
@@ -381,6 +432,7 @@ h3 {
         display: none;
         padding-left: 1rem;
         background: #f5f5f5;
+        max-width: 100%;
     }
 
     .nav-item.open .dropdown-menu {
@@ -404,6 +456,7 @@ h3 {
     color: white;
     padding-block: 4rem;
     text-align: center;
+    width: 100%; /* hero всегда во всю ширину */
 }
 
     .hero h1 {
@@ -479,6 +532,7 @@ h3 {
     border: 1px solid #e0e0e0;
     border-radius: 8px;
     padding: 1.25rem;
+    min-width: 0;
 }
 
     .card a {
@@ -513,6 +567,7 @@ h3 {
     border-radius: 8px;
     padding: 1.25rem;
     transition: box-shadow 0.2s;
+    min-width: 0;
 }
 
     .news-card:hover {
@@ -547,6 +602,8 @@ h3 {
     border-radius: 8px;
     padding: 1.25rem;
     margin-bottom: 1rem;
+    min-width: 0;
+    overflow-wrap: break-word;
 }
 
     .announcements-list li.pinned {
@@ -621,6 +678,7 @@ h3 {
     padding: 2rem;
     border-radius: 8px;
     border: 1px solid #e0e0e0;
+    min-width: 0;
 }
 
     .news-detail h1,
@@ -650,6 +708,7 @@ h3 {
 .content-body a {
     color: #0057b8;
     text-decoration: underline;
+    overflow-wrap: break-word;
 }
 
 .badge {
@@ -687,6 +746,7 @@ h3 {
     border: 1px solid #e0e0e0;
     cursor: pointer;
     transition: transform 0.2s, box-shadow 0.2s;
+    min-width: 0;
 }
 
     .gallery-item:hover {
@@ -785,14 +845,33 @@ h3 {
 .document-list {
     list-style: none;
     padding: 0;
+    margin: 0;
 }
 
     .document-list li {
         display: flex;
         justify-content: space-between;
+        align-items: center;
         gap: 1rem;
         padding: 0.75rem 0;
         border-bottom: 1px solid #e0e0e0;
+    }
+
+        .document-list li:last-child {
+            border-bottom: none;
+        }
+
+    .document-list strong {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        color: #1a202c;
+    }
+
+    .document-list small {
+        color: #718096;
+        margin-top: 4px;
+        display: inline-block;
     }
 
 /* ============================================
@@ -810,6 +889,7 @@ h3 {
     padding: 1.5rem;
     border-radius: 8px;
     border: 1px solid #e0e0e0;
+    min-width: 0;
 }
 
     .contact-info h2 {
@@ -840,6 +920,7 @@ h3 {
     padding: 1.5rem;
     border-radius: 8px;
     border: 1px solid #e0e0e0;
+    min-width: 0;
 }
 
     .contact-form h2 {
@@ -870,6 +951,7 @@ h3 {
     .form-field input,
     .form-field textarea {
         width: 100%;
+        max-width: 100%;
         padding: 10px 12px;
         border: 1px solid #cbd5e0;
         border-radius: 6px;
@@ -975,6 +1057,7 @@ h3 {
     padding: 15px;
     background: rgba(0, 0, 0, 0.5);
     animation: slideUp 0.3s ease-out;
+    max-width: 100vw;
 }
 
 @keyframes slideUp {
@@ -991,6 +1074,7 @@ h3 {
 
 .cookie-container {
     max-width: 1200px;
+    width: calc(100% - 2rem);
     margin: 0 auto;
     background: white;
     border-radius: 12px;
@@ -1002,31 +1086,36 @@ h3 {
     gap: 20px;
 }
 
-.cookie-content h3 {
-    margin: 0 0 8px 0;
-    font-size: 18px;
-    color: #1a202c;
-    display: flex;
-    align-items: center;
-    gap: 8px;
+.cookie-content {
+    min-width: 0;
 }
 
-.cookie-content p {
-    margin: 0;
-    font-size: 14px;
-    color: #4a5568;
-    line-height: 1.5;
-}
+    .cookie-content h3 {
+        margin: 0 0 8px 0;
+        font-size: 18px;
+        color: #1a202c;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
 
-.cookie-content a {
-    color: #0057b8;
-    text-decoration: underline;
-}
+    .cookie-content p {
+        margin: 0;
+        font-size: 14px;
+        color: #4a5568;
+        line-height: 1.5;
+    }
+
+    .cookie-content a {
+        color: #0057b8;
+        text-decoration: underline;
+    }
 
 .cookie-actions {
     display: flex;
     gap: 8px;
     flex-wrap: nowrap;
+    flex-shrink: 0;
 }
 
 .btn-cookie {
@@ -1057,32 +1146,6 @@ h3 {
     .btn-accept:hover {
         background: #004494;
     }
-
-@media (max-width: 768px) {
-    .cookie-container {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 12px;
-        padding: 16px;
-    }
-
-    .cookie-actions {
-        flex-direction: column;
-        width: 100%;
-    }
-
-    .btn-cookie {
-        width: 100%;
-    }
-
-    .transparency-layout {
-        grid-template-columns: 1fr !important;
-    }
-
-    .transparency-menu {
-        margin-bottom: 1.5rem;
-    }
-}
 
 /* ============================================
    FEEDBACK BUTTON
@@ -1121,8 +1184,7 @@ h3 {
     bottom: 90px;
     left: 20px;
     z-index: 9996;
-    width: 380px;
-    max-width: calc(100vw - 40px);
+    width: min(380px, calc(100vw - 40px));
     max-height: calc(100vh - 120px);
     background: white;
     border-radius: 12px;
@@ -1234,6 +1296,7 @@ h3 {
     padding: 2rem 0 1.5rem !important;
     font-size: 0.9rem !important;
     margin-top: auto !important;
+    width: 100%;
 }
 
     .footer * {
@@ -1244,6 +1307,7 @@ h3 {
     display: flex !important;
     flex-direction: column !important;
     gap: 20px !important;
+    min-width: 0;
 }
 
 .footer-main {
@@ -1451,6 +1515,7 @@ h3 {
     .admin-form textarea,
     .admin-form select {
         width: 100%;
+        max-width: 100%;
         padding: 10px;
         border: 1px solid #ddd;
         border-radius: 4px;
@@ -1648,6 +1713,7 @@ h3 {
     border: 1px solid #dee2e6;
     border-radius: 4px;
     margin-bottom: 8px;
+    gap: 10px;
 }
 
 .menu-item-info {
@@ -1655,6 +1721,7 @@ h3 {
     align-items: center;
     gap: 12px;
     flex-wrap: wrap;
+    min-width: 0;
 }
 
 .menu-title {
@@ -1678,6 +1745,7 @@ h3 {
 .menu-actions {
     display: flex;
     gap: 5px;
+    flex-shrink: 0;
 }
 
     .menu-actions button {
@@ -1706,6 +1774,7 @@ h3 {
     border: 1px solid #ddd;
     border-radius: 4px;
     margin-top: 8px;
+    max-width: 100%;
 }
 
 .file-upload .loading {
@@ -1758,37 +1827,6 @@ h3 {
     text-align: center;
     padding: 2rem;
 }
-
-.document-list {
-    list-style: none;
-    padding: 0;
-}
-
-    .document-list li {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 1rem;
-        padding: 0.75rem 0;
-        border-bottom: 1px solid #e0e0e0;
-    }
-
-        .document-list li:last-child {
-            border-bottom: none;
-        }
-
-    .document-list strong {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        color: #1a202c;
-    }
-
-    .document-list small {
-        color: #718096;
-        margin-top: 4px;
-        display: inline-block;
-    }
 
 .btn-sm {
     padding: 6px 12px;
@@ -1854,9 +1892,24 @@ h3 {
         grid-template-columns: 1fr;
     }
 
+    .transparency-layout {
+        grid-template-columns: 1fr !important;
+    }
+
+    .transparency-menu {
+        margin-bottom: 1.5rem;
+    }
+
+    /* Cookie-баннер на мобильных — ЕДИНСТВЕННЫЙ блок,
+       дублирующийся версия удалена */
+    .cookie-banner {
+        padding: 10px;
+    }
+
     .cookie-container {
-        grid-template-columns: 1fr;
+        width: 100%;
         flex-direction: column;
+        align-items: stretch;
         gap: 12px;
         padding: 16px;
     }
@@ -1875,6 +1928,7 @@ h3 {
         right: 10px;
         bottom: 80px;
         width: auto;
+        max-width: none;
     }
 
     .feedback-toggle {
@@ -1962,6 +2016,7 @@ h3 {
     padding: 2rem;
     margin: 2rem 0;
     box-shadow: 0 4px 20px rgba(0, 87, 184, 0.1);
+    min-width: 0;
 }
 
     .tariff-calculator h2 {
@@ -2000,6 +2055,7 @@ h3 {
 .calc-field input,
 .calc-field select {
     width: 100%;
+    max-width: 100%;
     padding: 12px 14px;
     border: 2px solid #cbd5e0;
     border-radius: 8px;
@@ -2021,6 +2077,7 @@ h3 {
     border-radius: 8px;
     padding: 1.5rem;
     border: 1px solid #e0e0e0;
+    min-width: 0;
 }
 
     .calc-result.calc-loading {
@@ -2046,6 +2103,7 @@ h3 {
     align-items: center;
     padding: 8px 0;
     border-bottom: 1px solid #e2e8f0;
+    gap: 10px;
 }
 
     .calc-row:last-child {
@@ -2074,6 +2132,7 @@ h3 {
     display: flex;
     align-items: center;
     gap: 6px;
+    flex-wrap: wrap;
 }
 
 /* Tariffs grid */
@@ -2097,6 +2156,7 @@ h3 {
     border-radius: 8px;
     padding: 1.5rem;
     transition: box-shadow 0.2s, transform 0.2s;
+    min-width: 0;
 }
 
     .tariff-card:hover {
@@ -2436,6 +2496,7 @@ h3 {
     border: 1px solid #e0e0e0;
     border-radius: 8px;
     padding: 1.5rem;
+    min-width: 0;
 }
 
     .details-card h3 {
