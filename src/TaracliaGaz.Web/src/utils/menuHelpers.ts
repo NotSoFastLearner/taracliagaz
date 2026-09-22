@@ -1,5 +1,5 @@
 import type { MenuCategory } from "../types/content";
-import type { NavItem } from "../components/Header";
+import type { MenuItem } from "../components/Header";
 
 /**
  * Внутренний тип для построения дерева меню.
@@ -21,14 +21,9 @@ const MAX_DEPTH = 3;
 
 /**
  * Преобразует плоский список MenuCategory из БД
- * в дерево NavItem для Header.
- * 
- * Защита:
- * - Проверка циклов через visited Set
- * - Ограничение максимальной глубины
- * - Игнорирование висячих ссылок (parent_id на несуществующий узел)
+ * в дерево MenuItem для Header.
  */
-export function buildMenuTree(items: MenuCategory[]): NavItem[] {
+export function buildMenuTree(items: MenuCategory[]): MenuItem[] {
     if (!items || items.length === 0) {
         return [];
     }
@@ -47,26 +42,23 @@ export function buildMenuTree(items: MenuCategory[]): NavItem[] {
         });
     });
 
-    // 2. Защита от циклов — отслеживаем уже обработанные узлы
+    // 2. Защита от циклов
     const processed = new Set<number>();
-    const MAX_NODES = items.length * 2; // Защита от бесконечного цикла
+    const MAX_NODES = items.length * 2;
 
     // 3. Строим дерево
     items.forEach((item) => {
         const node = nodeMap.get(item.id);
         if (!node) return;
 
-        // Защита от повторной обработки
         if (processed.has(item.id)) {
             console.warn(`[menuHelpers] Cycle detected at node ${item.id}, skipping`);
             return;
         }
-
         if (processed.size > MAX_NODES) {
             console.error("[menuHelpers] Max nodes exceeded, aborting tree build");
             return;
         }
-
         processed.add(item.id);
 
         if (item.parentId === null || item.parentId === undefined) {
@@ -76,7 +68,6 @@ export function buildMenuTree(items: MenuCategory[]): NavItem[] {
             if (parent) {
                 parent.children.push(node);
             } else {
-                // Родителя нет — делаем корневым (защита от висячих ссылок)
                 console.warn(
                     `[menuHelpers] Orphan node ${item.id} (parent ${item.parentId} not found), making root`
                 );
@@ -95,16 +86,13 @@ export function buildMenuTree(items: MenuCategory[]): NavItem[] {
             console.warn(`[menuHelpers] Cycle detected at node ${node.id}`);
             return true;
         }
-
         visited.add(node.id);
-
         for (const child of node.children) {
             if (hasCycle(child, visited, depth + 1)) {
                 return true;
             }
         }
-
-        visited.delete(node.id); // backtracking
+        visited.delete(node.id);
         return false;
     };
 
@@ -115,43 +103,39 @@ export function buildMenuTree(items: MenuCategory[]): NavItem[] {
         }
     }
 
-    // 5. Преобразуем в NavItem (убираем служебные поля)
-    const toNavItem = (node: MenuTreeNode, depth = 0): NavItem | null => {
+    // 5. Преобразуем в MenuItem (убираем служебные поля)
+    const toMenuItem = (node: MenuTreeNode, depth = 0): MenuItem | null => {
         if (depth > MAX_DEPTH) {
             console.warn(`[menuHelpers] Pruning node ${node.id} at depth ${depth}`);
             return null;
         }
 
         if (node.children.length === 0) {
-            // Листовой узел — ссылка
             return {
-                to: node.to,
                 label: node.label,
+                path: node.to,
             };
         } else {
-            // Узел с детьми — dropdown
             const childItems = node.children
-                .map((child) => toNavItem(child, depth + 1))
-                .filter((item): item is { to: string; label: string } =>
-                    item !== null && "to" in item
-                );
+                .map((child) => toMenuItem(child, depth + 1))
+                .filter((item): item is MenuItem => item !== null);
 
             if (childItems.length === 0) {
-                // Все дети отфильтрованы — делаем листовым узлом
                 return {
-                    to: node.to,
                     label: node.label,
+                    path: node.to,
                 };
             }
 
             return {
                 label: node.label,
+                path: node.to,
                 children: childItems,
             };
         }
     };
 
     return roots
-        .map((root) => toNavItem(root, 0))
-        .filter((item): item is NavItem => item !== null);
+        .map((root) => toMenuItem(root, 0))
+        .filter((item): item is MenuItem => item !== null);
 }

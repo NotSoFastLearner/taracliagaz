@@ -19,7 +19,7 @@ async function request<T>(method: string, path: string, body?: unknown, headers?
 
     const response = await fetch(url, init);
 
-    // 🔐 АВТОМАТИЧЕСКИЙ LOGOUT при истёкшем токене
+    // Автоматический logout при истёкшем токене
     if (response.status === 401) {
         localStorage.removeItem("taracliagaz_auth");
         if (!window.location.pathname.includes("/admin/login")) {

@@ -1,165 +1,177 @@
-import { useState, useEffect, useRef } from "react";
-import { NavLink, Link } from "react-router-dom";
-import Sidebar, { HamburgerButton } from "./Sidebar";
-import { getMenu } from "../api/contentApi";
-import type { MenuCategory } from "../types/content";
-import { buildMenuTree } from "../utils/menuHelpers";
+import { useState } from "react";
+import { Link, NavLink } from "react-router-dom";
 
-export type NavItem =
-    | { to: string; label: string; children?: undefined }
-    | { label: string; children: Array<{ to: string; label: string }>; to?: undefined };
+export interface MenuItem {
+    label: string;
+    path: string;
+    children?: MenuItem[];
+    external?: boolean;
+}
 
-const FALLBACK_NAV: NavItem[] = [
-    { to: "/", label: "Главная" },
+// Только нужные пункты меню (без демо-пунктов Joomla-шаблона)
+const menuItems: MenuItem[] = [
+    { label: "Главная", path: "/" },
     {
-        label: "О нас", children: [
-            { to: "/page/history", label: "История" },
-            { to: "/page/leadership", label: "Структура и руководство" },
-        ]
+        label: "О нас",
+        path: "/page/about",
+        children: [
+            { label: "История", path: "/page/istoriya" },
+            { label: "Структура и руководство", path: "/page/struktura-i-rukovodstvo" },
+        ],
     },
-    { to: "/page/services", label: "Услуги" },
     {
-        label: "Потребителям", children: [
-            { to: "/page/tariffs", label: "Тарифы" },
-            { to: "/page/legislation", label: "Законодательство" },
-            { to: "/page/faq", label: "Вопросы-Ответы" },
-            { to: "/page/safety", label: "Правила безопасности" },
-            { to: "/page/contracts", label: "Договоры" },
-            { to: "/page/network-development", label: "Руководство по процедуре развития сетей" },
-        ]
+        label: "Потребителям",
+        path: "/page/potrebiteli",
+        children: [
+            { label: "Услуги", path: "/page/uslugi" },
+            { label: "Законодательство", path: "/page/zakonodatelstvo" },
+            { label: "Вопросы-Ответы", path: "/page/voproy-otvety" },
+            { label: "Правила безопасности", path: "/page/pravila-polzovaniya-gazom-v-bytu" },
+            { label: "ДОГОВОРА", path: "/page/dogovora" },
+            { label: "Руководство по процедуре развития сетей", path: "/page/rukovodstvo-po-protsedure-razvitiya-setej-raspredeleniya-osd" },
+        ],
     },
-    { to: "/tenders", label: "Тендеры" },
+    { label: "Тендеры", path: "/tenders" },
     {
-        label: "Новости", children: [
-            { to: "/news", label: "Новости" },
-            { to: "/gallery", label: "Галерея" },
-        ]
+        label: "Новости",
+        path: "/news",
+        children: [
+            { label: "Галерея", path: "/gallery" },
+            { label: "Новости", path: "/news" },
+        ],
     },
-    { to: "/announcements", label: "Объявления" },
-    { to: "/transparency", label: "Прозрачность" },
-    { to: "/contacts", label: "Контакты" },
+    { label: "Контакты", path: "/contacts" },
+    { label: "ОБЪЯВЛЕНИЯ", path: "/announcements" },
+    {
+        label: "Прозрачность",
+        path: "/transparency",
+        children: [
+            { label: "Технико-экономические показатели", path: "/page/tekhniko-ekonomicheskie-pokazateli-za-2026g" },
+            { label: "Инвестиционный план", path: "/page/investitsionnyj-plan-na-2026-god" },
+            { label: "Программа соответствия", path: "/page/programma-sootvetstviya-2026g" },
+            { label: "Финансовое состояние", path: "/page/finansovoe-sostoyanie-ooo-tarakliya-gaz-na-period-01-yanvarya-31-dekabrya-2021" },
+            { label: "Отчет независимого аудитора", path: "/page/otchet-nezavisimogo-auditora" },
+            { label: "Вакансии", path: "/page/vakansii" },
+            { label: "УСТАВ", path: "/page/ustav" },
+            { label: "Список крупных небытовых потребителей", path: "/page/spisok-krupnykh-nebytovykh-potrebitelej" },
+            { label: "Список прерываемых потребителей", path: "/page/spisok-preryvaemykh-potrebitelej" },
+            { label: "Плановые и внеплановые отключения", path: "/page/planovye-i-neplanovye-otklyucheniya-za-2025g" },
+        ],
+    },
+    { label: "Линия „ANTIFRAUDĂ", path: "https://www.moldovagaz.md/rus/goryachaya-liniya", external: true },
+    { label: "Показание Счетчика", path: "https://www.moldovagaz.md/rus/potrebiteli/usluga-onlayn-peredachi-dannyh-schetchika", external: true },
 ];
 
 export default function Header() {
-    const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [menuOpen, setMenuOpen] = useState(false);
     const [openDropdown, setOpenDropdown] = useState<string | null>(null);
-    const [navItems, setNavItems] = useState<NavItem[]>(FALLBACK_NAV);
-    const [loading, setLoading] = useState(true);
-    const navRef = useRef<HTMLElement>(null);
-
-    useEffect(() => {
-        getMenu("ru")
-            .then((items: MenuCategory[]) => {
-                if (items.length > 0) {
-                    setNavItems(buildMenuTree(items));
-                }
-            })
-            .catch((err) => {
-                console.error("Не удалось загрузить меню:", err);
-            })
-            .finally(() => setLoading(false));
-    }, []);
-
-    // Закрытие dropdown по Escape
-    useEffect(() => {
-        const handleEscape = (e: KeyboardEvent) => {
-            if (e.key === "Escape") {
-                setOpenDropdown(null);
-            }
-        };
-        document.addEventListener("keydown", handleEscape);
-        return () => document.removeEventListener("keydown", handleEscape);
-    }, []);
-
-    // Закрытие dropdown по клику вне навигации
-    useEffect(() => {
-        const handleClickOutside = (e: MouseEvent) => {
-            if (navRef.current && !navRef.current.contains(e.target as Node)) {
-                setOpenDropdown(null);
-            }
-        };
-        document.addEventListener("mousedown", handleClickOutside);
-        return () => document.removeEventListener("mousedown", handleClickOutside);
-    }, []);
 
     const toggleDropdown = (label: string) => {
         setOpenDropdown(openDropdown === label ? null : label);
     };
 
+    const closeMenu = () => {
+        setMenuOpen(false);
+        setOpenDropdown(null);
+    };
+
     return (
-        <>
-            <header className="header">
-                <div className="container header-inner">
-                    <Link to="/" className="brand">
-                        <div>
-                            <div className="brand-title">Тараклия-ГАЗ</div>
-                            <div className="brand-subtitle">SRL «Taraclia Gaz»</div>
-                        </div>
-                    </Link>
+        <header className="site-header">
+            <div className="container header-inner">
+                {/* Логотип */}
+                <Link to="/" className="logo" onClick={closeMenu}>
+                    <span className="logo-main">Тараклия-ГАЗ</span>
+                    <span className="logo-sub">SRL «Taraclia Gaz»</span>
+                </Link>
 
-                    <a href="tel:904" className="header-emergency">
-                        <span className="header-emergency-label">Аварийная служба 24/7</span>
-                        <strong className="header-emergency-number">904</strong>
-                    </a>
+                {/* Кнопка аварийной службы */}
+                <a href="tel:904" className="emergency-btn">
+                    <span className="emergency-label">Аварийная служба 24/7</span>
+                    <span className="emergency-number">904</span>
+                </a>
 
-                    <HamburgerButton onClick={() => setSidebarOpen(true)} />
-                </div>
-            </header>
+                {/* Кнопка мобильного меню */}
+                <button
+                    className={`menu-toggle ${menuOpen ? "open" : ""}`}
+                    onClick={() => setMenuOpen(!menuOpen)}
+                    aria-label="Меню"
+                    aria-expanded={menuOpen}
+                >
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
 
-            <nav className="main-nav" ref={navRef}>
-                <div className="container">
-                    {loading ? (
-                        <ul className="nav-list">
-                            <li className="nav-item"><span className="nav-link">Загрузка меню...</span></li>
-                        </ul>
-                    ) : (
-                        <ul className="nav-list">
-                            {navItems.map((item) =>
-                                item.children ? (
-                                    <li key={item.label} className="nav-item has-dropdown">
+                {/* Главное меню */}
+                <nav className={`main-nav ${menuOpen ? "open" : ""}`}>
+                    <ul className="nav-list">
+                        {menuItems.map((item) => {
+                            const hasChildren = item.children && item.children.length > 0;
+
+                            if (item.external) {
+                                return (
+                                    <li key={item.label} className="nav-item">
+                                        <a
+                                            href={item.path}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="nav-link external"
+                                            onClick={closeMenu}
+                                        >
+                                            {item.label}
+                                        </a>
+                                    </li>
+                                );
+                            }
+
+                            if (hasChildren) {
+                                return (
+                                    <li
+                                        key={item.label}
+                                        className={`nav-item has-dropdown ${openDropdown === item.label ? "open" : ""}`}
+                                        onMouseEnter={() => setOpenDropdown(item.label)}
+                                        onMouseLeave={() => setOpenDropdown(null)}
+                                    >
                                         <button
-                                            type="button"
-                                            className={`dropdown-toggle ${openDropdown === item.label ? "active" : ""}`}
+                                            className="nav-link dropdown-toggle"
                                             onClick={() => toggleDropdown(item.label)}
                                             aria-expanded={openDropdown === item.label}
-                                            aria-haspopup="true"
                                         >
                                             {item.label}
-                                            <span className="dropdown-arrow" aria-hidden="true">▼</span>
+                                            <span className="dropdown-arrow">▼</span>
                                         </button>
-                                        {openDropdown === item.label && (
-                                            <ul className="dropdown">
-                                                {item.children.map((child) => (
-                                                    <li key={child.to}>
-                                                        <NavLink
-                                                            to={child.to}
-                                                            className={({ isActive }) => (isActive ? "active" : "")}
-                                                            onClick={() => setOpenDropdown(null)}
-                                                        >
-                                                            {child.label}
-                                                        </NavLink>
-                                                    </li>
-                                                ))}
-                                            </ul>
-                                        )}
+                                        <ul className="dropdown-menu">
+                                            {item.children!.map((child) => (
+                                                <li key={child.path}>
+                                                    <NavLink
+                                                        to={child.path}
+                                                        className="dropdown-link"
+                                                        onClick={closeMenu}
+                                                    >
+                                                        {child.label}
+                                                    </NavLink>
+                                                </li>
+                                            ))}
+                                        </ul>
                                     </li>
-                                ) : (
-                                    <li key={item.to} className="nav-item">
-                                        <NavLink
-                                            to={item.to}
-                                            className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}
-                                        >
-                                            {item.label}
-                                        </NavLink>
-                                    </li>
-                                )
-                            )}
-                        </ul>
-                    )}
-                </div>
-            </nav>
+                                );
+                            }
 
-            <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} items={navItems} />
-        </>
+                            return (
+                                <li key={item.label} className="nav-item">
+                                    <NavLink
+                                        to={item.path}
+                                        className="nav-link"
+                                        onClick={closeMenu}
+                                    >
+                                        {item.label}
+                                    </NavLink>
+                                </li>
+                            );
+                        })}
+                    </ul>
+                </nav>
+            </div>
+        </header>
     );
 }

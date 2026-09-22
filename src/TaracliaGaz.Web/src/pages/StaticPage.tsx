@@ -1,27 +1,33 @@
-import { useParams } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { getPage } from "../api/contentApi";
 import type { Page } from "../types/content";
 import SEO from "../components/SEO";
-import { sanitizeHtml } from "../utils/sanitize";
 
 export default function StaticPage() {
-    const { slug } = useParams<{ slug: string }>();
+    const location = useLocation();
     const [page, setPage] = useState<Page | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
+        // Извлекаем последний сегмент URL как slug
+        // Например: /page/about/istoriya -> istoriya
+        const pathParts = location.pathname.split('/').filter(Boolean);
+        const slug = pathParts[pathParts.length - 1];
+
         if (!slug) return;
+
         setLoading(true);
         setError(null);
+
         getPage(slug)
             .then(setPage)
             .catch((err: unknown) =>
                 setError(err instanceof Error ? err.message : "Ошибка загрузки страницы")
             )
             .finally(() => setLoading(false));
-    }, [slug]);
+    }, [location.pathname]);
 
     if (loading) return <p>Загрузка...</p>;
     if (error) return <p className="error">{error}</p>;
@@ -43,7 +49,6 @@ export default function StaticPage() {
             <section className="section">
                 <div className="container">
                     <h1>{page.title}</h1>
-
                     {/* Дата обновления для важных страниц */}
                     {["tariffs", "contracts", "legislation", "safety", "services"].includes(page.slug) && page.updatedAt && (
                         <div className="page-updated">
@@ -52,7 +57,6 @@ export default function StaticPage() {
                             })}
                         </div>
                     )}
-
                     <div
                         className="content-body"
                         dangerouslySetInnerHTML={{ __html: page.bodyHtml }}

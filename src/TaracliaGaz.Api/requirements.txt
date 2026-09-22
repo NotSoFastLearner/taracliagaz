@@ -1,25 +1,14 @@
-# Web framework
-fastapi==0.115.0
-uvicorn[standard]==0.34.0
-python-multipart==0.0.20
-
-# Database
-sqlalchemy==2.0.36
-
-# Validation
-pydantic==2.9.0
-pydantic-settings==2.6.0
-
-# Authentication
-PyJWT==2.9.0
-bcrypt==4.2.0
-
-# HTML sanitization
-nh3==0.2.19
-
-# Rate limiting
-slowapi==0.1.9
-redis==5.0.0
-
-# File type detection (optional)
-# python-magic==0.4.27
+fastapi
+uvicorn
+sqlalchemy
+pymysql
+pydantic
+pydantic-settings
+python-dotenv
+python-multipart
+a2wsgi
+bcrypt
+PyJWT
+nh3
+slowapi
+email-validator

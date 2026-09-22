@@ -31,7 +31,7 @@ ALLOWED_TAGS = {
 }
 
 ALLOWED_ATTRS = {
-    "a": {"href", "title", "target", "rel"},
+    "a": {"href", "title", "target"},
     "img": {"src", "alt", "title", "width", "height"},
     "*": {"class", "id"},
 }
@@ -53,7 +53,6 @@ def sanitize_html(html: str) -> str:
         tags=ALLOWED_TAGS,
         attributes=ALLOWED_ATTRS,
         link_rel="noopener noreferrer nofollow",
-        strip_markup_tags=True,
     )
 
 
@@ -333,71 +332,6 @@ class ContactMessageRead(BaseModel):
     created_at: datetime
 
 
-# ============================================
-# TARIFFS (калькулятор стоимости газа)
-# ============================================
-class TariffBase(BaseInput):
-    name: str = Field(..., min_length=1, max_length=200)
-    category: str = Field(..., max_length=50)
-    price_per_m3: float = Field(..., ge=0, le=10000)
-    fixed_fee: float = Field(0.0, ge=0, le=10000)
-    valid_from: datetime
-    valid_until: datetime | None = None
-    is_active: bool = True
-    description: str | None = Field(None, max_length=2000)
-    language_code: str = "ru"
-    source_decision: str | None = Field(None, max_length=200)
-
-
-class TariffCreate(TariffBase):
-    pass
-
-
-class TariffUpdate(BaseInput):
-    name: str | None = Field(None, max_length=200)
-    category: str | None = Field(None, max_length=50)
-    price_per_m3: float | None = Field(None, ge=0, le=10000)
-    fixed_fee: float | None = Field(None, ge=0, le=10000)
-    valid_from: datetime | None = None
-    valid_until: datetime | None = None
-    is_active: bool | None = None
-    description: str | None = Field(None, max_length=2000)
-    source_decision: str | None = Field(None, max_length=200)
-
-
-class TariffRead(TariffBase, BaseRead):
-    pass
-
-class TariffCalculateRequest(BaseModel):
-    """Запрос расчёта стоимости"""
-    model_config = ConfigDict(
-        populate_by_name=True,
-        alias_generator=to_camel,  # принимает и camelCase, и snake_case
-    )
-    
-    cubic_meters: float = Field(..., ge=0, le=1000000, description="Объём в м³")
-    category: str = Field("residential", description="Категория потребителя")
-
-
-class TariffCalculateResponse(BaseModel):
-    """Результат расчёта"""
-    model_config = ConfigDict(
-        populate_by_name=True,
-        from_attributes=True,
-        alias_generator=to_camel,  #  возвращает camelCase
-    )
-    
-    tariff_id: int
-    tariff_name: str
-    category: str
-    price_per_m3: float
-    fixed_fee: float
-    cubic_meters: float
-    gas_cost: float  # м³ × тариф
-    total: float  # gas_cost + абонплата
-    currency: str = "MDL"
-    valid_from: datetime
-    source_decision: str | None
 
 # ============================================
 # METER READINGS (показания счётчиков)

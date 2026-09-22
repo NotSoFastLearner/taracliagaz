@@ -24,7 +24,6 @@ def seed_menu():
             ]},
             {"title": "Услуги", "slug": "page/services", "order": 2},
             {"title": "Потребителям", "slug": "#", "order": 3, "children": [
-                {"title": "Тарифы", "slug": "page/tariffs", "order": 0},
                 {"title": "Законодательство", "slug": "page/legislation", "order": 1},
                 {"title": "Вопросы-Ответы", "slug": "page/faq", "order": 2},
                 {"title": "Правила безопасности", "slug": "page/safety", "order": 3},

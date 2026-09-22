@@ -1,13 +1,11 @@
-// src/TaracliaGaz.Web/src/components/Sidebar.tsx
-
 import { useState } from "react";
 import { NavLink } from "react-router-dom";
-import type { NavItem } from "./Header";
+import type { MenuItem } from "./Header";
 
 interface SidebarProps {
     isOpen: boolean;
     onClose: () => void;
-    items: NavItem[];
+    items: MenuItem[];
 }
 
 export default function Sidebar({ isOpen, onClose, items }: SidebarProps) {
@@ -49,7 +47,7 @@ export default function Sidebar({ isOpen, onClose, items }: SidebarProps) {
                 </div>
                 <ul className="sidebar-list">
                     {items.map((item) =>
-                        item.children ? (
+                        item.children && item.children.length > 0 ? (
                             <li key={item.label} className="sidebar-dropdown">
                                 <button
                                     type="button"
@@ -64,34 +62,62 @@ export default function Sidebar({ isOpen, onClose, items }: SidebarProps) {
                                 </button>
                                 {isExpanded(item.label) && (
                                     <ul className="sidebar-submenu">
-                                        {item.children.map((child) => (
-                                            <li key={child.to}>
-                                                <NavLink
-                                                    to={child.to}
-                                                    className={({ isActive }) =>
-                                                        `sidebar-link ${isActive ? "active" : ""}`
-                                                    }
-                                                    onClick={onClose}
-                                                >
-                                                    {child.label}
-                                                </NavLink>
-                                            </li>
-                                        ))}
+                                        {item.children.map((child) =>
+                                            child.external ? (
+                                                <li key={child.path}>
+                                                    <a
+                                                        href={child.path}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="sidebar-link"
+                                                        onClick={onClose}
+                                                    >
+                                                        {child.label}
+                                                    </a>
+                                                </li>
+                                            ) : (
+                                                <li key={child.path}>
+                                                    <NavLink
+                                                        to={child.path}
+                                                        className={({ isActive }) =>
+                                                            `sidebar-link ${isActive ? "active" : ""}`
+                                                        }
+                                                        onClick={onClose}
+                                                    >
+                                                        {child.label}
+                                                    </NavLink>
+                                                </li>
+                                            )
+                                        )}
                                     </ul>
                                 )}
                             </li>
                         ) : (
-                            <li key={item.to}>
-                                <NavLink
-                                    to={item.to}
-                                    className={({ isActive }) =>
-                                        `sidebar-link ${isActive ? "active" : ""}`
-                                    }
-                                    onClick={onClose}
-                                >
-                                    {item.label}
-                                </NavLink>
-                            </li>
+                            item.external ? (
+                                <li key={item.path}>
+                                    <a
+                                        href={item.path}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="sidebar-link"
+                                        onClick={onClose}
+                                    >
+                                        {item.label}
+                                    </a>
+                                </li>
+                            ) : (
+                                <li key={item.path}>
+                                    <NavLink
+                                        to={item.path}
+                                        className={({ isActive }) =>
+                                            `sidebar-link ${isActive ? "active" : ""}`
+                                        }
+                                        onClick={onClose}
+                                    >
+                                        {item.label}
+                                    </NavLink>
+                                </li>
+                            )
                         )
                     )}
                 </ul>
@@ -100,13 +126,13 @@ export default function Sidebar({ isOpen, onClose, items }: SidebarProps) {
     );
 }
 
-export function HamburgerButton({ onClick }: { onClick: () => void }) {
+export function HamburgerButton({ onClick, isOpen }: { onClick: () => void; isOpen?: boolean }) {
     return (
         <button
-            className="hamburger"
+            className={`hamburger ${isOpen ? "open" : ""}`}
             onClick={onClick}
             aria-label="Открыть меню"
-            aria-expanded="false"
+            aria-expanded={isOpen}
         >
             <span></span>
             <span></span>

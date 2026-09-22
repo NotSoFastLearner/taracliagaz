@@ -15,14 +15,13 @@ import CabinetComingSoonPage from "./pages/CabinetComingSoonPage";
 import AdminLoginPage from "./pages/admin/AdminLoginPage";
 import AdminDashboardPage from "./pages/admin/AdminDashboardPage";
 import ProtectedRoute from "./components/ProtectedRoute";
-import TariffsPage from "./pages/TariffsPage";
 function App() {
     return (
         <Routes>
             <Route element={<Layout />}>
                 {/* Публичные страницы */}
                 <Route path="/" element={<HomePage />} />
-                <Route path="/page/:slug" element={<StaticPage />} />
+                <Route path="/page/*" element={<StaticPage />} />
                 <Route path="/news" element={<NewsPage />} />
                 <Route path="/news/:id" element={<NewsDetailPage />} />
                 <Route path="/announcements" element={<AnnouncementsPage />} />
@@ -32,7 +31,6 @@ function App() {
                 <Route path="/transparency/:slug?" element={<TransparencyPage />} />
                 <Route path="/contacts" element={<ContactsPage />} />
                 <Route path="/cabinet" element={<CabinetComingSoonPage />} />
-                <Route path="/tariffs" element={<TariffsPage />} />
 
 
 

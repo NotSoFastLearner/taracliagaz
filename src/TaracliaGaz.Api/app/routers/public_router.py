@@ -24,7 +24,7 @@ router = APIRouter(prefix="/api/public", tags=["public"])
 
 
 @router.get("/pages", response_model=list[PageRead])
-def get_pages(lang: str = Query(default="ru", regex="^(ru|ro)$"), db: Session = Depends(get_db)):
+def get_pages(lang: str = Query(default="ru", pattern="^(ru|ro)$"), db: Session = Depends(get_db)):
     stmt = (
         select(Page)
         .where(Page.language_code == lang, Page.is_published == True)
@@ -34,7 +34,7 @@ def get_pages(lang: str = Query(default="ru", regex="^(ru|ro)$"), db: Session = 
 
 
 @router.get("/pages/{slug}", response_model=PageRead)
-def get_page(slug: str, lang: str = Query(default="ru", regex="^(ru|ro)$"), db: Session = Depends(get_db)):
+def get_page(slug: str, lang: str = Query(default="ru", pattern="^(ru|ro)$"), db: Session = Depends(get_db)):
     stmt = select(Page).where(
         Page.slug == slug,
         Page.language_code == lang,
@@ -47,7 +47,7 @@ def get_page(slug: str, lang: str = Query(default="ru", regex="^(ru|ro)$"), db: 
 
 
 @router.get("/news", response_model=list[NewsPostRead])
-def get_news(lang: str = Query(default="ru", regex="^(ru|ro)$"), db: Session = Depends(get_db)):
+def get_news(lang: str = Query(default="ru", pattern="^(ru|ro)$"), db: Session = Depends(get_db)):
     stmt = (
         select(NewsPost)
         .where(NewsPost.language_code == lang, NewsPost.is_published == True)
@@ -65,7 +65,7 @@ def get_news_item(id: int, db: Session = Depends(get_db)):
 
 
 @router.get("/announcements", response_model=list[AnnouncementRead])
-def get_announcements(lang: str = Query(default="ru", regex="^(ru|ro)$"), db: Session = Depends(get_db)):
+def get_announcements(lang: str = Query(default="ru", pattern="^(ru|ro)$"), db: Session = Depends(get_db)):
     stmt = (
         select(Announcement)
         .where(Announcement.language_code == lang, Announcement.is_published == True)
@@ -75,7 +75,7 @@ def get_announcements(lang: str = Query(default="ru", regex="^(ru|ro)$"), db: Se
 
 
 @router.get("/tenders", response_model=list[TenderRead])
-def get_tenders(lang: str = Query(default="ru", regex="^(ru|ro)$"), db: Session = Depends(get_db)):
+def get_tenders(lang: str = Query(default="ru", pattern="^(ru|ro)$"), db: Session = Depends(get_db)):
     stmt = (
         select(Tender)
         .where(Tender.language_code == lang, Tender.is_published == True)
@@ -96,7 +96,7 @@ def get_tender_item(id: int, db: Session = Depends(get_db)):
 @router.get("/documents", response_model=list[DocumentRead])
 def get_documents(
     category_slug: str | None = Query(default=None),
-    lang: str = Query(default="ru", regex="^(ru|ro)$"),
+    lang: str = Query(default="ru", pattern="^(ru|ro)$"),
     db: Session = Depends(get_db),
 ):
     stmt = (
@@ -121,7 +121,7 @@ def get_gallery(db: Session = Depends(get_db)):
 
 @router.get("/menu", response_model=list[MenuCategoryRead])
 def get_menu(
-    lang: str = Query(default="ru", regex="^(ru|ro)$"),
+    lang: str = Query(default="ru", pattern="^(ru|ro)$"),
     db: Session = Depends(get_db),
 ):
     stmt = (

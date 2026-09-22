@@ -17,7 +17,6 @@ from .routers import upload_router, seo_router
 from .middleware.security import SecurityHeadersMiddleware
 from .security.rate_limit import limiter
 from .security.xss_protection import XSSProtectionMiddleware
-from .routers import tariff_router
 # Игнорим предупреждения Pydantic
 warnings.filterwarnings("ignore", message=".*UnsupportedFieldAttributeWarning.*")
 
@@ -78,11 +77,16 @@ async def _rate_limit_exceeded_handler(request: Request, exc: RateLimitExceeded)
 # CORS — сужены методы и заголовки
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.CORS_ORIGINS,
+    allow_origins=[
+        "http://localhost:5173",
+        "http://localhost:4173",
+        "http://127.0.0.1:5173",
+        "http://127.0.0.1:4173",
+        "http://short-cyan-ostrich.195-178-106-115.cpanel.site", # Разрешаем и боевой
+    ],
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allow_headers=["Authorization", "Content-Type", "X-Requested-With"],
-    expose_headers=["X-RateLimit-Remaining", "X-RateLimit-Reset"],
+    allow_methods=["*"], # Разрешаем все методы, включая OPTIONS
+    allow_headers=["*"], # Разрешаем все заголовки
 )
 
 app.add_middleware(SecurityHeadersMiddleware)
@@ -98,7 +102,6 @@ app.include_router(admin_router.router)
 app.include_router(public_router.router)
 app.include_router(upload_router.router)
 app.include_router(seo_router.router)
-app.include_router(tariff_router.router)
 
 @app.get("/")
 async def root():

@@ -1,215 +1,259 @@
-import { useState } from "react";
-import { z } from "zod";
-import { submitContact } from "../api/contentApi";
+import { useState, type FormEvent } from "react";
 import SEO from "../components/SEO";
-import { COMPANY_ADDRESS, COMPANY_PHONES, COMPANY_EMAIL } from "../utils/site";
-import {
-    IconPhone,
-    IconMapPin,
-    IconMail,
-    IconClock,
-    IconMap,
-    IconHelpCircle,
-    IconFire,
-} from "../components/icons";
-
-const contactSchema = z.object({
-    name: z.string().min(2, "Имя должно быть не менее 2 символов").max(100, "Имя слишком длинное"),
-    email: z.string().email("Некорректный email").max(150, "Email слишком длинный"),
-    phone: z.string().max(30, "Телефон слишком длинный").optional().or(z.literal("")),
-    message: z.string().min(10, "Сообщение должно быть не менее 10 символов").max(5000, "Сообщение слишком длинное (макс. 5000 символов)"),
-});
-
-type ContactForm = z.infer<typeof contactSchema>;
+import { submitContact, type ContactFormData } from "../api/contentApi";
+import { IconPhone, IconMail, IconMapPin, IconClock } from "../components/icons";
 
 export default function ContactsPage() {
-    const [form, setForm] = useState<ContactForm & { websiteUrl: string }>({
-        name: "", email: "", phone: "", message: "", websiteUrl: "",
+    const [form, setForm] = useState<ContactFormData>({
+        name: "",
+        email: "",
+        phone: "",
+        message: "",
+        websiteUrl: "",
     });
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [submitting, setSubmitting] = useState(false);
-    const [successMessage, setSuccessMessage] = useState<string | null>(null);
+    const [success, setSuccess] = useState<string | null>(null);
     const [submitError, setSubmitError] = useState<string | null>(null);
 
     const validate = (): boolean => {
-        const result = contactSchema.safeParse(form);
-        if (!result.success) {
-            const fieldErrors: Record<string, string> = {};
-            const issues = result.error?.issues ?? [];
-            issues.forEach((err) => {
-                const field = err.path[0] as string;
-                if (field && !fieldErrors[field]) fieldErrors[field] = err.message;
-            });
-            setErrors(fieldErrors);
-            return false;
+        const errs: Record<string, string> = {};
+
+        if (!form.name.trim() || form.name.trim().length < 2) {
+            errs.name = "Введите имя (минимум 2 символа)";
         }
-        setErrors({});
-        return true;
+        if (!form.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
+            errs.email = "Введите корректный email";
+        }
+        if (!form.message.trim() || form.message.trim().length < 10) {
+            errs.message = "Сообщение слишком короткое (минимум 10 символов)";
+        }
+        if (form.message.length > 5000) {
+            errs.message = "Сообщение слишком длинное (максимум 5000 символов)";
+        }
+
+        setErrors(errs);
+        return Object.keys(errs).length === 0;
     };
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
-        setSuccessMessage(null);
+        setSuccess(null);
         setSubmitError(null);
+
         if (!validate()) return;
+
         setSubmitting(true);
         try {
-            const response = await submitContact({
-                name: form.name, email: form.email,
-                phone: form.phone || undefined,
-                message: form.message, websiteUrl: form.websiteUrl,
-            });
-            setSuccessMessage(response.message);
+            const result = await submitContact(form);
+            setSuccess(result.message);
             setForm({ name: "", email: "", phone: "", message: "", websiteUrl: "" });
+            setErrors({});
         } catch (err: unknown) {
-            const msg = err instanceof Error ? err.message : "Ошибка отправки";
-            try {
-                const parsed = JSON.parse(msg);
-                setSubmitError(parsed.detail || "Ошибка отправки");
-            } catch { setSubmitError(msg); }
-        } finally { setSubmitting(false); }
+            const msg =
+                err instanceof Error
+                    ? err.message
+                    : "Произошла ошибка при отправке. Попробуйте позже.";
+            setSubmitError(msg);
+        } finally {
+            setSubmitting(false);
+        }
     };
 
-    const updateField = (field: keyof ContactForm, value: string) => {
-        setForm({ ...form, [field]: value });
-        if (errors[field]) setErrors({ ...errors, [field]: "" });
+    const updateField = (field: keyof ContactFormData, value: string) => {
+        setForm((prev) => ({ ...prev, [field]: value }));
+        if (errors[field]) {
+            setErrors((prev) => {
+                const next = { ...prev };
+                delete next[field];
+                return next;
+            });
+        }
     };
 
     return (
         <>
             <SEO
                 title="Контакты"
-                description="Контакты SRL «Taraclia Gaz»: адрес, телефоны, электронная почта. Аварийная служба 24/7: 904. Офис: 08:00-17:00."
+                description="Контактная информация SRL «Taraclia Gaz». Адрес, телефоны, email. Аварийная служба 24/7: 904. Форма обратной связи."
                 path="/contacts"
             />
-
             <section className="section">
                 <div className="container">
-                    <h1><IconPhone width={32} height={32} /> Контакты</h1>
+                    <h1>Контакты</h1>
 
                     <div className="contacts-grid">
                         <div className="contact-info">
-                            <h2>Контактная информация</h2>
+                            <h2>Наши координаты</h2>
 
                             <p>
-                                <strong><IconMapPin /> Адрес:</strong><br />
-                                {COMPANY_ADDRESS.postalCode}, {COMPANY_ADDRESS.country}<br />
-                                {COMPANY_ADDRESS.city}, {COMPANY_ADDRESS.street}<br />
-                                <a
-                                    href={`https://maps.app.goo.gl/eb8xKCwjUoh3y7bg8`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                >
-                                    <IconMap /> Открыть на карте
+                                <IconMapPin />{" "}
+                                <strong>Адрес:</strong>
+                                <br />
+                                MD-7401, Республика Молдова,
+                                <br />
+                                г. Тараклия, ул. Ленина, 110А
+                            </p>
+
+                            <p>
+                                <IconPhone />{" "}
+                                <strong>Телефоны:</strong>
+                                <br />
+                                <a href="tel:+37329422404">+373 (294) 2-24-04</a>
+                                <br />
+                                <a href="tel:+37329422405">+373 (294) 2-24-05</a>
+                            </p>
+
+                            <p>
+                                <IconPhone />{" "}
+                                <strong>
+                                    Аварийная служба (24/7):
+                                </strong>
+                                <br />
+                                <a href="tel:904" className="emergency">
+                                    904
                                 </a>
                             </p>
 
                             <p>
-                                <strong><IconPhone /> Офис:</strong><br />
-                                <a href={`tel:${COMPANY_PHONES.office}`}>{COMPANY_PHONES.office}</a>
-                            </p>
-
-                            <p>
-                                <strong><IconHelpCircle /> Вопросы потребителей:</strong><br />
-                                <a href={`tel:${COMPANY_PHONES.qa}`}>{COMPANY_PHONES.qa}</a>
-                            </p>
-
-                            <p>
-                                <strong><IconFire /> Аварийная служба (24/7):</strong><br />
-                                <a href={`tel:${COMPANY_PHONES.emergency}`} className="emergency">
-                                    {COMPANY_PHONES.emergency}
+                                <IconMail />{" "}
+                                <strong>Email:</strong>
+                                <br />
+                                <a href="mailto:office@taraclia-gaz.md">
+                                    office@taraclia-gaz.md
                                 </a>
                             </p>
 
                             <p>
-                                <strong><IconMail /> Email:</strong><br />
-                                <a href={`mailto:${COMPANY_EMAIL}`}>{COMPANY_EMAIL}</a>
-                            </p>
-
-                            <p>
-                                <strong><IconClock /> График работы:</strong><br />
-                                Пн-Пт: 08:00 - 17:00<br />
-                                Сб-Вс: выходной
+                                <IconClock />{" "}
+                                <strong>Режим работы:</strong>
+                                <br />
+                                Пн–Пт: 08:00 – 17:00
+                                <br />
+                                Сб–Вс: выходной
+                                <br />
+                                <em>Аварийная служба работает круглосуточно</em>
                             </p>
                         </div>
 
                         <div className="contact-form">
-                            <h2>Написать нам</h2>
+                            <h2>Обратная связь</h2>
 
-                            {successMessage && (
-                                <div className="alert alert-success">{successMessage}</div>
+                            {success && (
+                                <div className="alert alert-success" role="alert">
+                                    {success}
+                                </div>
                             )}
+
                             {submitError && (
-                                <div className="alert alert-error">{submitError}</div>
+                                <div className="alert alert-error" role="alert">
+                                    {submitError}
+                                </div>
                             )}
 
                             <form onSubmit={handleSubmit} noValidate>
-                                <div style={{ position: "absolute", left: "-9999px" }} aria-hidden="true">
-                                    <label>
-                                        Не заполняйте это поле
-                                        <input
-                                            type="text"
-                                            name="website_url"
-                                            tabIndex={-1}
-                                            autoComplete="off"
-                                            value={form.websiteUrl}
-                                            onChange={(e) => setForm({ ...form, websiteUrl: e.target.value })}
-                                        />
+                                <div className="form-field">
+                                    <label htmlFor="contact-name">
+                                        Имя <span className="required">*</span>
                                     </label>
-                                </div>
-
-                                <div className="form-field">
-                                    <label htmlFor="contact-name">Имя <span className="required">*</span></label>
                                     <input
-                                        id="contact-name" type="text"
+                                        id="contact-name"
+                                        type="text"
                                         value={form.name}
-                                        onChange={(e) => updateField("name", e.target.value)}
-                                        disabled={submitting}
+                                        onChange={(e) =>
+                                            updateField("name", e.target.value)
+                                        }
                                         aria-invalid={!!errors.name}
-                                        aria-describedby={errors.name ? "name-error" : undefined}
+                                        aria-describedby={
+                                            errors.name ? "name-error" : undefined
+                                        }
+                                        disabled={submitting}
                                     />
-                                    {errors.name && <span id="name-error" className="field-error">{errors.name}</span>}
+                                    {errors.name && (
+                                        <span
+                                            id="name-error"
+                                            className="field-error"
+                                            role="alert"
+                                        >
+                                            {errors.name}
+                                        </span>
+                                    )}
                                 </div>
 
                                 <div className="form-field">
-                                    <label htmlFor="contact-email">Email <span className="required">*</span></label>
+                                    <label htmlFor="contact-email">
+                                        Email <span className="required">*</span>
+                                    </label>
                                     <input
-                                        id="contact-email" type="email"
+                                        id="contact-email"
+                                        type="email"
                                         value={form.email}
-                                        onChange={(e) => updateField("email", e.target.value)}
-                                        disabled={submitting}
+                                        onChange={(e) =>
+                                            updateField("email", e.target.value)
+                                        }
                                         aria-invalid={!!errors.email}
-                                        aria-describedby={errors.email ? "email-error" : undefined}
-                                    />
-                                    {errors.email && <span id="email-error" className="field-error">{errors.email}</span>}
-                                </div>
-
-                                <div className="form-field">
-                                    <label htmlFor="contact-phone">Телефон (необязательно)</label>
-                                    <input
-                                        id="contact-phone" type="tel"
-                                        value={form.phone}
-                                        onChange={(e) => updateField("phone", e.target.value)}
+                                        aria-describedby={
+                                            errors.email ? "email-error" : undefined
+                                        }
                                         disabled={submitting}
-                                        placeholder="+373 ..."
+                                    />
+                                    {errors.email && (
+                                        <span
+                                            id="email-error"
+                                            className="field-error"
+                                            role="alert"
+                                        >
+                                            {errors.email}
+                                        </span>
+                                    )}
+                                </div>
+
+                                <div className="form-field">
+                                    <label htmlFor="contact-phone">
+                                        Телефон <small>(необязательно)</small>
+                                    </label>
+                                    <input
+                                        id="contact-phone"
+                                        type="tel"
+                                        value={form.phone}
+                                        onChange={(e) =>
+                                            updateField("phone", e.target.value)
+                                        }
+                                        disabled={submitting}
                                     />
                                 </div>
 
                                 <div className="form-field">
-                                    <label htmlFor="contact-message">Сообщение <span className="required">*</span></label>
+                                    <label htmlFor="contact-message">
+                                        Сообщение <span className="required">*</span>
+                                    </label>
                                     <textarea
                                         id="contact-message"
-                                        value={form.message}
-                                        onChange={(e) => updateField("message", e.target.value)}
                                         rows={5}
-                                        disabled={submitting}
+                                        value={form.message}
+                                        onChange={(e) =>
+                                            updateField("message", e.target.value)
+                                        }
                                         aria-invalid={!!errors.message}
-                                        aria-describedby={errors.message ? "message-error" : "message-hint"}
+                                        aria-describedby={
+                                            errors.message
+                                                ? "message-error"
+                                                : "message-hint"
+                                        }
+                                        disabled={submitting}
                                     />
                                     {errors.message ? (
-                                        <span id="message-error" className="field-error">{errors.message}</span>
+                                        <span
+                                            id="message-error"
+                                            className="field-error"
+                                            role="alert"
+                                        >
+                                            {errors.message}
+                                        </span>
                                     ) : (
-                                        <small id="message-hint">{form.message.length}/5000 символов</small>
+                                        <small id="message-hint">
+                                            {form.message.length}/5000 символов
+                                        </small>
                                     )}
                                 </div>
 
@@ -219,108 +263,6 @@ export default function ContactsPage() {
                             </form>
                         </div>
                     </div>
-
-                    {/* Реквизиты компании — требование ANRE */}
-                    <div className="company-details">
-                        <h2>Реквизиты компании</h2>
-                        <div className="details-grid">
-                            <div className="details-card">
-                                <h3>Юридическая информация</h3>
-                                <dl>
-                                    <dt>Полное наименование:</dt>
-                                    <dd>SRL «Taraclia Gaz»</dd>
-
-                                    <dt>Идентраст код (IDNO):</dt>
-                                    <dd>1008620023456</dd>
-
-                                    <dt>Юридический адрес:</dt>
-                                    <dd>MD-7300, Республика Молдова,<br />
-                                        г. Тараклия, ул. Ленина, д. 1</dd>
-
-                                    <dt>Фактический адрес:</dt>
-                                    <dd>MD-7300, Республика Молдова,<br />
-                                        г. Тараклия, ул. Ленина, д. 1</dd>
-
-                                    <dt>Лицензия ANRE:</dt>
-                                    <dd>
-                                        <strong>Серия ANRE №1234</strong><br />
-                                        от 01.01.2024, действительна до 31.12.2029<br />
-                                        <small>на поставку и распределение природного газа</small>
-                                    </dd>
-                                </dl>
-                            </div>
-
-                            <div className="details-card">
-                                <h3>Банковские реквизиты</h3>
-                                <dl>
-                                    <dt>Банк:</dt>
-                                    <dd>BC "Moldova Agroindbank" S.A.</dd>
-
-                                    <dt>IBAN (MDL):</dt>
-                                    <dd className="mono">MD24 AG 1234567890123456</dd>
-
-                                    <dt>IBAN (EUR):</dt>
-                                    <dd className="mono">MD24 AG 1234567890123457</dd>
-
-                                    <dt>Код банка (SWIFT):</dt>
-                                    <dd className="mono">AGRNMD2X</dd>
-
-                                    <dt>Фискальный код:</dt>
-                                    <dd className="mono">1008620023456</dd>
-                                </dl>
-                            </div>
-
-                            <div className="details-card">
-                                <h3>Регулятор</h3>
-                                <dl>
-                                    <dt>Лицензирующий орган:</dt>
-                                    <dd>
-                                        Национальное агентство по регулированию в энергетике (ANRE)<br />
-                                        <small>Республика Молдова</small>
-                                    </dd>
-
-                                    <dt>Сайт ANRE:</dt>
-                                    <dd>
-                                        <a href="https://anre.md" target="_blank" rel="noopener noreferrer">
-                                            anre.md
-                                        </a>
-                                    </dd>
-
-                                    <dt>Горячая линия ANRE:</dt>
-                                    <dd>
-                                        <a href="tel:+37322823999">+373 22 823-999</a>
-                                    </dd>
-
-                                    <dt>Нормативная база:</dt>
-                                    <dd>
-                                        <ul className="details-links">
-                                            <li>
-                                                <a href="https://www.legis.md/cautare/getResults?doc_id=123456"
-                                                    target="_blank" rel="noopener noreferrer">
-                                                    Закон о природном газе №108/2016
-                                                </a>
-                                            </li>
-                                            <li>
-                                                <a href="https://www.legis.md/cautare/getResults?doc_id=234567"
-                                                    target="_blank" rel="noopener noreferrer">
-                                                    Правила поставки природного газа
-                                                </a>
-                                            </li>
-                                        </ul>
-                                    </dd>
-                                </dl>
-                            </div>
-                        </div>
-
-                        <div className="anre-notice">
-                            <p>
-                                <strong>Потребители имеют право:</strong> обращаться в ANRE по вопросам
-                                качества услуг, тарифов и соблюдения прав потребителей в сфере энергетики.
-                                Жалобы рассматриваются в течение 30 дней с момента регистрации.
-                            </p>
-                        </div>
-                    </div>
-
                 </div>
             </section>
         </>

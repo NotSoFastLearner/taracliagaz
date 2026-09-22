@@ -143,104 +143,81 @@ h3 {
     color: white;
     opacity: 0.95;
 }
-    
 
 /* ============================================
    HEADER
    ============================================ */
-.header {
-    background: #0057b8;
-    color: white;
-    padding: 0.75rem 0;
+.site-header {
+    background: #fff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     position: sticky;
     top: 0;
-    z-index: 100;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    z-index: 1000;
 }
 
 .header-inner {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
+    gap: 1.5rem;
+    padding: 0.75rem 1rem;
+    max-width: 1400px;
+    margin: 0 auto;
 }
 
-.brand {
-    color: white;
+/* Логотип */
+.logo {
     text-decoration: none;
+    color: #1a50b2;
     display: flex;
     flex-direction: column;
+    flex-shrink: 0;
 }
 
-    .brand:hover {
-        text-decoration: none;
-    }
-
-.brand-title {
+.logo-main {
     font-size: 1.5rem;
     font-weight: 700;
-    line-height: 1.1;
-    letter-spacing: 0.5px;
+    line-height: 1.2;
 }
 
-.brand-subtitle {
-    font-size: 11px;
-    opacity: 0.85;
-    letter-spacing: 0.5px;
-    margin-top: 2px;
+.logo-sub {
+    font-size: 0.85rem;
+    color: #666;
+    font-weight: 400;
 }
 
-.header-emergency {
+/* Кнопка аварийной службы */
+.emergency-btn {
     display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 8px 14px;
-    background: rgba(255, 255, 255, 0.15);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    border-radius: 20px;
-    color: white;
-    font-size: 13px;
-    font-weight: 500;
-    text-decoration: none;
-    transition: all 0.2s;
-    white-space: nowrap;
-}
-
-    .header-emergency:hover {
-        background: rgba(255, 255, 255, 0.25);
-        text-decoration: none;
-    }
-
-    .header-emergency strong {
-        font-weight: 800;
-        font-size: 16px;
-        letter-spacing: 1px;
-    }
-
-.hamburger {
-    display: none;
     flex-direction: column;
-    gap: 4px;
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    padding: 4px;
+    align-items: center;
+    background: #d32f2f;
+    color: #fff;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    text-decoration: none;
+    margin-left: auto;
+    flex-shrink: 0;
+    transition: background 0.2s;
 }
 
-    .hamburger span {
-        display: block;
-        width: 24px;
-        height: 3px;
-        background: white;
-        border-radius: 2px;
+    .emergency-btn:hover {
+        background: #b71c1c;
     }
 
-/* ============================================
-   MAIN NAV
-   ============================================ */
+.emergency-label {
+    font-size: 0.75rem;
+    opacity: 0.9;
+}
+
+.emergency-number {
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+/* Меню */
 .main-nav {
-    background: #004494;
-    color: white;
+    flex: 1;
 }
 
 .nav-list {
@@ -248,8 +225,8 @@ h3 {
     margin: 0;
     padding: 0;
     display: flex;
+    gap: 0.25rem;
     flex-wrap: wrap;
-    gap: 0;
 }
 
 .nav-item {
@@ -258,231 +235,167 @@ h3 {
 
 .nav-link {
     display: block;
-    padding: 0.75rem 1rem;
-    color: white;
-    font-weight: 500;
+    padding: 0.5rem 0.75rem;
+    color: #333;
     text-decoration: none;
-    cursor: pointer;
-    background: transparent;
+    font-size: 0.95rem;
+    border-radius: 4px;
+    transition: background 0.2s, color 0.2s;
     border: none;
+    background: none;
+    cursor: pointer;
     font-family: inherit;
-    font-size: inherit;
 }
 
-    .nav-link.active,
-    .nav-link:hover {
-        background: rgba(255, 255, 255, 0.15);
-        text-decoration: none;
+    .nav-link:hover,
+    .nav-link.active {
+        background: #1a50b2;
+        color: #fff;
     }
 
 .dropdown-toggle {
     display: flex;
     align-items: center;
-    gap: 6px;
-    padding: 0.75rem 1rem;
-    color: white;
-    font-weight: 500;
-    text-decoration: none;
-    cursor: pointer;
-    background: transparent;
-    border: none;
-    font-family: inherit;
-    font-size: inherit;
-    transition: background 0.2s;
+    gap: 0.25rem;
 }
-
-    .dropdown-toggle:hover,
-    .dropdown-toggle.active,
-    .dropdown-toggle[aria-expanded="true"] {
-        background: rgba(255, 255, 255, 0.15);
-    }
-
-    .dropdown-toggle:focus-visible {
-        outline: 3px solid #ffffff;
-        outline-offset: -3px;
-    }
 
 .dropdown-arrow {
-    font-size: 10px;
-    opacity: 0.7;
+    font-size: 0.7rem;
     transition: transform 0.2s;
-    display: inline-block;
 }
 
-.dropdown-toggle[aria-expanded="true"] .dropdown-arrow {
+.nav-item.open .dropdown-arrow {
     transform: rotate(180deg);
 }
 
-.dropdown {
+.dropdown-menu {
     position: absolute;
     top: 100%;
     left: 0;
-    background: white;
-    border: 1px solid #ddd;
+    background: #fff;
+    min-width: 280px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    border-radius: 4px;
     list-style: none;
     margin: 0;
     padding: 0.5rem 0;
-    min-width: 260px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: opacity 0.2s, transform 0.2s, visibility 0.2s;
     z-index: 100;
 }
 
-    .dropdown a {
-        display: block;
-        padding: 0.5rem 1rem;
-        color: #222;
-        text-decoration: none;
-    }
-
-        .dropdown a.active,
-        .dropdown a:hover {
-            background: #f0f4f8;
-            text-decoration: none;
-        }
-
-/* ============================================
-   SIDEBAR
-   ============================================ */
-.sidebar-backdrop {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.4);
-    z-index: 200;
+.nav-item.open .dropdown-menu {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
 }
 
-.sidebar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 280px;
-    height: 100%;
-    background: white;
-    transform: translateX(-100%);
-    transition: transform 0.2s ease;
-    z-index: 210;
-    overflow-y: auto;
-}
-
-    .sidebar.open {
-        transform: translateX(0);
-    }
-
-.sidebar-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 1rem;
-    background: #0057b8;
-    color: white;
-}
-
-.sidebar-title {
-    font-weight: 600;
-    font-size: 16px;
-}
-
-.sidebar-close {
-    background: transparent;
-    border: none;
-    color: white;
-    font-size: 1.5rem;
-    cursor: pointer;
-    padding: 4px 8px;
-    border-radius: 4px;
-}
-
-    .sidebar-close:hover {
-        background: rgba(255, 255, 255, 0.15);
-    }
-
-.sidebar-list {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-}
-
-.sidebar-link {
+.dropdown-link {
     display: block;
-    padding: 0.75rem 1rem;
-    color: #1a202c;
+    padding: 0.5rem 1rem;
+    color: #333;
     text-decoration: none;
-    border-bottom: 1px solid #e2e8f0;
-    transition: background 0.15s;
+    font-size: 0.9rem;
+    transition: background 0.2s, color 0.2s;
 }
 
-    .sidebar-link:hover {
-        background: #f0f4f8;
-        text-decoration: none;
+    .dropdown-link:hover,
+    .dropdown-link.active {
+        background: #1a50b2;
+        color: #fff;
     }
 
-    .sidebar-link.active {
-        background: #e9f2ff;
-        color: #0057b8;
-        font-weight: 600;
-    }
-
-/* Dropdown group (кнопка с выпадающим подменю) */
-.sidebar-group {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    width: 100%;
-    padding: 0.75rem 1rem;
-    background: #f8f9fa;
+/* Кнопка мобильного меню */
+.menu-toggle {
+    display: none;
+    flex-direction: column;
+    gap: 4px;
+    background: none;
     border: none;
-    border-bottom: 1px solid #e2e8f0;
-    font-weight: 600;
-    font-size: 15px;
-    color: #1a202c;
     cursor: pointer;
-    text-align: left;
-    font-family: inherit;
-    transition: background 0.15s;
+    padding: 0.5rem;
 }
 
-    .sidebar-group:hover {
-        background: #e9ecef;
-    }
-
-    .sidebar-group.expanded {
-        background: #e9f2ff;
-        color: #0057b8;
-    }
-
-.sidebar-arrow {
-    font-size: 10px;
-    opacity: 0.6;
-}
-
-/* Вложенное подменю */
-.sidebar-submenu {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    background: #f8f9fa;
-}
-
-    .sidebar-submenu a {
+    .menu-toggle span {
         display: block;
-        padding: 0.65rem 1rem 0.65rem 2rem;
-        color: #4a5568;
-        text-decoration: none;
-        border-bottom: 1px solid #e2e8f0;
-        font-size: 14px;
-        transition: all 0.15s;
+        width: 24px;
+        height: 3px;
+        background: #333;
+        border-radius: 2px;
+        transition: transform 0.2s, opacity 0.2s;
     }
 
-        .sidebar-submenu a:hover {
-            background: #e9ecef;
-            color: #0057b8;
-            padding-left: 2.25rem;
+    .menu-toggle.open span:nth-child(1) {
+        transform: translateY(7px) rotate(45deg);
+    }
+
+    .menu-toggle.open span:nth-child(2) {
+        opacity: 0;
+    }
+
+    .menu-toggle.open span:nth-child(3) {
+        transform: translateY(-7px) rotate(-45deg);
+    }
+
+/* Мобильная версия */
+@media (max-width: 1024px) {
+    .menu-toggle {
+        display: flex;
+    }
+
+    .main-nav {
+        position: fixed;
+        top: 70px;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: #fff;
+        overflow-y: auto;
+        transform: translateX(-100%);
+        transition: transform 0.3s;
+        z-index: 999;
+    }
+
+        .main-nav.open {
+            transform: translateX(0);
         }
 
-        .sidebar-submenu a.active {
-            background: #dbeafe;
-            color: #0057b8;
-            font-weight: 600;
-        }
+    .nav-list {
+        flex-direction: column;
+        padding: 1rem;
+    }
+
+    .nav-link {
+        padding: 0.75rem 1rem;
+        font-size: 1rem;
+    }
+
+    .dropdown-menu {
+        position: static;
+        box-shadow: none;
+        opacity: 1;
+        visibility: visible;
+        transform: none;
+        display: none;
+        padding-left: 1rem;
+        background: #f5f5f5;
+    }
+
+    .nav-item.open .dropdown-menu {
+        display: block;
+    }
+
+    .emergency-btn {
+        padding: 0.4rem 0.75rem;
+    }
+
+    .emergency-number {
+        font-size: 1.25rem;
+    }
+}
+
 /* ============================================
    HERO SECTION
    ============================================ */
@@ -728,8 +641,6 @@ h3 {
     margin-top: 1.5em;
     color: #1a202c;
 }
-
-
 
 .content-body ul,
 .content-body ol {
@@ -1164,8 +1075,6 @@ h3 {
         width: 100%;
     }
 
-
-
     .transparency-layout {
         grid-template-columns: 1fr !important;
     }
@@ -1174,6 +1083,7 @@ h3 {
         margin-bottom: 1.5rem;
     }
 }
+
 /* ============================================
    FEEDBACK BUTTON
    ============================================ */
@@ -1807,9 +1717,8 @@ h3 {
     color: #dc3545;
 }
 
-
 /* ============================================
-   TRANSPARENCY
+   TRANSPARENCY FILTERS
    ============================================ */
 .transparency-filters {
     display: flex;
@@ -1941,54 +1850,6 @@ h3 {
    RESPONSIVE
    ============================================ */
 @media (max-width: 768px) {
-    .hamburger {
-        display: flex;
-    }
-
-    .main-nav {
-        display: none;
-    }
-
-    .brand-title {
-        font-size: 1.15rem;
-    }
-
-    .brand-subtitle {
-        font-size: 10px;
-    }
-
-    .header-emergency {
-        font-size: 11px;
-        padding: 6px 10px;
-    }
-
-        .header-emergency strong {
-            font-size: 14px;
-        }
-
-    .hero {
-        padding-block: 2.5rem;
-    }
-
-        .hero h1 {
-            font-size: 2rem;
-        }
-
-    .hero-subtitle {
-        font-size: 1.05rem;
-    }
-
-    .hero-actions {
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    .btn-hero-primary,
-    .btn-hero-secondary {
-        text-align: center;
-    }
-
-
     .contacts-grid {
         grid-template-columns: 1fr;
     }
@@ -2073,7 +1934,6 @@ h3 {
         transition-duration: 0.01ms !important;
     }
 }
-
 
 /* ============================================
    UTILITIES
@@ -2323,7 +2183,6 @@ h3 {
         font-weight: 500;
     }
 
-
 /* ============================================
    PAGE UPDATE DATE
    ============================================ */
@@ -2340,10 +2199,9 @@ h3 {
 }
 
 /* ============================================
-   PRINT STYLES (печатная версия)
+   PRINT STYLES
    ============================================ */
 @media print {
-    /* Скрываем элементы не нужные при печати */
     .header,
     .main-nav,
     .sidebar,
@@ -2368,7 +2226,6 @@ h3 {
         display: none !important;
     }
 
-    /* Сброс стилей для печати */
     body {
         background: white !important;
         color: black !important;
@@ -2376,7 +2233,6 @@ h3 {
         line-height: 1.5 !important;
     }
 
-    /* Контейнер на всю ширину */
     .container {
         width: 100% !important;
         max-width: none !important;
@@ -2388,7 +2244,6 @@ h3 {
         padding: 0 !important;
     }
 
-    /* Убираем градиенты и фоны */
     .hero {
         background: none !important;
         color: black !important;
@@ -2400,7 +2255,6 @@ h3 {
             color: black !important;
         }
 
-    /* Типографика для печати */
     h1, h2, h3, h4, h5, h6 {
         color: black !important;
         page-break-after: avoid;
@@ -2427,7 +2281,6 @@ h3 {
         widows: 3;
     }
 
-    /* Ссылки — показываем URL */
     a {
         color: black !important;
         text-decoration: underline !important;
@@ -2445,7 +2298,6 @@ h3 {
             content: "";
         }
 
-    /* Таблицы тарифов — оптимизированные */
     .tariff-card {
         border: 1px solid black !important;
         page-break-inside: avoid;
@@ -2463,7 +2315,6 @@ h3 {
         color: black !important;
     }
 
-    /* Калькулятор — печатаем результат */
     .tariff-calculator {
         border: 1px solid black !important;
         background: white !important;
@@ -2479,13 +2330,11 @@ h3 {
         color: black !important;
     }
 
-    /* Изображения */
     img {
         max-width: 100% !important;
         page-break-inside: avoid;
     }
 
-    /* Отступы и разрывы страниц */
     .page-updated {
         background: none !important;
         border: 1px solid #999 !important;
@@ -2493,7 +2342,6 @@ h3 {
         padding: 4pt 8pt;
     }
 
-    /* Заголовок документа */
     .print-header {
         display: block !important;
         text-align: center;
@@ -2512,7 +2360,6 @@ h3 {
             color: #666;
         }
 
-    /* Футер при печати */
     .print-footer {
         display: block !important;
         margin-top: 30pt;
@@ -2523,13 +2370,11 @@ h3 {
         text-align: center;
     }
 
-    /* Убираем тени и эффекты */
     * {
         box-shadow: none !important;
         text-shadow: none !important;
     }
 
-    /* Принудительный перенос для больших таблиц */
     table {
         page-break-inside: auto;
     }
@@ -2539,7 +2384,6 @@ h3 {
     }
 }
 
-/* Кнопка "Печать" — видна только на экране */
 .print-trigger {
     display: inline-flex;
     align-items: center;
@@ -2561,14 +2405,13 @@ h3 {
         color: #0057b8;
     }
 
-/* Скрываем элементы, которые показываем только при печати */
 .print-header,
 .print-footer {
     display: none;
 }
 
 /* ============================================
-   COMPANY DETAILS (реквизиты ANRE)
+   COMPANY DETAILS
    ============================================ */
 .company-details {
     margin-top: 3rem;
