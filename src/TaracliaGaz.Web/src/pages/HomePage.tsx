@@ -3,24 +3,26 @@ import { Link } from "react-router-dom";
 import { getNews, getAnnouncements, getGallery } from "../api/contentApi";
 import type { NewsPostSummary, Announcement, GalleryImage } from "../types/content";
 import SEO from "../components/SEO";
-import { resolveUploadUrl } from "../utils/urls";
+import { resolveUploadUrl, resolveThumbnailUrl } from "../utils/urls";
 import { IconMegaphone, IconNews, IconGallery, IconCalendar } from "../components/icons";
 import { sanitizeHtml } from "../utils/sanitize";
+import { useLanguage, dateLocale } from "../context/LanguageContext";
 
 export default function HomePage() {
+    const { language, t } = useLanguage();
     const [news, setNews] = useState<NewsPostSummary[]>([]);
     const [announcements, setAnnouncements] = useState<Announcement[]>([]);
     const [gallery, setGallery] = useState<GalleryImage[]>([]);
 
     useEffect(() => {
-        getNews().then(setNews).catch(console.error);
-        getAnnouncements().then(setAnnouncements).catch(console.error);
+        getNews(language).then(setNews).catch(console.error);
+        getAnnouncements(language).then(setAnnouncements).catch(console.error);
         getGallery().then(setGallery).catch(console.error);
-    }, []);
+    }, [language]);
 
     const formatDate = (iso: string) => {
         try {
-            return new Date(iso).toLocaleDateString("ru-RU", {
+            return new Date(iso).toLocaleDateString(dateLocale(language), {
                 day: "2-digit", month: "2-digit", year: "numeric",
             });
         } catch { return iso; }
@@ -29,22 +31,22 @@ export default function HomePage() {
     return (
         <>
             <SEO
-                title="Главная"
-                description="SRL «Taraclia Gaz» — поставка природного газа в Тараклийском районе Молдовы. Актуальные тарифы, новости, объявления, тендеры. Аварийная служба 24/7: 904"
+                title={t('nav.home')}
+                description={t('seo.homeDesc')}
                 path="/"
             />
             <section className="hero">
                 <div className="container">
-                    <h1>Тараклия-ГАЗ</h1>
+                    <h1>{t('home.heroTitle')}</h1>
                     <p className="hero-subtitle">
-                        Надёжное газоснабжение для жителей и предприятий Тараклийского района
+                        {t('home.heroSubtitle')}
                     </p>
                     <div className="hero-actions">
                         <a href="tel:904" className="btn btn-hero-primary">
-                            Аварийная служба: 904
+                            {t('home.emergency')}
                         </a>
                         <Link to="/contacts" className="btn btn-hero-secondary">
-                            Контакты
+                            {t('home.contacts')}
                         </Link>
                     </div>
                 </div>
@@ -53,7 +55,7 @@ export default function HomePage() {
             {announcements.length > 0 && (
                 <section className="section">
                     <div className="container">
-                        <h2><IconMegaphone /> Объявления</h2>
+                        <h2><IconMegaphone /> {t('home.announcements')}</h2>
                         <ul className="announcements-list">
                             {announcements.slice(0, 3).map((a) => (
                                 <li key={a.id} className={a.isPinned ? "pinned" : ""}>
@@ -69,7 +71,7 @@ export default function HomePage() {
                             ))}
                         </ul>
                         <Link to="/announcements" className="read-more">
-                            Все объявления →
+                            {t('home.allAnnouncements')}
                         </Link>
                     </div>
                 </section>
@@ -77,9 +79,9 @@ export default function HomePage() {
 
             <section className="section">
                 <div className="container">
-                    <h2><IconNews /> Новости</h2>
+                    <h2><IconNews /> {t('home.news')}</h2>
                     {news.length === 0 ? (
-                        <p>Новостей пока нет</p>
+                        <p>{t('news.empty')}</p>
                     ) : (
                         <>
                             <div className="news-grid">
@@ -91,13 +93,13 @@ export default function HomePage() {
                                         <small><IconCalendar /> {formatDate(post.publishedAt)}</small>
                                         <p>{post.summary}</p>
                                         <Link to={`/news/${post.id}`} className="read-more">
-                                            Читать далее →
+                                            {t('common.readMore')}
                                         </Link>
                                     </article>
                                 ))}
                             </div>
                             <Link to="/news" className="read-more">
-                                Все новости →
+                                {t('home.allNews')}
                             </Link>
                         </>
                     )}
@@ -107,21 +109,29 @@ export default function HomePage() {
             {gallery.length > 0 && (
                 <section className="section">
                     <div className="container">
-                        <h2><IconGallery /> Галерея</h2>
+                        <h2><IconGallery /> {t('home.gallery')}</h2>
                         <div className="gallery-grid">
                             {gallery.slice(0, 6).map((img) => (
                                 <figure key={img.id} className="gallery-item">
                                     <img
-                                        src={resolveUploadUrl(img.imageUrl)}
+                                        src={resolveThumbnailUrl(img.imageUrl)}
                                         alt={img.caption}
                                         loading="lazy"
+                                        decoding="async"
+                                        onError={(e) => {
+                                            // Миниатюры может не быть — откатываемся на полный файл
+                                            const full = resolveUploadUrl(img.imageUrl);
+                                            if (e.currentTarget.src !== full) {
+                                                e.currentTarget.src = full;
+                                            }
+                                        }}
                                     />
                                     {img.caption && <figcaption>{img.caption}</figcaption>}
                                 </figure>
                             ))}
                         </div>
                         <Link to="/gallery" className="read-more">
-                            Вся галерея →
+                            {t('home.allGallery')}
                         </Link>
                     </div>
                 </section>

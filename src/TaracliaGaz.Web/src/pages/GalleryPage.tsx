@@ -2,10 +2,12 @@ import { useEffect, useState } from "react";
 import { getGallery } from "../api/contentApi";
 import type { GalleryImage } from "../types/content";
 import SEO from "../components/SEO";
-import { resolveUploadUrl } from "../utils/urls";
+import { resolveUploadUrl, resolveThumbnailUrl } from "../utils/urls";
 import { IconGallery, IconClose } from "../components/icons";
+import { useLanguage } from "../context/LanguageContext";
 
 export default function GalleryPage() {
+    const { t } = useLanguage();
     const [images, setImages] = useState<GalleryImage[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedImage, setSelectedImage] = useState<GalleryImage | null>(null);
@@ -26,14 +28,14 @@ export default function GalleryPage() {
 
     return (
         <>
-            <SEO title="Галерея" description="Фотогалерея SRL «Taraclia Gaz»" path="/gallery" />
+            <SEO title={t('gallery.title')} description={t('seo.galleryDesc')} path="/gallery" />
             <section className="section">
                 <div className="container">
-                    <h1><IconGallery width={32} height={32} /> Галерея</h1>
+                    <h1><IconGallery width={32} height={32} /> {t('gallery.title')}</h1>
                     {loading ? (
-                        <p>Загрузка...</p>
+                        <p>{t('common.loading')}</p>
                     ) : images.length === 0 ? (
-                        <p>Изображений пока нет</p>
+                        <p>{t('gallery.empty')}</p>
                     ) : (
                         <div className="gallery-grid">
                             {images.map((img) => (
@@ -46,9 +48,17 @@ export default function GalleryPage() {
                                     onKeyDown={(e) => { if (e.key === "Enter") setSelectedImage(img); }}
                                 >
                                     <img
-                                        src={resolveUploadUrl(img.imageUrl)}
+                                        src={resolveThumbnailUrl(img.imageUrl)}
                                         alt={img.caption}
                                         loading="lazy"
+                                        decoding="async"
+                                        onError={(e) => {
+                                            // Миниатюры может не быть — откатываемся на полный файл
+                                            const full = resolveUploadUrl(img.imageUrl);
+                                            if (e.currentTarget.src !== full) {
+                                                e.currentTarget.src = full;
+                                            }
+                                        }}
                                     />
                                     {img.caption && <figcaption>{img.caption}</figcaption>}
                                 </figure>
@@ -69,7 +79,7 @@ export default function GalleryPage() {
                     <button
                         className="lightbox-close"
                         onClick={() => setSelectedImage(null)}
-                        aria-label="Закрыть"
+                        aria-label={t('close')}
                     >
                         <IconClose width={32} height={32} />
                     </button>

@@ -1,7 +1,10 @@
+
 """
 Административные эндпоинты — CRUD для всего контента.
 Все эндпоинты защищены JWT (get_current_admin).
 """
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -22,6 +25,8 @@ from ..schemas import (
 )
 from .auth_router import get_current_admin
 from ..models import User
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(
     prefix="/api/admin",
@@ -59,13 +64,26 @@ def admin_create_page(item: PageCreate, db: Session = Depends(get_db)):
 @router.put("/pages/{id}", response_model=PageRead)
 def admin_update_page(id: int, item: PageUpdate, db: Session = Depends(get_db)):
     page = db.get(Page, id)
+
     if not page:
         raise HTTPException(404, "Page not found")
+
     for field, value in item.model_dump(exclude_unset=True).items():
         setattr(page, field, value)
-    db.commit()
-    db.refresh(page)
-    return page
+
+    try:
+        db.commit()
+        db.refresh(page)
+        return page
+
+    except Exception:
+        db.rollback()
+        # Детали — только в серверный лог, наружу отдаём общий текст
+        logger.exception("Page update failed (id=%s)", id)
+        raise HTTPException(
+            status_code=500,
+            detail="Page update failed"
+        )
 
 
 @router.delete("/pages/{id}", status_code=status.HTTP_204_NO_CONTENT)

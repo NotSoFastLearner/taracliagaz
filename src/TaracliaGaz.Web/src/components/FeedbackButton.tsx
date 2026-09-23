@@ -1,23 +1,18 @@
 import { useState } from "react";
-import { z } from "zod";
 import { submitContact } from "../api/contentApi";
+import { useLanguage } from "../context/LanguageContext";
 
-const feedbackSchema = z.object({
-    name: z.string().min(2, "Укажите имя").max(100),
-    email: z.string().email("Некорректный email"),
-    message: z.string().min(5, "Минимум 5 символов").max(2000),
-    type: z.enum(["bug", "idea", "other"]),
-});
+type FeedbackType = "bug" | "idea" | "other";
 
-type FeedbackForm = z.infer<typeof feedbackSchema>;
-
-const TYPE_LABELS = {
-    bug: "Нашёл ошибку",
-    idea: "Есть идея",
-    other: "✉️ Другое",
-};
+interface FeedbackForm {
+    name: string;
+    email: string;
+    message: string;
+    type: FeedbackType;
+}
 
 export default function FeedbackButton() {
+    const { t } = useLanguage();
     const [isOpen, setIsOpen] = useState(false);
     const [form, setForm] = useState<FeedbackForm>({
         name: "",
@@ -28,9 +23,26 @@ export default function FeedbackButton() {
     const [status, setStatus] = useState<"idle" | "sending" | "success" | "error">("idle");
     const [errors, setErrors] = useState<Record<string, string>>({});
 
+    const TYPE_LABELS: Record<FeedbackType, string> = {
+        bug: t('feedback.bug'),
+        idea: t('feedback.idea'),
+        other: t('feedback.other'),
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setErrors({});
+
+        // Схема создаётся здесь, чтобы сообщения об ошибках были на текущем языке.
+        // zod подгружается лениво — не раздувает основной бандл (нужен
+        // только при реальной отправке формы)
+        const { z } = await import("zod");
+        const feedbackSchema = z.object({
+            name: z.string().min(2, t('feedback.nameError')).max(100),
+            email: z.string().email(t('feedback.emailError')),
+            message: z.string().min(5, t('feedback.messageError')).max(2000),
+            type: z.enum(["bug", "idea", "other"]),
+        });
 
         const result = feedbackSchema.safeParse(form);
         if (!result.success) {
@@ -50,7 +62,7 @@ export default function FeedbackButton() {
             await submitContact({
                 name: `[Feedback: ${TYPE_LABELS[form.type]}] ${form.name}`,
                 email: form.email,
-                message: `Тип: ${TYPE_LABELS[form.type]}\n\n${form.message}`,
+                message: `${t('feedback.typeLabel')}: ${TYPE_LABELS[form.type]}\n\n${form.message}`,
                 websiteUrl: "",  // honeypot
             });
             setStatus("success");
@@ -69,20 +81,20 @@ export default function FeedbackButton() {
             <button
                 className={`feedback-toggle ${isOpen ? "open" : ""}`}
                 onClick={() => setIsOpen(!isOpen)}
-                aria-label={isOpen ? "Закрыть форму обратной связи" : "Открыть форму обратной связи"}
-                title="Сообщить об ошибке или предложить улучшение"
+                aria-label={isOpen ? t('feedback.closeForm') : t('feedback.open')}
+                title={t('feedback.tooltip')}
             >
                 {isOpen ? "✕" : "💬"}
             </button>
 
             {isOpen && (
-                <div className="feedback-modal" role="dialog" aria-label="Обратная связь">
+                <div className="feedback-modal" role="dialog" aria-label={t('feedback.dialogLabel')}>
                     <div className="feedback-header">
-                        <h3>Помогите улучшить сайт</h3>
+                        <h3>{t('feedback.title')}</h3>
                         <button
                             onClick={() => setIsOpen(false)}
                             className="feedback-close"
-                            aria-label="Закрыть"
+                            aria-label={t('close')}
                         >
                             ✕
                         </button>
@@ -90,7 +102,7 @@ export default function FeedbackButton() {
 
                     {status === "success" ? (
                         <div className="feedback-success">
-                            Спасибо! Мы получили ваше сообщение.
+                            {t('feedback.success')}
                         </div>
                     ) : (
                         <form onSubmit={handleSubmit} className="feedback-form">
@@ -108,7 +120,7 @@ export default function FeedbackButton() {
                             </div>
 
                             <div className="form-field">
-                                <label htmlFor="fb-name">Имя</label>
+                                <label htmlFor="fb-name">{t('form.name')}</label>
                                 <input
                                     id="fb-name"
                                     type="text"
@@ -130,25 +142,25 @@ export default function FeedbackButton() {
                             </div>
 
                             <div className="form-field">
-                                <label htmlFor="fb-message">Сообщение</label>
+                                <label htmlFor="fb-message">{t('form.message')}</label>
                                 <textarea
                                     id="fb-message"
                                     value={form.message}
                                     onChange={(e) => setForm({ ...form, message: e.target.value })}
                                     rows={4}
-                                    placeholder="Опишите ошибку или идею..."
+                                    placeholder={t('feedback.placeholder')}
                                 />
                                 {errors.message && <span className="field-error">{errors.message}</span>}
                             </div>
 
                             {status === "error" && (
                                 <div className="alert alert-error">
-                                    Ошибка отправки. Попробуйте позже.
+                                    {t('contacts.sendError')}
                                 </div>
                             )}
 
                             <button type="submit" disabled={status === "sending"}>
-                                {status === "sending" ? "Отправка..." : "Отправить"}
+                                {status === "sending" ? t('contacts.sending') : t('feedback.send')}
                             </button>
                         </form>
                     )}

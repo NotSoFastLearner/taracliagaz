@@ -116,6 +116,11 @@ img {
     flex-direction: column;
     min-width: 0; /* защита от flex-blowout */
     width: 100%;
+    /* CLS: футер изначально ниже первого экрана, поэтому подгрузка
+       контента (меню/новости/объявления) не сдвигает его в зоне
+       видимости — Lighthouse перестаёт считать layout shift футера */
+    min-height: 100vh;
+    min-height: 100dvh;
 }
 
     .site-main > .section {

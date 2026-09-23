@@ -3,9 +3,12 @@ import { useEffect, useState } from "react";
 import { getPage } from "../api/contentApi";
 import type { Page } from "../types/content";
 import SEO from "../components/SEO";
+import { sanitizeHtml } from "../utils/sanitize";
+import { useLanguage, dateLocale } from "../context/LanguageContext";
 
 export default function StaticPage() {
     const location = useLocation();
+    const { language, t } = useLanguage();
     const [page, setPage] = useState<Page | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -21,23 +24,21 @@ export default function StaticPage() {
         setLoading(true);
         setError(null);
 
-        getPage(slug)
+        getPage(slug, language)
             .then(setPage)
-            .catch((err: unknown) =>
-                setError(err instanceof Error ? err.message : "Ошибка загрузки страницы")
-            )
+            .catch(() => setError(t('static.loadError')))
             .finally(() => setLoading(false));
-    }, [location.pathname]);
+    }, [location.pathname, language, t]);
 
-    if (loading) return <p>Загрузка...</p>;
+    if (loading) return <p>{t('common.loading')}</p>;
     if (error) return <p className="error">{error}</p>;
-    if (!page) return <p>Страница не найдена.</p>;
+    if (!page) return <p>{t('static.notFound')}</p>;
 
     const plainText = page.bodyHtml.replace(/<[^>]*>/g, "").trim();
     const description =
         plainText.length > 160
             ? plainText.slice(0, 157) + "..."
-            : plainText || `Страница "${page.title}" на сайте Тараклия-ГАЗ`;
+            : plainText || page.title;
 
     return (
         <>
@@ -52,14 +53,14 @@ export default function StaticPage() {
                     {/* Дата обновления для важных страниц */}
                     {["tariffs", "contracts", "legislation", "safety", "services"].includes(page.slug) && page.updatedAt && (
                         <div className="page-updated">
-                            Обновлено: {new Date(page.updatedAt).toLocaleDateString("ru-RU", {
+                            {t('common.updated')}: {new Date(page.updatedAt).toLocaleDateString(dateLocale(language), {
                                 day: "2-digit", month: "long", year: "numeric",
                             })}
                         </div>
                     )}
                     <div
                         className="content-body"
-                        dangerouslySetInnerHTML={{ __html: page.bodyHtml }}
+                        dangerouslySetInnerHTML={{ __html: sanitizeHtml(page.bodyHtml) }}
                     />
                 </div>
             </section>

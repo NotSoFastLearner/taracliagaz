@@ -70,4 +70,12 @@ export interface MenuCategory {
     updatedAt: string;
 }
 
+/** Пункт меню для Header/Sidebar (строится menuHelpers.buildMenuTree). */
+export interface MenuItem {
+    label: string;
+    path: string;
+    external?: boolean;
+    children?: MenuItem[];
+}
+
 

@@ -11,6 +11,10 @@ if (apiOrigin && apiOrigin !== window.location.origin) {
     const link = document.createElement("link");
     link.rel = "preconnect";
     link.href = apiOrigin;
+    // fetch() к API идёт в режиме CORS — без crossorigin браузер держит
+    // прогретое соединение в другом пуле и не использует его (Lighthouse:
+    // "Unused preconnect")
+    link.crossOrigin = "anonymous";
     document.head.appendChild(link);
 }
 

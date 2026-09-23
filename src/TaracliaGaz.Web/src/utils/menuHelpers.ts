@@ -1,5 +1,4 @@
-import type { MenuCategory } from "../types/content";
-import type { MenuItem } from "../components/Header";
+import type { MenuCategory, MenuItem } from "../types/content";
 
 /**
  * Внутренний тип для построения дерева меню.
@@ -9,8 +8,26 @@ interface MenuTreeNode {
     id: number;
     to: string;
     label: string;
+    external: boolean;
     parentId: number | null;
     children: MenuTreeNode[];
+}
+
+/**
+ * Нормализует slug из БД в путь для роутера.
+ * - "#"           → "#" (родитель-заглушка, не ссылка)
+ * - "http(s)://…" → как есть (внешняя ссылка)
+ * - "/tenders"    → как есть (уже абсолютный путь)
+ * - "page/about"  → "/page/about"
+ */
+function normalizePath(slug: string): { to: string; external: boolean } {
+    if (!slug || slug === "#") {
+        return { to: "#", external: false };
+    }
+    if (/^https?:\/\//i.test(slug)) {
+        return { to: slug, external: true };
+    }
+    return { to: slug.startsWith("/") ? slug : `/${slug}`, external: false };
 }
 
 /**
@@ -33,10 +50,12 @@ export function buildMenuTree(items: MenuCategory[]): MenuItem[] {
     const roots: MenuTreeNode[] = [];
 
     items.forEach((item) => {
+        const { to, external } = normalizePath(item.slug);
         nodeMap.set(item.id, {
             id: item.id,
-            to: item.slug.startsWith("/") ? item.slug : `/${item.slug}`,
+            to,
             label: item.title,
+            external,
             parentId: item.parentId,
             children: [],
         });
@@ -114,22 +133,25 @@ export function buildMenuTree(items: MenuCategory[]): MenuItem[] {
             return {
                 label: node.label,
                 path: node.to,
+                ...(node.external ? { external: true } : {}),
             };
         } else {
             const childItems = node.children
-                .map((child) => toMenuItem(child, depth + 1))
+                .map((child: MenuTreeNode) => toMenuItem(child, depth + 1))
                 .filter((item): item is MenuItem => item !== null);
 
             if (childItems.length === 0) {
                 return {
                     label: node.label,
                     path: node.to,
+                    ...(node.external ? { external: true } : {}),
                 };
             }
 
             return {
                 label: node.label,
                 path: node.to,
+                ...(node.external ? { external: true } : {}),
                 children: childItems,
             };
         }

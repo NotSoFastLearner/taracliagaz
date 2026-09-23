@@ -4,18 +4,24 @@ import { getTenders } from "../api/contentApi";
 import type { Tender } from "../types/content";
 import SEO from "../components/SEO";
 import { IconCalendar, IconClock } from "../components/icons";
+import { useLanguage, dateLocale } from "../context/LanguageContext";
 
 export default function TendersPage() {
+    const { language, t } = useLanguage();
     const [tenders, setTenders] = useState<Tender[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        getTenders().then(setTenders).catch(console.error).finally(() => setLoading(false));
-    }, []);
+        setLoading(true);
+        getTenders(language)
+            .then(setTenders)
+            .catch(console.error)
+            .finally(() => setLoading(false));
+    }, [language]);
 
     const formatDate = (iso: string) => {
         try {
-            return new Date(iso).toLocaleDateString("ru-RU", {
+            return new Date(iso).toLocaleDateString(dateLocale(language), {
                 day: "2-digit", month: "2-digit", year: "numeric",
             });
         } catch { return iso; }
@@ -23,45 +29,45 @@ export default function TendersPage() {
 
     const getStatusBadge = (deadline?: string | null) => {
         if (!deadline) {
-            return { label: "Активный тендер", className: "badge optional" };
+            return { label: t('tenders.active'), className: "badge optional" };
         }
         const dl = new Date(deadline);
         const now = new Date();
         if (dl < now) {
-            return { label: "Приём заявок завершён", className: "badge required" };
+            return { label: t('tenders.closed'), className: "badge required" };
         }
         return {
-            label: `Приём заявок до ${formatDate(deadline)}`,
+            label: `${t('tenders.until')} ${formatDate(deadline)}`,
             className: "badge optional",
         };
     };
 
     return (
         <>
-            <SEO title="Тендеры" description="Тендеры SRL «Taraclia Gaz»" path="/tenders" />
+            <SEO title={t('tenders.title')} description={t('seo.tendersDesc')} path="/tenders" />
             <section className="section">
                 <div className="container">
-                    <h1>Тендеры</h1>
+                    <h1>{t('tenders.title')}</h1>
                     {loading ? (
-                        <p>Загрузка...</p>
+                        <p>{t('common.loading')}</p>
                     ) : tenders.length === 0 ? (
-                        <p>Тендеров пока нет</p>
+                        <p>{t('tenders.empty')}</p>
                     ) : (
                         <ul className="tenders-list">
-                            {tenders.map((t) => {
-                                const badge = getStatusBadge(t.deadlineAt);
+                            {tenders.map((tender) => {
+                                const badge = getStatusBadge(tender.deadlineAt);
                                 return (
-                                    <li key={t.id}>
+                                    <li key={tender.id}>
                                         <h2>
-                                            <Link to={`/tenders/${t.id}`}>{t.title}</Link>
+                                            <Link to={`/tenders/${tender.id}`}>{tender.title}</Link>
                                         </h2>
                                         <div className="tender-meta-inline">
                                             <small>
-                                                <IconCalendar /> Опубликовано: {formatDate(t.publishedAt)}
+                                                <IconCalendar /> {t('common.published')}: {formatDate(tender.publishedAt)}
                                             </small>
-                                            {t.deadlineAt && (
+                                            {tender.deadlineAt && (
                                                 <small>
-                                                    <IconClock /> Дедлайн: {formatDate(t.deadlineAt)}
+                                                    <IconClock /> {t('common.deadline')}: {formatDate(tender.deadlineAt)}
                                                 </small>
                                             )}
                                         </div>

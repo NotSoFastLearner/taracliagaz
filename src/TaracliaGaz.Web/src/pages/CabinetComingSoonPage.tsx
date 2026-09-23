@@ -1,26 +1,28 @@
 import { Link } from "react-router-dom";
 import SEO from "../components/SEO";
+import { useLanguage } from "../context/LanguageContext";
 
 export default function CabinetComingSoonPage() {
+    const { t } = useLanguage();
+
     return (
         <>
             <SEO
-                title="Личный кабинет (в разработке)"
-                description="Сервис личного кабинета потребителя находится в разработке."
+                title={t('cabinet.title')}
+                description={t('seo.cabinetDesc')}
                 path="/cabinet"
                 noindex
             />
 
             <section className="section">
                 <div className="container">
-                    <h1>Личный кабинет</h1>
+                    <h1>{t('cabinet.title')}</h1>
                     <p style={{ maxWidth: "600px", lineHeight: 1.7 }}>
-                        Сервис личного кабинета находится в разработке.
-                        В будущем здесь будут доступны электронные услуги для потребителей природного газа.
+                        {t('cabinet.text')}
                     </p>
                     <p style={{ marginTop: "2rem" }}>
-                        По всем вопросам обращайтесь в наш офис или по телефонам, указанным в разделе{" "}
-                        <Link to="/contacts">Контакты</Link>.
+                        {t('cabinet.note')}{" "}
+                        <Link to="/contacts">{t('nav.contacts')}</Link>.
                     </p>
                 </div>
             </section>

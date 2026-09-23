@@ -2,8 +2,10 @@ import { useState, type FormEvent } from "react";
 import SEO from "../components/SEO";
 import { submitContact, type ContactFormData } from "../api/contentApi";
 import { IconPhone, IconMail, IconMapPin, IconClock } from "../components/icons";
+import { useLanguage } from "../context/LanguageContext";
 
 export default function ContactsPage() {
+    const { t } = useLanguage();
     const [form, setForm] = useState<ContactFormData>({
         name: "",
         email: "",
@@ -20,16 +22,16 @@ export default function ContactsPage() {
         const errs: Record<string, string> = {};
 
         if (!form.name.trim() || form.name.trim().length < 2) {
-            errs.name = "Введите имя (минимум 2 символа)";
+            errs.name = t('contacts.nameError');
         }
         if (!form.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
-            errs.email = "Введите корректный email";
+            errs.email = t('contacts.emailError');
         }
         if (!form.message.trim() || form.message.trim().length < 10) {
-            errs.message = "Сообщение слишком короткое (минимум 10 символов)";
+            errs.message = t('contacts.messageShort');
         }
         if (form.message.length > 5000) {
-            errs.message = "Сообщение слишком длинное (максимум 5000 символов)";
+            errs.message = t('contacts.messageLong');
         }
 
         setErrors(errs);
@@ -53,7 +55,7 @@ export default function ContactsPage() {
             const msg =
                 err instanceof Error
                     ? err.message
-                    : "Произошла ошибка при отправке. Попробуйте позже.";
+                    : t('contacts.sendError');
             setSubmitError(msg);
         } finally {
             setSubmitting(false);
@@ -74,30 +76,30 @@ export default function ContactsPage() {
     return (
         <>
             <SEO
-                title="Контакты"
-                description="Контактная информация SRL «Taraclia Gaz». Адрес, телефоны, email. Аварийная служба 24/7: 904. Форма обратной связи."
+                title={t('contacts.title')}
+                description={t('seo.contactsDesc')}
                 path="/contacts"
             />
             <section className="section">
                 <div className="container">
-                    <h1>Контакты</h1>
+                    <h1>{t('contacts.title')}</h1>
 
                     <div className="contacts-grid">
                         <div className="contact-info">
-                            <h2>Наши координаты</h2>
+                            <h2>{t('contacts.coords')}</h2>
 
                             <p>
                                 <IconMapPin />{" "}
-                                <strong>Адрес:</strong>
+                                <strong>{t('contacts.address')}:</strong>
                                 <br />
-                                MD-7401, Республика Молдова,
+                                MD-7401, Republica Moldova,
                                 <br />
-                                г. Тараклия, ул. Ленина, 110А
+                                or. Taraclia, str. Lenin, 110A
                             </p>
 
                             <p>
                                 <IconPhone />{" "}
-                                <strong>Телефоны:</strong>
+                                <strong>{t('contacts.phones')}:</strong>
                                 <br />
                                 <a href="tel:+37329422404">+373 (294) 2-24-04</a>
                                 <br />
@@ -107,7 +109,7 @@ export default function ContactsPage() {
                             <p>
                                 <IconPhone />{" "}
                                 <strong>
-                                    Аварийная служба (24/7):
+                                    {t('contacts.emergency')}:
                                 </strong>
                                 <br />
                                 <a href="tel:904" className="emergency">
@@ -126,18 +128,18 @@ export default function ContactsPage() {
 
                             <p>
                                 <IconClock />{" "}
-                                <strong>Режим работы:</strong>
+                                <strong>{t('contacts.workingHours')}:</strong>
                                 <br />
-                                Пн–Пт: 08:00 – 17:00
+                                {t('contacts.workdays')}
                                 <br />
-                                Сб–Вс: выходной
+                                {t('contacts.weekend')}
                                 <br />
-                                <em>Аварийная служба работает круглосуточно</em>
+                                <em>{t('contacts.emergency247')}</em>
                             </p>
                         </div>
 
                         <div className="contact-form">
-                            <h2>Обратная связь</h2>
+                            <h2>{t('contacts.feedback')}</h2>
 
                             {success && (
                                 <div className="alert alert-success" role="alert">
@@ -154,7 +156,7 @@ export default function ContactsPage() {
                             <form onSubmit={handleSubmit} noValidate>
                                 <div className="form-field">
                                     <label htmlFor="contact-name">
-                                        Имя <span className="required">*</span>
+                                        {t('form.name')} <span className="required">*</span>
                                     </label>
                                     <input
                                         id="contact-name"
@@ -210,7 +212,7 @@ export default function ContactsPage() {
 
                                 <div className="form-field">
                                     <label htmlFor="contact-phone">
-                                        Телефон <small>(необязательно)</small>
+                                        {t('form.phone')} <small>({t('contacts.optional')})</small>
                                     </label>
                                     <input
                                         id="contact-phone"
@@ -225,7 +227,7 @@ export default function ContactsPage() {
 
                                 <div className="form-field">
                                     <label htmlFor="contact-message">
-                                        Сообщение <span className="required">*</span>
+                                        {t('form.message')} <span className="required">*</span>
                                     </label>
                                     <textarea
                                         id="contact-message"
@@ -252,13 +254,13 @@ export default function ContactsPage() {
                                         </span>
                                     ) : (
                                         <small id="message-hint">
-                                            {form.message.length}/5000 символов
+                                            {form.message.length}/5000 {t('contacts.charsCount')}
                                         </small>
                                     )}
                                 </div>
 
                                 <button type="submit" disabled={submitting}>
-                                    {submitting ? "Отправка..." : "Отправить сообщение"}
+                                    {submitting ? t('contacts.sending') : t('contacts.send')}
                                 </button>
                             </form>
                         </div>

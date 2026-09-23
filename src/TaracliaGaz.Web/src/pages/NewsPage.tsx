@@ -4,18 +4,24 @@ import { getNews } from "../api/contentApi";
 import type { NewsPostSummary } from "../types/content";
 import SEO from "../components/SEO";
 import { IconNews, IconCalendar } from "../components/icons";
+import { useLanguage, dateLocale } from "../context/LanguageContext";
 
 export default function NewsPage() {
+    const { language, t } = useLanguage();
     const [news, setNews] = useState<NewsPostSummary[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        getNews().then(setNews).catch(console.error).finally(() => setLoading(false));
-    }, []);
+        setLoading(true);
+        getNews(language)
+            .then(setNews)
+            .catch(console.error)
+            .finally(() => setLoading(false));
+    }, [language]);
 
     const formatDate = (iso: string) => {
         try {
-            return new Date(iso).toLocaleDateString("ru-RU", {
+            return new Date(iso).toLocaleDateString(dateLocale(language), {
                 day: "2-digit", month: "2-digit", year: "numeric",
             });
         } catch { return iso; }
@@ -23,14 +29,14 @@ export default function NewsPage() {
 
     return (
         <>
-            <SEO title="Новости" description="Новости и события SRL «Taraclia Gaz»" path="/news" />
+            <SEO title={t('news.title')} description={t('seo.newsDesc')} path="/news" />
             <section className="section">
                 <div className="container">
-                    <h1><IconNews width={32} height={32} /> Новости</h1>
+                    <h1><IconNews width={32} height={32} /> {t('news.title')}</h1>
                     {loading ? (
-                        <p>Загрузка...</p>
+                        <p>{t('common.loading')}</p>
                     ) : news.length === 0 ? (
-                        <p>Новостей пока нет</p>
+                        <p>{t('news.empty')}</p>
                     ) : (
                         <div className="news-grid">
                             {news.map((post) => (
@@ -39,7 +45,7 @@ export default function NewsPage() {
                                     <small><IconCalendar /> {formatDate(post.publishedAt)}</small>
                                     <p>{post.summary}</p>
                                     <Link to={`/news/${post.id}`} className="read-more">
-                                        Читать далее →
+                                        {t('common.readMore')}
                                     </Link>
                                 </article>
                             ))}

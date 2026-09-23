@@ -4,21 +4,24 @@ import type { Announcement } from "../types/content";
 import SEO from "../components/SEO";
 import { IconMegaphone, IconCalendar, IconPin } from "../components/icons";
 import { sanitizeHtml } from "../utils/sanitize";
+import { useLanguage, dateLocale } from "../context/LanguageContext";
 
 export default function AnnouncementsPage() {
+    const { language, t } = useLanguage();
     const [items, setItems] = useState<Announcement[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        getAnnouncements()
+        setLoading(true);
+        getAnnouncements(language)
             .then(setItems)
             .catch(console.error)
             .finally(() => setLoading(false));
-    }, []);
+    }, [language]);
 
     const formatDate = (iso: string) => {
         try {
-            return new Date(iso).toLocaleDateString("ru-RU", {
+            return new Date(iso).toLocaleDateString(dateLocale(language), {
                 day: "2-digit", month: "2-digit", year: "numeric",
             });
         } catch { return iso; }
@@ -26,14 +29,14 @@ export default function AnnouncementsPage() {
 
     return (
         <>
-            <SEO title="Объявления" description="Объявления SRL «Taraclia Gaz»" path="/announcements" />
+            <SEO title={t('announcements.title')} description={t('seo.announcementsDesc')} path="/announcements" />
             <section className="section">
                 <div className="container">
-                    <h1><IconMegaphone width={32} height={32} /> Объявления</h1>
+                    <h1><IconMegaphone width={32} height={32} /> {t('announcements.title')}</h1>
                     {loading ? (
-                        <p>Загрузка...</p>
+                        <p>{t('common.loading')}</p>
                     ) : items.length === 0 ? (
-                        <p>Объявлений пока нет</p>
+                        <p>{t('announcements.empty')}</p>
                     ) : (
                         <ul className="announcements-list">
                             {items.map((a) => (

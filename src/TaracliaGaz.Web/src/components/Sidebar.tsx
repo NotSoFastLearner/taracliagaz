@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { NavLink } from "react-router-dom";
-import type { MenuItem } from "./Header";
+import { useLanguage } from "../context/LanguageContext";
+import type { MenuItem } from "../types/content";
 
 interface SidebarProps {
     isOpen: boolean;
@@ -10,6 +11,7 @@ interface SidebarProps {
 
 export default function Sidebar({ isOpen, onClose, items }: SidebarProps) {
     const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
+    const { t } = useLanguage();
 
     const toggleExpand = (label: string) => {
         setExpandedItems((prev) => {
@@ -34,13 +36,13 @@ export default function Sidebar({ isOpen, onClose, items }: SidebarProps) {
                     aria-hidden="true"
                 />
             )}
-            <aside className={`sidebar ${isOpen ? "open" : ""}`} aria-label="Главное меню">
+            <aside className={`sidebar ${isOpen ? "open" : ""}`} aria-label={t('menu.title')}>
                 <div className="sidebar-header">
-                    <span className="sidebar-title">Меню</span>
+                    <span className="sidebar-title">{t('menu.title')}</span>
                     <button
                         onClick={onClose}
                         className="sidebar-close"
-                        aria-label="Закрыть меню"
+                        aria-label={t('menu.close')}
                     >
                         ✕
                     </button>
@@ -127,11 +129,12 @@ export default function Sidebar({ isOpen, onClose, items }: SidebarProps) {
 }
 
 export function HamburgerButton({ onClick, isOpen }: { onClick: () => void; isOpen?: boolean }) {
+    const { t } = useLanguage();
     return (
         <button
             className={`hamburger ${isOpen ? "open" : ""}`}
             onClick={onClick}
-            aria-label="Открыть меню"
+            aria-label={t('menu.open')}
             aria-expanded={isOpen}
         >
             <span></span>

@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { Routes, Route } from "react-router-dom";
 import Layout from "./pages/Layout";
 import HomePage from "./pages/HomePage";
@@ -12,9 +13,17 @@ import GalleryPage from "./pages/GalleryPage";
 import TransparencyPage from "./pages/TransparencyPage";
 import NotFoundPage from "./pages/NotFoundPage";
 import CabinetComingSoonPage from "./pages/CabinetComingSoonPage";
-import AdminLoginPage from "./pages/admin/AdminLoginPage";
-import AdminDashboardPage from "./pages/admin/AdminDashboardPage";
-import ProtectedRoute from "./components/ProtectedRoute";
+
+// Админка (тяжёлый редактор TipTap и менеджеры) грузится лениво,
+// отдельным чанком — не тормозит публичные страницы
+const AdminLoginPage = lazy(() => import("./pages/admin/AdminLoginPage"));
+const AdminDashboardPage = lazy(() => import("./pages/admin/AdminDashboardPage"));
+const ProtectedRoute = lazy(() => import("./components/ProtectedRoute"));
+
+function AdminFallback() {
+    return <p style={{ padding: "2rem" }}>Загрузка...</p>;
+}
+
 function App() {
     return (
         <Routes>
@@ -32,16 +41,23 @@ function App() {
                 <Route path="/contacts" element={<ContactsPage />} />
                 <Route path="/cabinet" element={<CabinetComingSoonPage />} />
 
-
-
-                {/* Админка */}
-                <Route path="/admin/login" element={<AdminLoginPage />} />
+                {/* Админка — ленивая загрузка */}
+                <Route
+                    path="/admin/login"
+                    element={
+                        <Suspense fallback={<AdminFallback />}>
+                            <AdminLoginPage />
+                        </Suspense>
+                    }
+                />
                 <Route
                     path="/admin/*"
                     element={
-                        <ProtectedRoute>
-                            <AdminDashboardPage />
-                        </ProtectedRoute>
+                        <Suspense fallback={<AdminFallback />}>
+                            <ProtectedRoute>
+                                <AdminDashboardPage />
+                            </ProtectedRoute>
+                        </Suspense>
                     }
                 />
 

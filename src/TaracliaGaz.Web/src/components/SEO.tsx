@@ -1,5 +1,6 @@
 import { Helmet } from "react-helmet-async";
 import { SITE_URL } from "../utils/site";
+import { useLanguage } from "../context/LanguageContext";
 
 interface SEOProps {
     title: string;
@@ -16,8 +17,9 @@ export default function SEO({
     image = "/og-image.png", // Было /og-image.jpg (404)
     noindex = false,
 }: SEOProps) {
-    const fullTitle = title === "Главная"
-        ? "Тараклия-ГАЗ — поставка природного газа"
+    const { language, t } = useLanguage();
+    const fullTitle = path === "/"
+        ? t('seo.homeTitle')
         : `${title} — Тараклия-ГАЗ`;
 
     const url = `${SITE_URL}${path}`;
@@ -39,7 +41,7 @@ export default function SEO({
             <meta property="og:image" content={imageUrl} />
             <meta property="og:image:width" content="1200" />
             <meta property="og:image:height" content="630" />
-            <meta property="og:locale" content="ru_RU" />
+            <meta property="og:locale" content={language === 'ro' ? 'ro_RO' : 'ru_RU'} />
 
             <meta name="twitter:card" content="summary_large_image" />
             <meta name="twitter:title" content={fullTitle} />
