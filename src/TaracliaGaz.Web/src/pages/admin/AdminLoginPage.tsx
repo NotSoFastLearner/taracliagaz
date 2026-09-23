@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import { login } from "../../api/authApi";
 
 export default function AdminLoginPage() {
@@ -35,6 +36,9 @@ export default function AdminLoginPage() {
 
     return (
         <section className="section">
+            <Helmet>
+                <meta name="robots" content="noindex,nofollow" />
+            </Helmet>
             <div className="container admin-login">
                 <h1>Вход в панель управления</h1>
                 {error && <p className="error">{error}</p>}

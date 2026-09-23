@@ -2563,6 +2563,67 @@ h3 {
     min-width: 0;
 }
 
+/* ============================================
+   АККОРДЕОНЫ (legacy-шорткоды Joomla {spoiler})
+   Конвертируются в <details>/<summary> — sanitize.ts
+   ============================================ */
+.spoiler-accordion {
+    background: #fff;
+    border: 1px solid #e2e5ea;
+    border-radius: 8px;
+    margin: 0 0 0.75rem;
+    padding: 0;
+    overflow: hidden;
+}
+
+    .spoiler-accordion summary {
+        cursor: pointer;
+        list-style: none;
+        position: relative;
+        padding: 0.9rem 2.4rem 0.9rem 1rem;
+        font-weight: 600;
+        color: #1a202c;
+    }
+
+        .spoiler-accordion summary::-webkit-details-marker {
+            display: none;
+        }
+
+        /* стрелка-чеврон */
+        .spoiler-accordion summary::after {
+            content: "";
+            position: absolute;
+            right: 1rem;
+            top: 50%;
+            width: 0.5em;
+            height: 0.5em;
+            border-right: 2px solid #0057b8;
+            border-bottom: 2px solid #0057b8;
+            transform: translateY(-70%) rotate(45deg);
+            transition: transform 0.2s ease;
+        }
+
+    .spoiler-accordion[open] summary {
+        border-bottom: 1px solid #e2e5ea;
+    }
+
+        .spoiler-accordion[open] summary::after {
+            transform: translateY(-30%) rotate(-135deg);
+        }
+
+    .spoiler-accordion[open] > summary ~ * {
+        margin-left: 1rem;
+        margin-right: 1rem;
+    }
+
+    .spoiler-accordion[open] > summary + * {
+        margin-top: 0.75rem;
+    }
+
+    .spoiler-accordion[open] > summary ~ *:last-child {
+        margin-bottom: 1rem;
+    }
+
     .details-card h3 {
         color: #1a202c;
         font-size: 1rem;

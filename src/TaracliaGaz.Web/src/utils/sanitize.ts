@@ -20,10 +20,29 @@ DOMPurify.addHook("uponSanitizeElement", (node, data) => {
     }
 });
 
+/**
+ * Конвертирует legacy-шорткоды Joomla (плагин spoiler) из мигрированного
+ * контента в семантический HTML <details>/<summary> — работает без JS.
+ * {spoiler title=Текст opened=1}...{/spoiler}
+ *   → <details open><summary>Текст</summary>...</details>
+ */
+function convertLegacyShortcodes(html: string): string {
+    return html.replace(
+        /\{spoiler\s+([^}]*)\}([\s\S]*?)\{\/spoiler\}/g,
+        (_match, attrs: string, content: string) => {
+            const titleMatch = attrs.match(/title=(.*?)(?:\s+opened=\d)?\s*$/);
+            const title = (titleMatch?.[1] ?? "").trim();
+            const isOpen = /\bopened=1\b/.test(attrs);
+            return `<details class="spoiler-accordion"${isOpen ? " open" : ""}>` +
+                `<summary>${title}</summary>${content}</details>`;
+        }
+    );
+}
+
 export function sanitizeHtml(dirty: string): string {
     if (!dirty) return "";
 
-    return DOMPurify.sanitize(dirty, {
+    return DOMPurify.sanitize(convertLegacyShortcodes(dirty), {
         ALLOWED_TAGS: [
             "p", "br", "strong", "em", "u", "s", "b", "i",
             "h1", "h2", "h3", "h4", "h5", "h6",
@@ -34,6 +53,8 @@ export function sanitizeHtml(dirty: string): string {
             "table", "thead", "tbody", "tfoot", "tr", "th", "td",
             "caption", "colgroup", "col",
             "figure", "figcaption",
+            // Аккордеоны из legacy-шорткодов Joomla ({spoiler...} → convertLegacyShortcodes)
+            "details", "summary",
             // YouTube-embeds (только доверенный src — см. хук выше)
             "iframe",
         ],
@@ -43,6 +64,8 @@ export function sanitizeHtml(dirty: string): string {
             "class", "id",
             // Инлайн-стили мигрированного контента (редактируют только админы)
             "style", "colspan", "rowspan",
+            // Аккордеон: открытое состояние <details open>
+            "open",
             // Атрибуты iframe для видео
             "allowfullscreen", "frameborder", "allow", "loading",
         ],
