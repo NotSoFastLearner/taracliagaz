@@ -6,7 +6,7 @@ import PagesManager from "./PagesManager";
 import MenuManager from "./MenuManager";
 import AnnouncementsManager from "./AnnouncementsManager";
 import TendersManager from "./TendersManager";
-
+import ContactsManager from "./ContactsManager";
 function DashboardHome() {
     return (
         <>
@@ -33,6 +33,9 @@ function DashboardHome() {
                 <li>
                     <Link to="/admin/menu">Меню</Link>
                 </li>
+                <li>
+                    <Link to="/admin/contacts">Обратная связь</Link>
+                </li>
             </ul>
         </>
     );
@@ -52,6 +55,7 @@ export default function AdminDashboardPage() {
                     <Route path="/documents" element={<DocumentsManager />} />
                     <Route path="/pages" element={<PagesManager />} />
                     <Route path="/menu" element={<MenuManager />} />
+                    <Route path="/contacts" element={<ContactsManager />} />
                 </Routes>
             </div>
         </section>

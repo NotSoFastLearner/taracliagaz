@@ -1,9 +1,9 @@
-import { StrictMode } from "react";
-import { createRoot } from "react-dom/client";
-import { BrowserRouter } from "react-router-dom";
-import { HelmetProvider } from "react-helmet-async";
-import "./styles/index.css";
-import App from "./App.tsx";
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import { BrowserRouter } from 'react-router-dom';
+import App from './App';
+import { LanguageProvider } from './context/LanguageContext';
+import './styles/index.css';
 
 const apiBase = import.meta.env.VITE_API_BASE_URL ?? "";
 const apiOrigin = apiBase.replace(/\/api\/?$/, "");
@@ -16,12 +16,12 @@ if (apiOrigin && apiOrigin !== window.location.origin) {
 
 
 
-createRoot(document.getElementById("root")!).render(
-    <StrictMode>
-        <HelmetProvider>
-            <BrowserRouter>
+ReactDOM.createRoot(document.getElementById('root')!).render(
+    <React.StrictMode>
+        <BrowserRouter>
+            <LanguageProvider>
                 <App />
-            </BrowserRouter>
-        </HelmetProvider>
-    </StrictMode>
+            </LanguageProvider>
+        </BrowserRouter>
+    </React.StrictMode>
 );

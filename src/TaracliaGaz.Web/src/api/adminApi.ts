@@ -99,3 +99,27 @@ export const updateMenuCategory = (id: number, data: Partial<MenuCategory>) =>
 
 export const deleteMenuCategory = (id: number) =>
     http.delete<void>(`/admin/menu/${id}`);
+
+export interface ContactMessage {
+    id: number;
+    name: string;
+    email: string;
+    phone: string | null;
+    message: string;
+    ipAddress: string | null;
+    userAgent: string | null;
+    isRead: boolean;
+    isSpam: boolean;
+    createdAt: string;
+}
+
+export const getContactsAdmin = (unreadOnly = false) =>
+    http.get<ContactMessage[]>(
+        `/admin/contacts?unread_only=${unreadOnly}`
+    );
+
+export const markContactRead = (id: number) =>
+    http.patch<{ success: boolean }>(`/admin/contacts/${id}/read`);
+
+export const deleteContact = (id: number) =>
+    http.delete<void>(`/admin/contacts/${id}`);

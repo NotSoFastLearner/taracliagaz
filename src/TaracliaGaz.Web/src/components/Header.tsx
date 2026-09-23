@@ -1,98 +1,43 @@
-import { useState } from "react";
-import { Link, NavLink } from "react-router-dom";
+import { useState } from 'react';
+import { Link, NavLink } from 'react-router-dom';
+import { useLanguage } from '../context/LanguageContext';
+import LanguageSwitcher from '../context/LanguageSwitcher';
+import type { MenuItem } from '../types/content';
 
-export interface MenuItem {
-    label: string;
-    path: string;
-    children?: MenuItem[];
-    external?: boolean;
+interface HeaderProps {
+    menuItems?: MenuItem[];  // ← делаем опциональным
 }
 
-// Только нужные пункты меню (без демо-пунктов Joomla-шаблона)
-const menuItems: MenuItem[] = [
-    { label: "Главная", path: "/" },
-    {
-        label: "О нас",
-        path: "/page/about",
-        children: [
-            { label: "История", path: "/page/istoriya" },
-            { label: "Структура и руководство", path: "/page/struktura-i-rukovodstvo" },
-        ],
-    },
-    {
-        label: "Потребителям",
-        path: "/page/potrebiteli",
-        children: [
-            { label: "Услуги", path: "/page/uslugi" },
-            { label: "Законодательство", path: "/page/zakonodatelstvo" },
-            { label: "Вопросы-Ответы", path: "/page/voproy-otvety" },
-            { label: "Правила безопасности", path: "/page/pravila-polzovaniya-gazom-v-bytu" },
-            { label: "ДОГОВОРА", path: "/page/dogovora" },
-            { label: "Руководство по процедуре развития сетей", path: "/page/rukovodstvo-po-protsedure-razvitiya-setej-raspredeleniya-osd" },
-        ],
-    },
-    { label: "Тендеры", path: "/tenders" },
-    {
-        label: "Новости",
-        path: "/news",
-        children: [
-            { label: "Галерея", path: "/gallery" },
-            { label: "Новости", path: "/news" },
-        ],
-    },
-    { label: "Контакты", path: "/contacts" },
-    { label: "ОБЪЯВЛЕНИЯ", path: "/announcements" },
-    {
-        label: "Прозрачность",
-        path: "/transparency",
-        children: [
-            { label: "Технико-экономические показатели", path: "/page/tekhniko-ekonomicheskie-pokazateli-za-2026g" },
-            { label: "Инвестиционный план", path: "/page/investitsionnyj-plan-na-2026-god" },
-            { label: "Программа соответствия", path: "/page/programma-sootvetstviya-2026g" },
-            { label: "Финансовое состояние", path: "/page/finansovoe-sostoyanie-ooo-tarakliya-gaz-na-period-01-yanvarya-31-dekabrya-2021" },
-            { label: "Отчет независимого аудитора", path: "/page/otchet-nezavisimogo-auditora" },
-            { label: "Вакансии", path: "/page/vakansii" },
-            { label: "УСТАВ", path: "/page/ustav" },
-            { label: "Список крупных небытовых потребителей", path: "/page/spisok-krupnykh-nebytovykh-potrebitelej" },
-            { label: "Список прерываемых потребителей", path: "/page/spisok-preryvaemykh-potrebitelej" },
-            { label: "Плановые и внеплановые отключения", path: "/page/planovye-i-neplanovye-otklyucheniya-za-2025g" },
-        ],
-    },
-    { label: "Линия „ANTIFRAUDĂ", path: "https://www.moldovagaz.md/rus/goryachaya-liniya", external: true },
-    { label: "Показание Счетчика", path: "https://www.moldovagaz.md/rus/potrebiteli/usluga-onlayn-peredachi-dannyh-schetchika", external: true },
-];
-
-export default function Header() {
+export default function Header({ menuItems = [] }: HeaderProps) {
     const [menuOpen, setMenuOpen] = useState(false);
     const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+    const { t } = useLanguage();
 
-    const toggleDropdown = (label: string) => {
-        setOpenDropdown(openDropdown === label ? null : label);
-    };
-
-    const closeMenu = () => {
-        setMenuOpen(false);
-        setOpenDropdown(null);
+    const toggleDropdown = (slug: string) => {
+        setOpenDropdown(openDropdown === slug ? null : slug);
     };
 
     return (
         <header className="site-header">
             <div className="container header-inner">
                 {/* Логотип */}
-                <Link to="/" className="logo" onClick={closeMenu}>
+                <Link to="/" className="logo" onClick={() => setMenuOpen(false)}>
                     <span className="logo-main">Тараклия-ГАЗ</span>
                     <span className="logo-sub">SRL «Taraclia Gaz»</span>
                 </Link>
 
                 {/* Кнопка аварийной службы */}
                 <a href="tel:904" className="emergency-btn">
-                    <span className="emergency-label">Аварийная служба 24/7</span>
+                    <span className="emergency-label">{t('emergency.label')}</span>
                     <span className="emergency-number">904</span>
                 </a>
 
+                {/* Переключатель языка */}
+                <LanguageSwitcher />
+
                 {/* Кнопка мобильного меню */}
                 <button
-                    className={`menu-toggle ${menuOpen ? "open" : ""}`}
+                    className={`menu-toggle ${menuOpen ? 'open' : ''}`}
                     onClick={() => setMenuOpen(!menuOpen)}
                     aria-label="Меню"
                     aria-expanded={menuOpen}
@@ -102,73 +47,54 @@ export default function Header() {
                     <span></span>
                 </button>
 
-                {/* Главное меню */}
-                <nav className={`main-nav ${menuOpen ? "open" : ""}`}>
+                {/* Навигация */}
+                <nav className={`main-nav ${menuOpen ? 'open' : ''}`}>
                     <ul className="nav-list">
-                        {menuItems.map((item) => {
-                            const hasChildren = item.children && item.children.length > 0;
-
-                            if (item.external) {
-                                return (
-                                    <li key={item.label} className="nav-item">
-                                        <a
-                                            href={item.path}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="nav-link external"
-                                            onClick={closeMenu}
-                                        >
-                                            {item.label}
-                                        </a>
-                                    </li>
-                                );
-                            }
-
-                            if (hasChildren) {
-                                return (
-                                    <li
-                                        key={item.label}
-                                        className={`nav-item has-dropdown ${openDropdown === item.label ? "open" : ""}`}
-                                        onMouseEnter={() => setOpenDropdown(item.label)}
-                                        onMouseLeave={() => setOpenDropdown(null)}
-                                    >
+                        {/* Защита от undefined через menuItems?.map() или menuItems = [] */}
+                        {menuItems.map((item) => (
+                            <li
+                                key={item.slug}
+                                className={`nav-item ${openDropdown === item.slug ? 'open' : ''}`}
+                            >
+                                {item.children && item.children.length > 0 ? (
+                                    <>
                                         <button
                                             className="nav-link dropdown-toggle"
-                                            onClick={() => toggleDropdown(item.label)}
-                                            aria-expanded={openDropdown === item.label}
+                                            onClick={() => toggleDropdown(item.slug)}
                                         >
-                                            {item.label}
+                                            {item.title}
                                             <span className="dropdown-arrow">▼</span>
                                         </button>
                                         <ul className="dropdown-menu">
-                                            {item.children!.map((child) => (
-                                                <li key={child.path}>
-                                                    <NavLink
-                                                        to={child.path}
+                                            {item.children.map((child) => (
+                                                <li key={child.slug}>
+                                                    <Link
+                                                        to={child.url || `/page/${child.slug}`}
                                                         className="dropdown-link"
-                                                        onClick={closeMenu}
+                                                        onClick={() => {
+                                                            setOpenDropdown(null);
+                                                            setMenuOpen(false);
+                                                        }}
                                                     >
-                                                        {child.label}
-                                                    </NavLink>
+                                                        {child.title}
+                                                    </Link>
                                                 </li>
                                             ))}
                                         </ul>
-                                    </li>
-                                );
-                            }
-
-                            return (
-                                <li key={item.label} className="nav-item">
+                                    </>
+                                ) : (
                                     <NavLink
-                                        to={item.path}
-                                        className="nav-link"
-                                        onClick={closeMenu}
+                                        to={item.url || `/page/${item.slug}`}
+                                        className={({ isActive }) =>
+                                            `nav-link ${isActive ? 'active' : ''}`
+                                        }
+                                        onClick={() => setMenuOpen(false)}
                                     >
-                                        {item.label}
+                                        {item.title}
                                     </NavLink>
-                                </li>
-                            );
-                        })}
+                                )}
+                            </li>
+                        ))}
                     </ul>
                 </nav>
             </div>
