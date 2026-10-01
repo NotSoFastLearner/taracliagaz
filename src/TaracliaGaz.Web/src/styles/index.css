@@ -149,6 +149,38 @@ h1 {
     line-height: 1.2;
 }
 
+/* ============================================
+   OVERFLOW PROTECTION (узкие экраны)
+   Длинные слова и ссылки переносятся, вместо
+   выхода за рамки; hyphens: auto использует
+   lang документа (переключается с RU/RO)
+   ============================================ */
+h1, h2, h3, h4, h5, h6,
+p, li, td, th, figcaption, summary, blockquote {
+    overflow-wrap: break-word;
+}
+
+.content-body,
+.announcement-body,
+.tender-body,
+.news-detail,
+.tender-detail {
+    hyphens: auto;
+}
+
+/* Таблицы мигрированного контента — прокрутка вместо разрыва вёрстки */
+.content-body table {
+    display: block;
+    max-width: 100%;
+    overflow-x: auto;
+}
+
+@media (max-width: 640px) {
+    h1 {
+        font-size: 1.55rem;
+    }
+}
+
 h2 {
     font-size: 1.5rem;
     margin-top: 0;
@@ -2623,6 +2655,15 @@ h3 {
     .spoiler-accordion[open] > summary ~ *:last-child {
         margin-bottom: 1rem;
     }
+
+/* Мобильная нормализация инлайн-размеров шрифта: мигрированный контент
+   Joomla содержит значения в pt (см. normalizeInlineFontSize в sanitize.ts),
+   которые даже после капа остаются крупными на узком экране */
+@media (max-width: 768px) {
+    .content-body [style*="font-size"] {
+        font-size: clamp(0.9375rem, 4.2vw, 1.125rem) !important;
+    }
+}
 
     .details-card h3 {
         color: #1a202c;

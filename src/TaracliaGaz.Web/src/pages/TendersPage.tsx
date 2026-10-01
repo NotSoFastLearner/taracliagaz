@@ -1,23 +1,17 @@
-import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { getTenders } from "../api/contentApi";
-import type { Tender } from "../types/content";
+import { useCachedFetch } from "../hooks/useCachedFetch";
 import SEO from "../components/SEO";
 import { IconCalendar, IconClock } from "../components/icons";
 import { useLanguage, dateLocale } from "../context/LanguageContext";
 
 export default function TendersPage() {
     const { language, t } = useLanguage();
-    const [tenders, setTenders] = useState<Tender[]>([]);
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        setLoading(true);
-        getTenders(language)
-            .then(setTenders)
-            .catch(console.error)
-            .finally(() => setLoading(false));
-    }, [language]);
+    // SWR: мгновенный показ из localStorage, свежие данные в фоне
+    const { data: tendersData, loading } = useCachedFetch(
+        `tenders:${language}`, () => getTenders(language), [language]
+    );
+    const tenders = tendersData ?? [];
 
     const formatDate = (iso: string) => {
         try {

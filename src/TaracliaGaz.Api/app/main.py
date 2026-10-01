@@ -436,7 +436,13 @@ async def health():
         "status": "ok",
         "environment": settings.ENVIRONMENT,
     }
-
+    
+@app.middleware("http")
+async def cache_public(request, call_next):
+    response = await call_next(request)
+    if request.method == "GET" and request.url.path.startswith("/api/public/"):
+        response.headers["Cache-Control"] = "public, max-age=60"
+    return response
 
 # -----------------------------------------------------------------------------
 # Финальное сообщение

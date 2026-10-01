@@ -1,24 +1,24 @@
-import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { getNews, getAnnouncements, getGallery } from "../api/contentApi";
-import type { NewsPostSummary, Announcement, GalleryImage } from "../types/content";
 import SEO from "../components/SEO";
 import { resolveUploadUrl, resolveThumbnailUrl } from "../utils/urls";
 import { IconMegaphone, IconNews, IconGallery, IconCalendar } from "../components/icons";
 import { sanitizeHtml } from "../utils/sanitize";
 import { useLanguage, dateLocale } from "../context/LanguageContext";
+import { useCachedFetch } from "../hooks/useCachedFetch";
 
 export default function HomePage() {
     const { language, t } = useLanguage();
-    const [news, setNews] = useState<NewsPostSummary[]>([]);
-    const [announcements, setAnnouncements] = useState<Announcement[]>([]);
-    const [gallery, setGallery] = useState<GalleryImage[]>([]);
 
-    useEffect(() => {
-        getNews(language).then(setNews).catch(console.error);
-        getAnnouncements(language).then(setAnnouncements).catch(console.error);
-        getGallery().then(setGallery).catch(console.error);
-    }, [language]);
+    // SWR: повторные визиты рендерятся мгновенно из localStorage,
+    // свежие данные подгружаются в фоне
+    const { data: newsData } = useCachedFetch(`news:${language}`, () => getNews(language), [language]);
+    const { data: annData } = useCachedFetch(`announcements:${language}`, () => getAnnouncements(language), [language]);
+    const { data: galleryData } = useCachedFetch("gallery", () => getGallery(), []);
+
+    const news = newsData ?? [];
+    const announcements = annData ?? [];
+    const gallery = galleryData ?? [];
 
     const formatDate = (iso: string) => {
         try {

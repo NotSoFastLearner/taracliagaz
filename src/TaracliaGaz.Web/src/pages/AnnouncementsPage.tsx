@@ -1,6 +1,5 @@
-import { useEffect, useState } from "react";
 import { getAnnouncements } from "../api/contentApi";
-import type { Announcement } from "../types/content";
+import { useCachedFetch } from "../hooks/useCachedFetch";
 import SEO from "../components/SEO";
 import { IconMegaphone, IconCalendar, IconPin } from "../components/icons";
 import { sanitizeHtml } from "../utils/sanitize";
@@ -8,16 +7,11 @@ import { useLanguage, dateLocale } from "../context/LanguageContext";
 
 export default function AnnouncementsPage() {
     const { language, t } = useLanguage();
-    const [items, setItems] = useState<Announcement[]>([]);
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        setLoading(true);
-        getAnnouncements(language)
-            .then(setItems)
-            .catch(console.error)
-            .finally(() => setLoading(false));
-    }, [language]);
+    // SWR: мгновенный показ из localStorage, свежие данные в фоне
+    const { data: itemsData, loading } = useCachedFetch(
+        `announcements:${language}`, () => getAnnouncements(language), [language]
+    );
+    const items = itemsData ?? [];
 
     const formatDate = (iso: string) => {
         try {

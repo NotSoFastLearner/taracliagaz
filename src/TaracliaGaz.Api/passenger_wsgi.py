@@ -1,13 +1,19 @@
-import sys
 import os
+import sys
 
-sys.path.insert(0, os.path.dirname(__file__))
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, BASE_DIR)
 
-try:
-    from a2wsgi import ASGIMiddleware
-    from app.main import app as fastapi_app
-    application = ASGIMiddleware(fastapi_app)
-except Exception as e:
-    def application(environ, start_response):
-        start_response('500 Internal Server Error', [('Content-Type', 'text/plain')])
-        return [f"Error: {str(e)}".encode()]
+_app = None
+
+
+def application(environ, start_response):
+    global _app
+
+    if _app is None:
+        from a2wsgi import ASGIMiddleware
+        from app.main import app as fastapi_app
+
+        _app = ASGIMiddleware(fastapi_app)
+
+    return _app(environ, start_response)

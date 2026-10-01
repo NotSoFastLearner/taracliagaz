@@ -39,10 +39,30 @@ function convertLegacyShortcodes(html: string): string {
     );
 }
 
+/**
+ * Нормализация инлайн-размеров шрифта в мигрированном контенте:
+ * редактор Joomla/Word сохранял значения в pt (48pt = 64px — гигантский
+ * текст, на мобильном нечитаемо). Конвертируем pt→px и ограничиваем 36px.
+ */
+function normalizeInlineFontSize(html: string): string {
+    return html.replace(
+        /font-size:\s*([0-9.]+)\s*(pt|px)/gi,
+        (_m, v: string, unit: string) => {
+            let px = unit.toLowerCase() === "pt"
+                ? parseFloat(v) * (96 / 72)
+                : parseFloat(v);
+            if (!Number.isFinite(px)) return "font-size: inherit";
+            if (px > 36) px = 36;
+            return `font-size: ${Math.round(px * 100) / 100}px`;
+        }
+    );
+}
+
 export function sanitizeHtml(dirty: string): string {
     if (!dirty) return "";
 
-    return DOMPurify.sanitize(convertLegacyShortcodes(dirty), {
+    return DOMPurify.sanitize(
+        normalizeInlineFontSize(convertLegacyShortcodes(dirty)), {
         ALLOWED_TAGS: [
             "p", "br", "strong", "em", "u", "s", "b", "i",
             "h1", "h2", "h3", "h4", "h5", "h6",

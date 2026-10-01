@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { getGallery } from "../api/contentApi";
 import type { GalleryImage } from "../types/content";
+import { useCachedFetch } from "../hooks/useCachedFetch";
 import SEO from "../components/SEO";
 import { resolveUploadUrl, resolveThumbnailUrl } from "../utils/urls";
 import { IconGallery, IconClose } from "../components/icons";
@@ -8,13 +9,10 @@ import { useLanguage } from "../context/LanguageContext";
 
 export default function GalleryPage() {
     const { t } = useLanguage();
-    const [images, setImages] = useState<GalleryImage[]>([]);
-    const [loading, setLoading] = useState(true);
+    // SWR: мгновенный показ из localStorage, свежие данные в фоне
+    const { data: imagesData, loading } = useCachedFetch("gallery", () => getGallery(), []);
+    const images = imagesData ?? [];
     const [selectedImage, setSelectedImage] = useState<GalleryImage | null>(null);
-
-    useEffect(() => {
-        getGallery().then(setImages).catch(console.error).finally(() => setLoading(false));
-    }, []);
 
     useEffect(() => {
         const handleKey = (e: KeyboardEvent) => {

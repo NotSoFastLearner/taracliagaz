@@ -47,3 +47,13 @@ Thumbs.db
 
 # Logs
 *.log
+
+# cPanel / hosting config (contains server paths)
+.htaccess
+.user.ini
+
+# Passenger runtime
+tmp/
+
+# Legacy images from old site (too large for git)
+images/

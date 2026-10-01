@@ -36,7 +36,7 @@ ALLOWED_TAGS = {
 }
 
 ALLOWED_ATTRS = {
-    "a": {"href", "title", "target", "rel"},
+    "a": {"href", "title", "target"},
     "img": {"src", "alt", "title", "width", "height"},
     "td": {"colspan", "rowspan"},
     "th": {"colspan", "rowspan"},

@@ -1,37 +1,28 @@
 import { useLocation } from "react-router-dom";
-import { useEffect, useState } from "react";
 import { getPage } from "../api/contentApi";
-import type { Page } from "../types/content";
 import SEO from "../components/SEO";
 import { sanitizeHtml } from "../utils/sanitize";
 import { useLanguage, dateLocale } from "../context/LanguageContext";
+import { useCachedFetch } from "../hooks/useCachedFetch";
 
 export default function StaticPage() {
     const location = useLocation();
     const { language, t } = useLanguage();
-    const [page, setPage] = useState<Page | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
 
-    useEffect(() => {
-        // Извлекаем последний сегмент URL как slug
-        // Например: /page/about/istoriya -> istoriya
-        const pathParts = location.pathname.split('/').filter(Boolean);
-        const slug = pathParts[pathParts.length - 1];
+    // Извлекаем последний сегмент URL как slug
+    // Например: /page/about/istoriya -> istoriya
+    const pathParts = location.pathname.split('/').filter(Boolean);
+    const slug = pathParts[pathParts.length - 1] ?? "";
 
-        if (!slug) return;
-
-        setLoading(true);
-        setError(null);
-
-        getPage(slug, language)
-            .then(setPage)
-            .catch(() => setError(t('static.loadError')))
-            .finally(() => setLoading(false));
-    }, [location.pathname, language, t]);
+    // SWR: мгновенный показ из localStorage, свежие данные подтягиваются в фоне
+    const { data: page, loading, error } = useCachedFetch(
+        `page:${slug}:${language}`,
+        () => getPage(slug, language),
+        [slug, language]
+    );
 
     if (loading) return <p>{t('common.loading')}</p>;
-    if (error) return <p className="error">{error}</p>;
+    if (error) return <p className="error">{t('static.loadError')}</p>;
     if (!page) return <p>{t('static.notFound')}</p>;
 
     const plainText = page.bodyHtml.replace(/<[^>]*>/g, "").trim();

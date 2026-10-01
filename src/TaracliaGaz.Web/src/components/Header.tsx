@@ -2,16 +2,68 @@ import { useState } from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import { LanguageSwitcher } from '../context/LanguageSwitcher';
+import { prefetchCache } from '../hooks/useCachedFetch';
+import {
+    getPage, getNews, getAnnouncements, getTenders, getGallery,
+} from '../api/contentApi';
 import type { MenuItem } from '../types/content';
 
 interface HeaderProps {
     menuItems?: MenuItem[];
 }
 
+/**
+ * Предзагрузка при наведении/фокусе на пункт меню:
+ * 1) JS-чанк страницы (ленивый import — браузер кладёт его в кэш);
+ * 2) данные страницы в SWR-кэш (localStorage).
+ * К моменту клика страница рендерится мгновенно.
+ */
+const pageChunks: Record<string, () => Promise<unknown>> = {
+    '/news': () => import('../pages/NewsPage'),
+    '/announcements': () => import('../pages/AnnouncementsPage'),
+    '/tenders': () => import('../pages/TendersPage'),
+    '/gallery': () => import('../pages/GalleryPage'),
+    '/contacts': () => import('../pages/ContactsPage'),
+    '/transparency': () => import('../pages/TransparencyPage'),
+    '/cabinet': () => import('../pages/CabinetComingSoonPage'),
+};
+
+function prefetchForPath(path: string, language: string): void {
+    if (!path || path === '#') return;
+
+    // JS-чанк страницы
+    const basePath = path.startsWith('/page/')
+        ? '/page'
+        : path;
+    if (basePath === '/page') {
+        void import('../pages/StaticPage');
+    } else {
+        void pageChunks[basePath]?.();
+    }
+
+    // Данные страницы — в тот же кэш, что читают страницы
+    if (path.startsWith('/page/')) {
+        const slug = path.split('/').filter(Boolean).pop() ?? '';
+        if (slug) {
+            prefetchCache(`page:${slug}:${language}`, () => getPage(slug, language));
+        }
+    } else if (path === '/news') {
+        prefetchCache(`news:${language}`, () => getNews(language));
+    } else if (path === '/announcements') {
+        prefetchCache(`announcements:${language}`, () => getAnnouncements(language));
+    } else if (path === '/tenders') {
+        prefetchCache(`tenders:${language}`, () => getTenders(language));
+    } else if (path === '/gallery') {
+        prefetchCache('gallery', () => getGallery());
+    }
+}
+
 export default function Header({ menuItems = [] }: HeaderProps) {
     const [menuOpen, setMenuOpen] = useState(false);
     const [openDropdown, setOpenDropdown] = useState<string | null>(null);
-    const { t } = useLanguage();
+    const { language, t } = useLanguage();
+
+    const prefetch = (path: string) => () => prefetchForPath(path, language);
 
     const toggleDropdown = (key: string) => {
         setOpenDropdown(openDropdown === key ? null : key);
@@ -91,6 +143,8 @@ export default function Header({ menuItems = [] }: HeaderProps) {
                                                             to={child.path}
                                                             className="dropdown-link"
                                                             onClick={closeAll}
+                                                            onMouseEnter={prefetch(child.path)}
+                                                            onFocus={prefetch(child.path)}
                                                         >
                                                             {child.label}
                                                         </Link>
@@ -118,6 +172,8 @@ export default function Header({ menuItems = [] }: HeaderProps) {
                                             `nav-link ${isActive ? 'active' : ''}`
                                         }
                                         onClick={closeAll}
+                                        onMouseEnter={prefetch(item.path)}
+                                        onFocus={prefetch(item.path)}
                                     >
                                         {item.label}
                                     </NavLink>

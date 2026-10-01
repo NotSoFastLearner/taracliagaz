@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useMemo } from "react";
 import { Outlet } from "react-router-dom";
 import Header from '../components/Header';
 import Footer from "../components/Footer";
@@ -8,6 +8,7 @@ import LocalBusinessSchema from "../components/LocalBusinessSchema";
 import { useLanguage } from "../context/LanguageContext";
 import { getMenu } from "../api/contentApi";
 import { buildMenuTree } from "../utils/menuHelpers";
+import { useCachedFetch } from "../hooks/useCachedFetch";
 import type { MenuItem } from "../types/content";
 
 export interface SiteOutletContext {
@@ -16,13 +17,17 @@ export interface SiteOutletContext {
 
 export default function Layout() {
     const { language, t } = useLanguage();
-    const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
-
-    useEffect(() => {
-        getMenu(language)
-            .then((items) => setMenuItems(buildMenuTree(items)))
-            .catch(console.error);
-    }, [language]);
+    // SWR-кэш: меню рисуется мгновенно из localStorage при повторном
+    // визите, свежая версия подгружается в фоне
+    const { data: menuData } = useCachedFetch(
+        `menu:${language}`,
+        () => getMenu(language),
+        [language]
+    );
+    const menuItems = useMemo<MenuItem[]>(
+        () => (menuData ? buildMenuTree(menuData) : []),
+        [menuData]
+    );
 
     const context: SiteOutletContext = { languageCode: language };
 

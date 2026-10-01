@@ -1,23 +1,17 @@
-import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { getNews } from "../api/contentApi";
-import type { NewsPostSummary } from "../types/content";
+import { useCachedFetch } from "../hooks/useCachedFetch";
 import SEO from "../components/SEO";
 import { IconNews, IconCalendar } from "../components/icons";
 import { useLanguage, dateLocale } from "../context/LanguageContext";
 
 export default function NewsPage() {
     const { language, t } = useLanguage();
-    const [news, setNews] = useState<NewsPostSummary[]>([]);
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        setLoading(true);
-        getNews(language)
-            .then(setNews)
-            .catch(console.error)
-            .finally(() => setLoading(false));
-    }, [language]);
+    // SWR: мгновенный показ из localStorage, свежие данные в фоне
+    const { data: newsData, loading } = useCachedFetch(
+        `news:${language}`, () => getNews(language), [language]
+    );
+    const news = newsData ?? [];
 
     const formatDate = (iso: string) => {
         try {
