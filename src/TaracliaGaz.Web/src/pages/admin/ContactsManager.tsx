@@ -12,19 +12,17 @@ export default function ContactsManager() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
 
-    const loadContacts = async () => {
-        try {
-            setLoading(true);
-            setError("");
-
-            const response = await getContactsAdmin();
-            setContacts(response);
-        } catch (err) {
-            console.error(err);
-            setError("Не удалось загрузить сообщения.");
-        } finally {
-            setLoading(false);
-        }
+    const loadContacts = () => {
+        getContactsAdmin()
+            .then((response) => {
+                setContacts(response);
+                setError("");
+            })
+            .catch((err) => {
+                console.error(err);
+                setError("Не удалось загрузить сообщения.");
+            })
+            .finally(() => setLoading(false));
     };
 
     useEffect(() => {
@@ -278,7 +276,7 @@ export default function ContactsManager() {
                                 )}
 
                                 <a
-                                    href={`mailto:${ contact.email }?subject = Ответ % 20на % 20сообщение % 20с % 20сайта % 20Тараклия - ГАЗ`}
+                                    href={`mailto:${contact.email}?subject=${encodeURIComponent("Ответ на сообщение с сайта Тараклия-ГАЗ")}`}
                                     className="admin-btn"
                                     style={{
                                         textDecoration: "none",

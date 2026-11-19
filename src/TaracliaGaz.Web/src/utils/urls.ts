@@ -5,52 +5,40 @@
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000/api";
 const API_ORIGIN = API_BASE.replace(/\/api\/?$/, "");
 
-// Доверенные домены для внешних ссылок/файлов (whitelist)
-const TRUSTED_DOMAINS = [
-    "taraclia-gaz.md",
-    "www.taraclia-gaz.md",
-    "localhost",
-    "127.0.0.1",
-    // На Google Drive лежат мигрированные документы и тендеры со старого сайта
-    "drive.google.com",
-    "docs.google.com",
-];
+// Домены, для которых принудительно переключаем http -> https
+const FORCE_HTTPS_DOMAINS = ["taraclia-gaz.md", "www.taraclia-gaz.md"];
 
 /**
  * Преобразует относительный URL загрузки в абсолютный.
- * Принудительно использует HTTPS для внешних URL.
- * Проверяет домен по whitelist для защиты от SSRF.
+ * Принудительно использует HTTPS для собственного домена и пропускает валидные внешние http/https URL.
  */
-export function resolveUploadUrl(url: string): string {
-    if (!url) return "";
+export function resolveUploadUrl(rawUrl: string): string {
+    if (!rawUrl) return "";
+    const url = rawUrl.trim().replace(/&amp;/gi, "&");
 
-    // Внешние URL — проверяем домен и форсируем HTTPS
-    if (url.startsWith("http://") || url.startsWith("https://")) {
+    // Внешние URL — валидируем синтаксис через URL и форсируем HTTPS для своего домена
+    if (/^https?:\/\//i.test(url)) {
         try {
             const parsedUrl = new URL(url);
-            const hostname = parsedUrl.hostname;
-
-            // Проверка whitelist (в production можно строже)
-            const isTrusted = TRUSTED_DOMAINS.some(
-                (domain) => hostname === domain || hostname.endsWith(`.${domain}`)
-            );
-
-            if (!isTrusted) {
-                console.warn(`[resolveUploadUrl] Untrusted domain blocked: ${hostname}`);
-                return ""; // Возвращаем пустую строку для недоверенных доменов
+            if (parsedUrl.protocol !== "http:" && parsedUrl.protocol !== "https:") {
+                return "";
             }
-
-            // Принудительный HTTPS
-            if (parsedUrl.protocol === "http:") {
+            if (
+                parsedUrl.protocol === "http:" &&
+                FORCE_HTTPS_DOMAINS.includes(parsedUrl.hostname.toLowerCase())
+            ) {
                 parsedUrl.protocol = "https:";
                 return parsedUrl.toString();
             }
 
             return url;
         } catch {
-            return url;
+            return "";
         }
     }
+
+    // Защита от protocol-relative URL (//evil.com)
+    if (url.startsWith("//")) return "";
 
     // Относительные URL — добавляем API_ORIGIN
     if (url.startsWith("/")) return `${API_ORIGIN}${url}`;
@@ -58,7 +46,7 @@ export function resolveUploadUrl(url: string): string {
     // иначе браузер относит их к текущему роуту и получает 404
     if (/^(images|uploads|static)\//.test(url)) return `${API_ORIGIN}/${url}`;
 
-    return url;
+    return "";
 }
 
 /**

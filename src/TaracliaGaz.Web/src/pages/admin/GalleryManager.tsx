@@ -18,18 +18,17 @@ export default function GalleryManager() {
     const [editing, setEditing] = useState<EditingImage>(null);
     const [showForm, setShowForm] = useState(false);
 
-    const loadImages = async () => {
-        setLoading(true);
-        try {
-            const data = await getGalleryAdmin();
-            setImages(data);
-            setError(null);
-        } catch (err) {
-            setError("Ошибка загрузки галереи");
-            console.error(err);
-        } finally {
-            setLoading(false);
-        }
+    const loadImages = () => {
+        getGalleryAdmin()
+            .then((data) => {
+                setImages(data);
+                setError(null);
+            })
+            .catch((err) => {
+                setError("Ошибка загрузки галереи");
+                console.error(err);
+            })
+            .finally(() => setLoading(false));
     };
 
     useEffect(() => {

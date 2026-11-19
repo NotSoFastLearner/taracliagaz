@@ -2,7 +2,8 @@
 """
 Pydantic схемы для валидации входных/выходных данных.
 """
-from datetime import datetime
+from datetime import datetime, timezone
+import re
 import nh3
 from pydantic import BaseModel, EmailStr, ConfigDict, Field, field_validator
 
@@ -33,6 +34,8 @@ ALLOWED_TAGS = {
     "table", "thead", "tbody", "tfoot", "tr", "td", "th",
     "caption", "colgroup", "col",
     "figure", "figcaption",
+    # Аккордеоны и YouTube-embeds (FAQ, Видео-инструкция)
+    "details", "summary", "iframe",
 }
 
 ALLOWED_ATTRS = {
@@ -41,10 +44,19 @@ ALLOWED_ATTRS = {
     "td": {"colspan", "rowspan"},
     "th": {"colspan", "rowspan"},
     "col": {"span", "width"},
+    "details": {"open"},
+    "iframe": {"src", "width", "height", "allowfullscreen", "frameborder", "allow", "loading", "title"},
     # "style" разрешён, т.к. контент мигрирован из Joomla с инлайн-стилями.
     # HTML редактируют только админы, риск приемлем.
     "*": {"class", "id", "style"},
 }
+
+_YOUTUBE_EMBED_URL_RE = re.compile(
+    r"^https://(?:www\.)?(?:youtube\.com|youtube-nocookie\.com)/embed/[A-Za-z0-9_-]+(?:\?[^\s\"'<>]*)?$",
+    re.IGNORECASE,
+)
+_IFRAME_BLOCK_RE = re.compile(r"<iframe\b([^>]*)>.*?</iframe>", re.IGNORECASE | re.DOTALL)
+_NH3_ATTR_RE = re.compile(r'([a-z0-9_-]+)(?:="([^"]*)")?', re.IGNORECASE)
 
 # Лимиты длины для защиты от DoS
 MAX_TITLE_LENGTH = 200
@@ -54,16 +66,48 @@ MAX_CAPTION_LENGTH = 200
 MAX_SLUG_LENGTH = 160
 
 
+def _filter_html_attribute(tag: str, attr: str, value: str) -> str | None:
+    """Нативный attribute_filter для nh3: разрешает iframe.src только для YouTube embed."""
+    if tag == "iframe" and attr == "src":
+        cleaned_url = value.strip()
+        return cleaned_url if _YOUTUBE_EMBED_URL_RE.match(cleaned_url) else None
+    return value
+
+
+def _keep_only_valid_iframe(match: re.Match[str]) -> str:
+    attrs = _NH3_ATTR_RE.findall(match.group(1))
+    if any(k.lower() == "src" and _YOUTUBE_EMBED_URL_RE.match(v) for k, v in attrs):
+        return match.group(0)
+    return ""
+
+
 def sanitize_html(html: str) -> str:
     """Очистка HTML от XSS-инъекций"""
     if not html:
         return ""
-    return nh3.clean(
+    cleaned = nh3.clean(
         html,
         tags=ALLOWED_TAGS,
         attributes=ALLOWED_ATTRS,
+        attribute_filter=_filter_html_attribute,
         link_rel="noopener noreferrer nofollow",
     )
+    return _IFRAME_BLOCK_RE.sub(_keep_only_valid_iframe, cleaned)
+
+
+def validate_safe_url(url: str | None) -> str | None:
+    """Проверка безопасности URL-схемы (защита от Stored XSS)"""
+    if url is None:
+        return None
+    url_clean = url.strip()
+    if not url_clean:
+        return url_clean
+    lower = url_clean.lower()
+    if any(lower.startswith(p) for p in ("javascript:", "data:", "vbscript:")):
+        raise ValueError("Dangerous URL scheme not allowed (javascript:, data:, vbscript:)")
+    if not (lower.startswith("http://") or lower.startswith("https://") or (url_clean.startswith("/") and not url_clean.startswith("//")) or any(lower.startswith(p) for p in ("images/", "uploads/", "static/"))):
+        raise ValueError("URL must start with http://, https://, /, or images/|uploads/|static/")
+    return url_clean
 
 
 # ============================================
@@ -93,7 +137,7 @@ class PageBase(BaseInput):
     slug: str = Field(..., max_length=MAX_SLUG_LENGTH)
     title: str = Field(..., min_length=1, max_length=MAX_TITLE_LENGTH)
     body_html: str = Field(..., max_length=MAX_BODY_HTML_LENGTH)
-    language_code: str = "ru"
+    language_code: str = Field("ru", pattern=r"^(ru|ro)$")
     is_published: bool = True
 
 
@@ -105,8 +149,10 @@ class PageCreate(PageBase):
 
 
 class PageUpdate(BaseInput):
+    slug: str | None = Field(None, max_length=MAX_SLUG_LENGTH)
     title: str | None = Field(None, max_length=MAX_TITLE_LENGTH)
     body_html: str | None = Field(None, max_length=MAX_BODY_HTML_LENGTH)
+    language_code: str | None = Field(None, pattern=r"^(ru|ro)$")
     is_published: bool | None = None
 
     @field_validator("body_html")
@@ -127,15 +173,22 @@ class NewsPostBase(BaseInput):
     summary: str
     body_html: str
     published_at: datetime
-    language_code: str = "ru"
+    language_code: str = Field("ru", pattern=r"^(ru|ro)$")
     is_published: bool = True
 
 
-class NewsPostCreate(BaseModel):
+class NewsPostCreate(BaseInput):
     title: str = Field(..., min_length=1, max_length=MAX_TITLE_LENGTH)
     summary: str = Field("", max_length=MAX_SUMMARY_LENGTH)
     body_html: str = Field(..., max_length=MAX_BODY_HTML_LENGTH)
-    language_code: str = "ru"
+    published_at: datetime | None = Field(default_factory=lambda: datetime.now(timezone.utc))
+    language_code: str = Field("ru", pattern=r"^(ru|ro)$")
+    is_published: bool = True
+
+    @field_validator("published_at", mode="before")
+    @classmethod
+    def default_published_at(cls, v):
+        return datetime.now(timezone.utc) if (v is None or v == "") else v
 
     @field_validator("body_html")
     @classmethod
@@ -143,10 +196,12 @@ class NewsPostCreate(BaseModel):
         return sanitize_html(v)
 
 
-class NewsPostUpdate(BaseModel):
+class NewsPostUpdate(BaseInput):
     title: str | None = Field(None, max_length=MAX_TITLE_LENGTH)
     summary: str | None = Field(None, max_length=MAX_SUMMARY_LENGTH)
     body_html: str | None = Field(None, max_length=MAX_BODY_HTML_LENGTH)
+    published_at: datetime | None = None
+    language_code: str | None = Field(None, pattern=r"^(ru|ro)$")
     is_published: bool | None = None
 
     @field_validator("body_html")
@@ -167,7 +222,7 @@ class AnnouncementBase(BaseInput):
     body_html: str = Field(..., max_length=MAX_BODY_HTML_LENGTH)
     published_at: datetime
     is_pinned: bool = False
-    language_code: str = "ru"
+    language_code: str = Field("ru", pattern=r"^(ru|ro)$")
     is_published: bool = True
 
 
@@ -183,6 +238,7 @@ class AnnouncementUpdate(BaseInput):
     body_html: str | None = Field(None, max_length=MAX_BODY_HTML_LENGTH)
     published_at: datetime | None = None
     is_pinned: bool | None = None
+    language_code: str | None = Field(None, pattern=r"^(ru|ro)$")
     is_published: bool | None = None
 
     @field_validator("body_html")
@@ -205,8 +261,13 @@ class TenderBase(BaseInput):
     deadline_at: datetime | None = None
     document_url: str | None = Field(None, max_length=500)
     external_url: str | None = Field(None, max_length=1000)
-    language_code: str = "ru"
+    language_code: str = Field("ru", pattern=r"^(ru|ro)$")
     is_published: bool = True
+
+    @field_validator("document_url", "external_url", mode="before")
+    @classmethod
+    def validate_urls(cls, v: str | None) -> str | None:
+        return validate_safe_url(v)
 
 
 class TenderCreate(TenderBase):
@@ -223,12 +284,18 @@ class TenderUpdate(BaseInput):
     deadline_at: datetime | None = None
     document_url: str | None = Field(None, max_length=500)
     external_url: str | None = Field(None, max_length=1000)
+    language_code: str | None = Field(None, pattern=r"^(ru|ro)$")
     is_published: bool | None = None
 
     @field_validator("body_html")
     @classmethod
     def clean_body_html(cls, v: str | None) -> str | None:
         return sanitize_html(v) if v is not None else None
+
+    @field_validator("document_url", "external_url", mode="before")
+    @classmethod
+    def validate_urls(cls, v: str | None) -> str | None:
+        return validate_safe_url(v)
 
 
 class TenderRead(TenderBase, BaseRead):
@@ -241,10 +308,15 @@ class TenderRead(TenderBase, BaseRead):
 class DocumentBase(BaseInput):
     title: str = Field(..., min_length=1, max_length=MAX_TITLE_LENGTH)
     category_slug: str = Field(..., max_length=100)
-    file_url: str = Field(..., max_length=500)
+    file_url: str = Field(..., max_length=1000)
     published_at: datetime
-    language_code: str = "ru"
+    language_code: str = Field("ru", pattern=r"^(ru|ro)$")
     is_published: bool = True
+
+    @field_validator("file_url", mode="before")
+    @classmethod
+    def validate_urls(cls, v: str | None) -> str | None:
+        return validate_safe_url(v)
 
 
 class DocumentCreate(DocumentBase):
@@ -254,9 +326,15 @@ class DocumentCreate(DocumentBase):
 class DocumentUpdate(BaseInput):
     title: str | None = Field(None, max_length=MAX_TITLE_LENGTH)
     category_slug: str | None = Field(None, max_length=100)
-    file_url: str | None = Field(None, max_length=500)
+    file_url: str | None = Field(None, max_length=1000)
     published_at: datetime | None = None
+    language_code: str | None = Field(None, pattern=r"^(ru|ro)$")
     is_published: bool | None = None
+
+    @field_validator("file_url", mode="before")
+    @classmethod
+    def validate_urls(cls, v: str | None) -> str | None:
+        return validate_safe_url(v)
 
 
 class DocumentRead(DocumentBase, BaseRead):
@@ -272,6 +350,11 @@ class GalleryImageBase(BaseInput):
     sort_order: int = 0
     is_published: bool = True
 
+    @field_validator("image_url", mode="before")
+    @classmethod
+    def validate_urls(cls, v: str | None) -> str | None:
+        return validate_safe_url(v)
+
 
 class GalleryImageCreate(GalleryImageBase):
     pass
@@ -282,6 +365,11 @@ class GalleryImageUpdate(BaseInput):
     image_url: str | None = Field(None, max_length=500)
     sort_order: int | None = None
     is_published: bool | None = None
+
+    @field_validator("image_url", mode="before")
+    @classmethod
+    def validate_urls(cls, v: str | None) -> str | None:
+        return validate_safe_url(v)
 
 
 class GalleryImageRead(GalleryImageBase, BaseRead):
@@ -296,7 +384,7 @@ class MenuCategoryBase(BaseInput):
     slug: str = Field(..., max_length=100)
     parent_id: int | None = None
     order: int = 0
-    language_code: str = "ru"
+    language_code: str = Field("ru", pattern=r"^(ru|ro)$")
 
 
 class MenuCategoryCreate(MenuCategoryBase):
@@ -308,7 +396,7 @@ class MenuCategoryUpdate(BaseInput):
     slug: str | None = Field(None, max_length=100)
     parent_id: int | None = None
     order: int | None = None
-    language_code: str | None = None
+    language_code: str | None = Field(None, pattern=r"^(ru|ro)$")
 
 
 class MenuCategoryRead(MenuCategoryBase, BaseRead):
@@ -318,157 +406,61 @@ class MenuCategoryRead(MenuCategoryBase, BaseRead):
 # ============================================
 # CONTACTS
 # ============================================
-class ContactMessageCreate(BaseModel):
-    model_config = ConfigDict(populate_by_name=True)
-
+class ContactMessageCreate(BaseInput):
     name: str = Field(..., min_length=2, max_length=100)
     email: EmailStr
     phone: str | None = Field(None, max_length=30)
     message: str = Field(..., min_length=10, max_length=5000)
     website_url: str | None = Field(None, max_length=500)
 
+    @field_validator("name", "phone", mode="before")
+    @classmethod
+    def sanitize_single_line(cls, v: str | None) -> str | None:
+        if isinstance(v, str):
+            return re.sub(r"[\r\n]+", " ", v).strip()
+        return v
 
-class ContactMessageRead(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
+    @field_validator("message", mode="before")
+    @classmethod
+    def strip_message(cls, v: str) -> str:
+        return v.strip() if isinstance(v, str) else v
 
+
+class ContactMessageRead(BaseInput):
     id: int
     name: str
     email: str
-    phone: str | None
+    phone: str | None = None
     message: str
-    ip_address: str | None
+    ip_address: str | None = None
+    user_agent: str | None = None
     is_read: bool
     is_spam: bool
     created_at: datetime
 
 
-# ============================================
-# TARIFFS (калькулятор стоимости газа)
-# ============================================
-class TariffBase(BaseInput):
-    name: str = Field(..., min_length=1, max_length=200)
-    category: str = Field(..., max_length=50)
-    price_per_m3: float = Field(..., ge=0, le=10000)
-    fixed_fee: float = Field(0.0, ge=0, le=10000)
-    valid_from: datetime
-    valid_until: datetime | None = None
-    is_active: bool = True
-    description: str | None = Field(None, max_length=2000)
-    language_code: str = "ru"
-    source_decision: str | None = Field(None, max_length=200)
+class BootstrapRead(BaseInput):
+    menu: list[MenuCategoryRead]
+    announcements: list[AnnouncementRead]
+    news: list[NewsPostRead]
+    gallery: list[GalleryImageRead]
 
 
-class TariffCreate(TariffBase):
-    pass
+class PasswordChangeRequest(BaseInput):
+    current_password: str = Field(..., min_length=1, max_length=128)
+    new_password: str = Field(..., min_length=12, max_length=128)
+
+    @field_validator("new_password")
+    @classmethod
+    def validate_password_strength(cls, v: str) -> str:
+        if not (any(c.isupper() for c in v) and any(c.islower() for c in v) and any(c.isdigit() for c in v)):
+            raise ValueError("Новый пароль должен содержать заглавные и строчные буквы и цифры (минимум 12 символов)")
+        return v
 
 
-class TariffUpdate(BaseInput):
-    name: str | None = Field(None, max_length=200)
-    category: str | None = Field(None, max_length=50)
-    price_per_m3: float | None = Field(None, ge=0, le=10000)
-    fixed_fee: float | None = Field(None, ge=0, le=10000)
-    valid_from: datetime | None = None
-    valid_until: datetime | None = None
-    is_active: bool | None = None
-    description: str | None = Field(None, max_length=2000)
-    source_decision: str | None = Field(None, max_length=200)
-
-
-class TariffRead(TariffBase, BaseRead):
-    pass
-
-class TariffCalculateRequest(BaseModel):
-    """Запрос расчёта стоимости"""
-    model_config = ConfigDict(
-        populate_by_name=True,
-        alias_generator=to_camel,  # принимает и camelCase, и snake_case
-    )
-    
-    cubic_meters: float = Field(..., ge=0, le=1000000, description="Объём в м³")
-    category: str = Field("residential", description="Категория потребителя")
-
-
-class TariffCalculateResponse(BaseModel):
-    """Результат расчёта"""
-    model_config = ConfigDict(
-        populate_by_name=True,
-        from_attributes=True,
-        alias_generator=to_camel,  #  возвращает camelCase
-    )
-    
-    tariff_id: int
-    tariff_name: str
-    category: str
-    price_per_m3: float
-    fixed_fee: float
-    cubic_meters: float
-    gas_cost: float  # м³ × тариф
-    total: float  # gas_cost + абонплата
-    currency: str = "MDL"
-    valid_from: datetime
-    source_decision: str | None
-
-# ============================================
-# METER READINGS (показания счётчиков)
-# ============================================
-class MeterReadingCreate(BaseModel):
-    """Форма передачи показаний (публичная)"""
-    model_config = ConfigDict(populate_by_name=True)
-    
-    contract_number: str = Field(
-        ...,
-        min_length=3,
-        max_length=50,
-        pattern=r"^[A-Za-z0-9\-/]+$",
-        description="Номер договора (только буквы, цифры, дефис, слэш)",
-    )
-    address: str = Field(..., min_length=5, max_length=300)
-    reading_value: float = Field(..., ge=0, le=999999999)
-    reading_date: datetime
-    contact_phone: str | None = Field(None, max_length=30, pattern=r"^[\d\s\+\-\(\)]+$")
-    contact_email: EmailStr | None = None
-    notes: str | None = Field(None, max_length=1000)
-    language_code: str = "ru"
-    # Honeypot
-    website_url: str | None = Field(None, max_length=500)
-
-
-class MeterReadingRead(BaseModel):
-    """Полная запись показания (для админки)"""
-    model_config = ConfigDict(
-        from_attributes=True,
-        alias_generator=to_camel,
-        populate_by_name=True,
-    )
-    
+class SearchResultItem(BaseInput):
+    type: str
     id: int
-    contract_number: str
-    address: str
-    reading_value: float
-    previous_reading: float | None
-    consumption: float | None
-    reading_date: datetime
-    contact_phone: str | None
-    contact_email: str | None
-    notes: str | None
-    ip_address: str | None
-    is_processed: bool
-    processed_at: datetime | None
-    processed_by: str | None
-    is_spam: bool
-    created_at: datetime
-    language_code: str
-
-
-class MeterReadingProcess(BaseModel):
-    """Пометить показание как обработанное"""
-    processed_by: str = Field(..., min_length=1, max_length=100)
-
-
-class MeterReadingSuccess(BaseModel):
-    """Ответ на успешную отправку"""
-    success: bool = True
-    message: str
-    reading_id: int
-    consumption: float | None
-    estimated_cost: float | None
+    title: str
+    snippet: str
+    url: str

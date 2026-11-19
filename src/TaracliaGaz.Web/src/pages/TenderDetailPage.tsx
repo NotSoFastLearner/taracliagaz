@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useEffect, useMemo } from "react";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { getTenderById } from "../api/contentApi";
 import type { Tender } from "../types/content";
 import SEO from "../components/SEO";
@@ -7,23 +7,32 @@ import { resolveUploadUrl } from "../utils/urls";
 import { IconCalendar, IconClock, IconDownload, IconExternalLink } from "../components/icons";
 import { sanitizeHtml } from "../utils/sanitize";
 import { useLanguage, dateLocale } from "../context/LanguageContext";
+import { readCache, useCachedFetch, writeCache } from "../hooks/useCachedFetch";
 
 export default function TenderDetailPage() {
     const { id } = useParams<{ id: string }>();
+    const navigate = useNavigate();
     const { language, t } = useLanguage();
-    const [tender, setTender] = useState<Tender | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+    const numericId = Number(id);
+
+    const cachedList = readCache<Tender[]>(`tenders:${language}`);
+    const listMatch = cachedList?.find((item) => item.id === numericId);
+    if (listMatch && !readCache<Tender>(`tender-item:${numericId}`)) {
+        writeCache(`tender-item:${numericId}`, listMatch);
+    }
+
+    const { data: tender, loading, error } = useCachedFetch(
+        `tender-item:${numericId}`,
+        () => getTenderById(numericId, language)
+    );
 
     useEffect(() => {
-        if (!id) return;
-        setLoading(true);
-        setError(null);
-        getTenderById(parseInt(id))
-            .then(setTender)
-            .catch(() => setError(t('tenders.notFound')))
-            .finally(() => setLoading(false));
-    }, [id, t]);
+        if (tender && tender.languageCode && tender.languageCode !== language) {
+            navigate("/tenders", { replace: true });
+        }
+    }, [tender, language, navigate]);
+
+    const safeHtml = useMemo(() => (tender ? sanitizeHtml(tender.bodyHtml) : ""), [tender]);
 
     const formatDate = (iso: string) => {
         try {
@@ -34,7 +43,7 @@ export default function TenderDetailPage() {
     };
 
     if (loading) return <p>{t('common.loading')}</p>;
-    if (error || !tender) return <p className="error">{error || t('tenders.notFound')}</p>;
+    if (error || !tender) return <p className="error">{t('tenders.notFound')}</p>;
 
     return (
         <>
@@ -42,6 +51,7 @@ export default function TenderDetailPage() {
                 title={tender.title}
                 description={`${t('tenders.title')}: ${tender.title}. ${tender.deadlineAt ? `${t('common.deadline')}: ${formatDate(tender.deadlineAt)}.` : ""}`}
                 path={`/tenders/${tender.id}`}
+                singleLang
             />
             <section className="section">
                 <div className="container">
@@ -58,7 +68,7 @@ export default function TenderDetailPage() {
                         </div>
                         <div
                             className="tender-body content-body"
-                            dangerouslySetInnerHTML={{ __html: sanitizeHtml(tender.bodyHtml) }}
+                            dangerouslySetInnerHTML={{ __html: safeHtml }}
                         />
                         {(tender.documentUrl || tender.externalUrl) && (
                             <div className="tender-docs">
@@ -74,7 +84,7 @@ export default function TenderDetailPage() {
                                 )}
                                 {tender.externalUrl && (
                                     <a
-                                        href={tender.externalUrl}
+                                        href={resolveUploadUrl(tender.externalUrl)}
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         className="btn btn-secondary"

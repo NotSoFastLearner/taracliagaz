@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 
-from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Integer, String, Text, UniqueConstraint
+from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Index, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 class Base(DeclarativeBase):
@@ -14,6 +14,7 @@ class Page(Base, TimestampMixin):
     __tablename__ = "pages"
     __table_args__ = (
         UniqueConstraint("slug", "language_code", name="uq_pages_slug_lang"),
+        Index("ix_pages_lang_pub_slug", "language_code", "is_published", "slug"),
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -35,6 +36,9 @@ class User(Base, TimestampMixin):
 
 class NewsPost(Base, TimestampMixin):
     __tablename__ = "news_posts"
+    __table_args__ = (
+        Index("ix_news_lang_pub_date", "language_code", "is_published", "published_at"),
+    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     title: Mapped[str] = mapped_column(String(200))
@@ -47,6 +51,9 @@ class NewsPost(Base, TimestampMixin):
 
 class Announcement(Base, TimestampMixin):
     __tablename__ = "announcements"
+    __table_args__ = (
+        Index("ix_announcements_lang_pub_pin", "language_code", "is_published", "is_pinned", "published_at"),
+    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     title: Mapped[str] = mapped_column(String(200))
@@ -59,6 +66,9 @@ class Announcement(Base, TimestampMixin):
 
 class Tender(Base, TimestampMixin):
     __tablename__ = "tenders"
+    __table_args__ = (
+        Index("ix_tenders_lang_pub_date", "language_code", "is_published", "published_at"),
+    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     title: Mapped[str] = mapped_column(String(200))
@@ -73,6 +83,9 @@ class Tender(Base, TimestampMixin):
 
 class Document(Base, TimestampMixin):
     __tablename__ = "documents"
+    __table_args__ = (
+        Index("ix_documents_lang_pub_cat", "language_code", "is_published", "category_slug", "published_at"),
+    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     title: Mapped[str] = mapped_column(String(200))
@@ -85,6 +98,9 @@ class Document(Base, TimestampMixin):
 
 class GalleryImage(Base, TimestampMixin):
     __tablename__ = "gallery_images"
+    __table_args__ = (
+        Index("ix_gallery_pub_order", "is_published", "sort_order"),
+    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     caption: Mapped[str] = mapped_column(String(200))
@@ -95,6 +111,9 @@ class GalleryImage(Base, TimestampMixin):
 
 class MenuCategory(Base, TimestampMixin):
     __tablename__ = "menu_categories"
+    __table_args__ = (
+        Index("ix_menu_lang_order", "language_code", "order"),
+    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     title: Mapped[str] = mapped_column(String(200))

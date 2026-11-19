@@ -36,3 +36,9 @@ export const login = async (username: string, password: string): Promise<LoginRe
 export const getCurrentUser = async (): Promise<UserResponse> => {
     return http.get<UserResponse>("/auth/me");
 };
+
+export const changePassword = (currentPassword: string, newPassword: string) =>
+    http.put<{ success: boolean; message: string; access_token?: string }>("/auth/password", {
+        currentPassword,
+        newPassword,
+    });

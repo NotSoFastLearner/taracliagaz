@@ -12,7 +12,6 @@ export const translations = {
         'nav.announcements': 'ОБЪЯВЛЕНИЯ',
         'nav.transparency': 'Прозрачность',
         'nav.antifraud': 'Линия „ANTIFRAUDĂ"',
-        'nav.meterReading': 'Показание Счетчика',
 
         // Общие
         'common.loading': 'Загрузка...',
@@ -66,6 +65,8 @@ export const translations = {
         'contacts.send': 'Отправить сообщение',
         'contacts.sending': 'Отправка...',
         'contacts.success': 'Сообщение отправлено!',
+        'contacts.successMsg': 'Сообщение отправлено! Мы свяжемся с вами в ближайшее время.',
+        'contacts.fullAddress': 'MD-7401, Республика Молдова, г. Тараклия, ул. Ленина 110А',
         'contacts.error': 'Ошибка отправки',
         'contacts.coords': 'Наши координаты',
         'contacts.feedback': 'Обратная связь',
@@ -96,6 +97,14 @@ export const translations = {
         'home.allNews': 'Все новости →',
         'home.gallery': 'Галерея',
         'home.allGallery': 'Вся галерея →',
+        'home.quickTariffs': 'Тарифы на газ',
+        'home.quickTariffsDesc': 'Действующие регулируемые цены на природный газ',
+        'home.quickSafety': 'Правила безопасности',
+        'home.quickSafetyDesc': 'Памятка по безопасной эксплуатации газового оборудования',
+        'home.quickServices': 'Услуги и договоры',
+        'home.quickServicesDesc': 'Техническое обслуживание, подключение и документы',
+        'home.quickFaq': 'Вопросы и ответы',
+        'home.quickFaqDesc': 'Ответы на частые вопросы бытовых и юр. потребителей',
 
         'news.title': 'Новости',
         'news.empty': 'Новостей пока нет',
@@ -117,23 +126,33 @@ export const translations = {
 
         'gallery.title': 'Галерея',
         'gallery.empty': 'Изображений пока нет',
+        'gallery.prev': 'Предыдущее фото',
+        'gallery.next': 'Следующее фото',
 
         'transparency.title': 'Прозрачность',
         'transparency.empty': 'Документов в этой категории пока нет',
         'transparency.open': 'Открыть',
+        'transparency.noFile': 'Файл не прикреплён',
 
         'static.notFound': 'Страница не найдена.',
         'static.loadError': 'Ошибка загрузки страницы',
 
-        'cabinet.title': 'Личный кабинет',
-        'cabinet.text': 'Сервис личного кабинета находится в разработке. В будущем здесь будут доступны электронные услуги для потребителей природного газа.',
+        'search.placeholder': 'Поиск по сайту...',
+        'search.empty': 'Ничего не найдено',
+        'search.button': 'Поиск',
+        'search.type.page': 'Страница',
+        'search.type.news': 'Новость',
+        'search.type.announcement': 'Объявление',
+        'search.type.tender': 'Тендер',
+        'search.type.document': 'Документ',
+
+        'banner.important': 'Важно',
+        'banner.details': 'Подробнее →',
 
         'notfound.title': 'Страница не найдена',
         'notfound.text': 'Запрошенная страница не существует или была перемещена.',
         'notfound.home': 'На главную',
         'notfound.call': 'Позвонить',
-
-        'cabinet.note': 'По всем вопросам обращайтесь в наш офис или по телефонам, указанным в разделе',
 
         // Cookie-баннер
         'cookie.ariaLabel': 'Использование cookies',
@@ -167,6 +186,7 @@ export const translations = {
         'contacts.optional': 'необязательно',
         'contacts.charsCount': 'символов',
 
+        'footer.address': 'г. Тараклия, ул. Ленина 110А',
         'footer.privacy': 'Политика конфиденциальности',
         'footer.terms': 'Условия использования',
         'footer.cookies': 'Политика cookies',
@@ -181,7 +201,6 @@ export const translations = {
         'seo.galleryDesc': 'Фотогалерея SRL «Taraclia Gaz»',
         'seo.transparencyDesc': 'Публичные документы SRL «Taraclia Gaz»',
         'seo.contactsDesc': 'Контактная информация SRL «Taraclia Gaz». Адрес, телефоны, email. Аварийная служба 24/7: 904. Форма обратной связи.',
-        'seo.cabinetDesc': 'Сервис личного кабинета потребителя находится в разработке.',
 
         // Категории документов (slug → название)
         'cat.prozrachnost': 'Прозрачность',
@@ -192,6 +211,8 @@ export const translations = {
         'cat.finansovye-otchety': 'Финансовые отчёты',
         'cat.ustav': 'Устав',
         'cat.statutul': 'Statutul',
+        'cat.audit-report': 'Аудиторский отчёт',
+        'cat.vnutrennyaya-informatsiya': 'Внутренняя информация',
 
         // Переключатель языка
         'lang.switch': 'RO',
@@ -208,7 +229,6 @@ export const translations = {
         'nav.announcements': 'ANUNȚURI',
         'nav.transparency': 'Transparență',
         'nav.antifraud': 'Linia „ANTIFRAUDĂ"',
-        'nav.meterReading': 'Citirea Contorului',
 
         // Comune
         'common.loading': 'Încărcare...',
@@ -262,6 +282,8 @@ export const translations = {
         'contacts.send': 'Trimite mesaj',
         'contacts.sending': 'Trimitere...',
         'contacts.success': 'Mesaj trimis!',
+        'contacts.successMsg': 'Mesajul a fost trimis cu succes! Vă vom contacta în curând.',
+        'contacts.fullAddress': 'MD-7401, Republica Moldova, or. Taraclia, str. Lenin, 110A',
         'contacts.error': 'Eroare la trimitere',
         'contacts.coords': 'Datele noastre de contact',
         'contacts.feedback': 'Feedback',
@@ -292,6 +314,14 @@ export const translations = {
         'home.allNews': 'Toate știrile →',
         'home.gallery': 'Galerie',
         'home.allGallery': 'Toată galeria →',
+        'home.quickTariffs': 'Tarife la gaze',
+        'home.quickTariffsDesc': 'Prețurile reglementate în vigoare pentru gazele naturale',
+        'home.quickSafety': 'Tehnica securității',
+        'home.quickSafetyDesc': 'Reguli de utilizare în siguranță a instalațiilor de gaze',
+        'home.quickServices': 'Servicii și contracte',
+        'home.quickServicesDesc': 'Deservire tehnică, racordare și documentație',
+        'home.quickFaq': 'Întrebări frecvente',
+        'home.quickFaqDesc': 'Răspunsuri la cele mai frecvente întrebări ale consumatorilor',
 
         'news.title': 'Știri',
         'news.empty': 'Deocamdată nu sunt știri',
@@ -313,23 +343,33 @@ export const translations = {
 
         'gallery.title': 'Galerie',
         'gallery.empty': 'Deocamdată nu sunt imagini',
+        'gallery.prev': 'Fotografia anterioară',
+        'gallery.next': 'Fotografia următoare',
 
         'transparency.title': 'Transparență',
         'transparency.empty': 'Deocamdată nu sunt documente în această categorie',
         'transparency.open': 'Deschide',
+        'transparency.noFile': 'Fișier neatașat',
 
         'static.notFound': 'Pagina nu a fost găsită.',
         'static.loadError': 'Eroare la încărcarea paginii',
 
-        'cabinet.title': 'Cabinetul personal',
-        'cabinet.text': 'Serviciul de cabinet personal este în curs de dezvoltare. În viitor aici vor fi disponibile servicii electronice pentru consumatorii de gaze naturale.',
+        'search.placeholder': 'Căutare pe site...',
+        'search.empty': 'Nimic găsit',
+        'search.button': 'Căutare',
+        'search.type.page': 'Pagină',
+        'search.type.news': 'Știre',
+        'search.type.announcement': 'Anunț',
+        'search.type.tender': 'Tender',
+        'search.type.document': 'Document',
+
+        'banner.important': 'Important',
+        'banner.details': 'Detalii →',
 
         'notfound.title': 'Pagina nu a fost găsită',
         'notfound.text': 'Pagina solicitată nu există sau a fost mutată.',
         'notfound.home': 'La pagina principală',
         'notfound.call': 'Sunați',
-
-        'cabinet.note': 'Pentru orice întrebări contactați biroul nostru sau numerele de telefon din secțiunea',
 
         // Banner cookies
         'cookie.ariaLabel': 'Utilizarea cookies',
@@ -363,6 +403,7 @@ export const translations = {
         'contacts.optional': 'opțional',
         'contacts.charsCount': 'caractere',
 
+        'footer.address': 'or. Taraclia, str. Lenin, 110A',
         'footer.privacy': 'Politica de confidențialitate',
         'footer.terms': 'Termeni de utilizare',
         'footer.cookies': 'Politica cookies',
@@ -377,7 +418,6 @@ export const translations = {
         'seo.galleryDesc': 'Galerie foto SRL «Taraclia Gaz»',
         'seo.transparencyDesc': 'Documente publice SRL «Taraclia Gaz»',
         'seo.contactsDesc': 'Informații de contact SRL «Taraclia Gaz». Adresă, telefoane, email. Serviciul de urgență 24/7: 904. Formular de feedback.',
-        'seo.cabinetDesc': 'Serviciul de cabinet personal al consumatorului este în curs de dezvoltare.',
 
         // Categorii de documente (slug → denumire)
         'cat.prozrachnost': 'Transparență',
@@ -388,6 +428,8 @@ export const translations = {
         'cat.finansovye-otchety': 'Rapoarte financiare',
         'cat.ustav': 'Statutul',
         'cat.statutul': 'Statutul',
+        'cat.audit-report': 'Raportul auditorului',
+        'cat.vnutrennyaya-informatsiya': 'Informații privilegiate',
 
         // Comutator limbă
         'lang.switch': 'RU',

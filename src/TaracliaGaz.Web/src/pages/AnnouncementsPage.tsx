@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { getAnnouncements } from "../api/contentApi";
 import { useCachedFetch } from "../hooks/useCachedFetch";
 import SEO from "../components/SEO";
@@ -11,7 +12,14 @@ export default function AnnouncementsPage() {
     const { data: itemsData, loading } = useCachedFetch(
         `announcements:${language}`, () => getAnnouncements(language), [language]
     );
-    const items = itemsData ?? [];
+    const items = useMemo(
+        () =>
+            (itemsData ?? []).map((a) => ({
+                ...a,
+                safeHtml: sanitizeHtml(a.bodyHtml),
+            })),
+        [itemsData]
+    );
 
     const formatDate = (iso: string) => {
         try {
@@ -43,7 +51,7 @@ export default function AnnouncementsPage() {
                                     </div>
                                     <div
                                         className="announcement-body content-body"
-                                        dangerouslySetInnerHTML={{ __html: sanitizeHtml(a.bodyHtml) }}
+                                        dangerouslySetInnerHTML={{ __html: a.safeHtml }}
                                     />
                                 </li>
                             ))}

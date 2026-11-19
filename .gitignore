@@ -18,7 +18,7 @@ env/
 ENV/
 
 # ============================================
-# Environment variables (НИКОГДА не коммитим секреты)
+# Environment variables (пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ)
 # ============================================
 .env
 .env.local
@@ -26,11 +26,13 @@ ENV/
 .env.production
 .env.example
 # ============================================
-# Database files (слишком большие для GitHub)
+# Database files (пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ GitHub)
 # ============================================
 *.db
 *.sqlite
 *.sqlite3
+*.db-shm
+*.db-wal
 
 # ============================================
 # User-generated content
@@ -88,3 +90,5 @@ coverage/
 .pytest_cache/
 .coverage
 htmlcov/
+# AI & Agent artifacts
+.agents/

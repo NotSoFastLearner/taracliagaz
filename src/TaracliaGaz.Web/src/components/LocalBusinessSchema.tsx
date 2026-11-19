@@ -7,19 +7,25 @@ import {
     COMPANY_EMAIL,
     SITE_URL,
 } from "../utils/site";
+import { useLanguage } from "../context/LanguageContext";
 
 export default function LocalBusinessSchema() {
+    const { language, t } = useLanguage();
+    const isRo = language === "ro";
+
     const schema = {
         "@context": "https://schema.org",
         "@type": "LocalBusiness",
         "@id": `${SITE_URL}/#organization`,
         name: COMPANY_NAME,
-        image: `${SITE_URL}/og-image.jpg`,
-        description: "Поставка природного газа в Тараклийском районе Молдовы",
+        image: `${SITE_URL}/og-image.png`,
+        description: isRo
+            ? "Furnizarea gazelor naturale în raionul Taraclia, Moldova"
+            : "Поставка природного газа в Тараклийском районе Молдовы",
         address: {
             "@type": "PostalAddress",
-            streetAddress: COMPANY_ADDRESS.street,
-            addressLocality: COMPANY_ADDRESS.city.replace("г. ", ""),
+            streetAddress: isRo ? "str. Lenin, 110A" : COMPANY_ADDRESS.street,
+            addressLocality: isRo ? "Taraclia" : COMPANY_ADDRESS.city.replace("г. ", ""),
             postalCode: COMPANY_ADDRESS.postalCode,
             addressCountry: "MD",
         },
@@ -28,7 +34,7 @@ export default function LocalBusinessSchema() {
             latitude: COMPANY_COORDINATES.latitude,
             longitude: COMPANY_COORDINATES.longitude,
         },
-        url: SITE_URL,
+        url: isRo ? `${SITE_URL}/?lang=ro` : SITE_URL,
         telephone: COMPANY_PHONES.office,
         email: COMPANY_EMAIL,
         openingHoursSpecification: [
@@ -55,7 +61,7 @@ export default function LocalBusinessSchema() {
                 "@type": "ContactPoint",
                 telephone: COMPANY_PHONES.qa,
                 contactType: "customer service",
-                description: "Вопросы потребителей",
+                description: t('contacts.qa'),
             },
             {
                 "@type": "ContactPoint",

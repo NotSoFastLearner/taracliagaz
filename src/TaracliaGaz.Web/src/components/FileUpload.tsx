@@ -69,7 +69,7 @@ export default function FileUpload({ type, value, onChange, label = "Файл" }
                 type="file"
                 onChange={handleFileChange}
                 disabled={uploading}
-                accept={type === "image" ? "image/*" : ".pdf,.doc,.docx,.xls,.xlsx"}
+                accept={type === "image" ? "image/*" : ".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.rtf"}
             />
 
             {uploading && <p className="loading">Загрузка...</p>}

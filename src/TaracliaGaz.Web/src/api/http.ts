@@ -7,7 +7,9 @@ async function request<T>(method: string, path: string, body?: unknown, headers?
     const init: RequestInit = {
         method,
         headers: {
-            ...(body instanceof FormData ? {} : { "Content-Type": "application/json" }),
+            ...(body !== undefined && !(body instanceof FormData)
+                ? { "Content-Type": "application/json" }
+                : {}),
             ...(token ? { Authorization: `Bearer ${token}` } : {}),
             ...headers,
         },

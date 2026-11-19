@@ -17,7 +17,6 @@ const ContactsPage = lazy(() => import("./pages/ContactsPage"));
 const GalleryPage = lazy(() => import("./pages/GalleryPage"));
 const TransparencyPage = lazy(() => import("./pages/TransparencyPage"));
 const NotFoundPage = lazy(() => import("./pages/NotFoundPage"));
-const CabinetComingSoonPage = lazy(() => import("./pages/CabinetComingSoonPage"));
 
 // Админка (тяжёлый редактор TipTap и менеджеры) грузится лениво,
 // отдельным чанком — не тормозит публичные страницы
@@ -53,7 +52,6 @@ function App() {
                 <Route path="/gallery" element={S(<GalleryPage />)} />
                 <Route path="/transparency/:slug?" element={S(<TransparencyPage />)} />
                 <Route path="/contacts" element={S(<ContactsPage />)} />
-                <Route path="/cabinet" element={S(<CabinetComingSoonPage />)} />
 
                 {/* Админка — ленивая загрузка */}
                 <Route

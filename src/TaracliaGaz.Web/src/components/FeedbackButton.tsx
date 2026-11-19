@@ -11,7 +11,7 @@ interface FeedbackForm {
     type: FeedbackType;
 }
 
-export default function FeedbackButton() {
+export default function FeedbackButton({ aboveCookieBanner = false }: { aboveCookieBanner?: boolean }) {
     const { t } = useLanguage();
     const [isOpen, setIsOpen] = useState(false);
     const [form, setForm] = useState<FeedbackForm>({
@@ -33,26 +33,21 @@ export default function FeedbackButton() {
         e.preventDefault();
         setErrors({});
 
-        // Схема создаётся здесь, чтобы сообщения об ошибках были на текущем языке.
-        // zod подгружается лениво — не раздувает основной бандл (нужен
-        // только при реальной отправке формы)
-        const { z } = await import("zod");
-        const feedbackSchema = z.object({
-            name: z.string().min(2, t('feedback.nameError')).max(100),
-            email: z.string().email(t('feedback.emailError')),
-            message: z.string().min(5, t('feedback.messageError')).max(2000),
-            type: z.enum(["bug", "idea", "other"]),
-        });
+        const fieldErrors: { name?: string; email?: string; message?: string } = {};
+        const trimmedName = form.name.trim();
+        const trimmedEmail = form.email.trim();
+        const trimmedMessage = form.message.trim();
 
-        const result = feedbackSchema.safeParse(form);
-        if (!result.success) {
-            const fieldErrors: Record<string, string> = {};
-            result.error.issues.forEach((err) => {
-                const field = err.path[0] as string;
-                if (field && !fieldErrors[field]) {
-                    fieldErrors[field] = err.message;
-                }
-            });
+        if (trimmedName.length < 2 || trimmedName.length > 100) {
+            fieldErrors.name = t('feedback.nameError');
+        }
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+            fieldErrors.email = t('feedback.emailError');
+        }
+        if (trimmedMessage.length < 5 || form.message.length > 2000) {
+            fieldErrors.message = t('feedback.messageError');
+        }
+        if (Object.keys(fieldErrors).length > 0) {
             setErrors(fieldErrors);
             return;
         }
@@ -60,9 +55,9 @@ export default function FeedbackButton() {
         setStatus("sending");
         try {
             await submitContact({
-                name: `[Feedback: ${TYPE_LABELS[form.type]}] ${form.name}`,
-                email: form.email,
-                message: `${t('feedback.typeLabel')}: ${TYPE_LABELS[form.type]}\n\n${form.message}`,
+                name: `[Feedback: ${TYPE_LABELS[form.type]}] ${trimmedName}`,
+                email: trimmedEmail,
+                message: `${t('feedback.typeLabel')}: ${TYPE_LABELS[form.type]}\n\n${trimmedMessage}`,
                 websiteUrl: "",  // honeypot
             });
             setStatus("success");
@@ -79,7 +74,7 @@ export default function FeedbackButton() {
     return (
         <>
             <button
-                className={`feedback-toggle ${isOpen ? "open" : ""}`}
+                className={`feedback-toggle ${isOpen ? "open" : ""} ${aboveCookieBanner ? "above-cookie" : ""}`}
                 onClick={() => setIsOpen(!isOpen)}
                 aria-label={isOpen ? t('feedback.closeForm') : t('feedback.open')}
                 title={t('feedback.tooltip')}

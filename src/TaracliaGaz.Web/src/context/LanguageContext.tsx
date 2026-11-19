@@ -12,6 +12,11 @@ const LanguageContext = createContext<LanguageContextType | undefined>(undefined
 
 export const LanguageProvider = ({ children }: { children: ReactNode }) => {
     const [language, setLanguageState] = useState<Language>(() => {
+        const urlLang = new URLSearchParams(window.location.search).get('lang');
+        if (urlLang === 'ro' || urlLang === 'ru') {
+            localStorage.setItem('language', urlLang);
+            return urlLang;
+        }
         const saved = localStorage.getItem('language');
         return (saved === 'ro' || saved === 'ru') ? saved : 'ru';
     });
@@ -19,6 +24,13 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
     const setLanguage = (lang: Language) => {
         setLanguageState(lang);
         localStorage.setItem('language', lang);
+        const url = new URL(window.location.href);
+        if (lang === 'ro') {
+            url.searchParams.set('lang', 'ro');
+        } else {
+            url.searchParams.delete('lang');
+        }
+        window.history.replaceState(null, '', url.pathname + url.search + url.hash);
     };
 
     useEffect(() => {
@@ -40,6 +52,7 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
     );
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useLanguage = () => {
     const context = useContext(LanguageContext);
     if (!context) {
@@ -49,4 +62,5 @@ export const useLanguage = () => {
 };
 
 /** Локаль для форматирования дат по текущему языку */
+// eslint-disable-next-line react-refresh/only-export-components
 export const dateLocale = (lang: Language): string => (lang === 'ro' ? 'ro-RO' : 'ru-RU');

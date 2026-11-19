@@ -8,21 +8,26 @@ interface SEOProps {
     path?: string;
     image?: string;
     noindex?: boolean;
+    singleLang?: boolean;
 }
 
 export default function SEO({
     title,
     description,
     path = "",
-    image = "/og-image.png", // Было /og-image.jpg (404)
+    image = "/og-image.png",
     noindex = false,
+    singleLang = false,
 }: SEOProps) {
     const { language, t } = useLanguage();
+    const siteName = t('home.heroTitle');
     const fullTitle = path === "/"
         ? t('seo.homeTitle')
-        : `${title} — Тараклия-ГАЗ`;
+        : `${title} — ${siteName}`;
 
-    const url = `${SITE_URL}${path}`;
+    const ruUrl = `${SITE_URL}${path}`;
+    const roUrl = `${SITE_URL}${path}${path.includes('?') ? '&' : '?'}lang=ro`;
+    const url = language === 'ro' ? roUrl : ruUrl;
     const imageUrl = image.startsWith("http") ? image : `${SITE_URL}${image}`;
 
     return (
@@ -32,9 +37,12 @@ export default function SEO({
             {noindex && <meta name="robots" content="noindex,nofollow" />}
 
             <link rel="canonical" href={url} />
+            {!singleLang && <link rel="alternate" hrefLang="ru" href={ruUrl} />}
+            {!singleLang && <link rel="alternate" hrefLang="ro" href={roUrl} />}
+            {!singleLang && <link rel="alternate" hrefLang="x-default" href={ruUrl} />}
 
             <meta property="og:type" content="website" />
-            <meta property="og:site_name" content="Тараклия-ГАЗ" />
+            <meta property="og:site_name" content={siteName} />
             <meta property="og:title" content={fullTitle} />
             <meta property="og:description" content={description} />
             <meta property="og:url" content={url} />

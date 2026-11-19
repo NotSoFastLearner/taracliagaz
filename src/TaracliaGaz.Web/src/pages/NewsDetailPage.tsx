@@ -1,30 +1,37 @@
-import { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useEffect, useMemo } from "react";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { getNewsById } from "../api/contentApi";
 import type { NewsPostDetail } from "../types/content";
 import SEO from "../components/SEO";
 import { IconCalendar } from "../components/icons";
 import { sanitizeHtml } from "../utils/sanitize";
 import { useLanguage, dateLocale } from "../context/LanguageContext";
+import { readCache, useCachedFetch, writeCache } from "../hooks/useCachedFetch";
 
 export default function NewsDetailPage() {
     const { id } = useParams<{ id: string }>();
+    const navigate = useNavigate();
     const { language, t } = useLanguage();
-    const [post, setPost] = useState<NewsPostDetail | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+    const numericId = Number(id);
+
+    const cachedList = readCache<NewsPostDetail[]>(`news:${language}`);
+    const listMatch = cachedList?.find((n) => n.id === numericId && n.bodyHtml);
+    if (listMatch && !readCache<NewsPostDetail>(`news-item:${numericId}`)) {
+        writeCache(`news-item:${numericId}`, listMatch);
+    }
+
+    const { data: post, loading, error } = useCachedFetch(
+        `news-item:${numericId}`,
+        () => getNewsById(numericId, language)
+    );
 
     useEffect(() => {
-        if (!id) return;
-        setLoading(true);
-        setError(null);
-        getNewsById(parseInt(id))
-            .then((item) => {
-                setPost(item);
-            })
-            .catch(() => setError(t('news.notFound')))
-            .finally(() => setLoading(false));
-    }, [id, t]);
+        if (post && post.languageCode && post.languageCode !== language) {
+            navigate("/news", { replace: true });
+        }
+    }, [post, language, navigate]);
+
+    const safeHtml = useMemo(() => (post ? sanitizeHtml(post.bodyHtml) : ""), [post]);
 
     const formatDate = (iso: string) => {
         try {
@@ -35,11 +42,11 @@ export default function NewsDetailPage() {
     };
 
     if (loading) return <p>{t('common.loading')}</p>;
-    if (error || !post) return <p className="error">{error || t('news.notFound')}</p>;
+    if (error || !post) return <p className="error">{t('news.notFound')}</p>;
 
     return (
         <>
-            <SEO title={post.title} description={post.summary} path={`/news/${post.id}`} />
+            <SEO title={post.title} description={post.summary} path={`/news/${post.id}`} singleLang />
             <section className="section">
                 <div className="container">
                     <Link to="/news" className="back-link">{t('news.backAll')}</Link>
@@ -50,7 +57,7 @@ export default function NewsDetailPage() {
                         </div>
                         <div
                             className="content-body"
-                            dangerouslySetInnerHTML={{ __html: sanitizeHtml(post.bodyHtml) }}
+                            dangerouslySetInnerHTML={{ __html: safeHtml }}
                         />
                     </article>
                 </div>

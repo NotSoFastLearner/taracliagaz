@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { useLocation } from "react-router-dom";
 import { getPage } from "../api/contentApi";
 import SEO from "../components/SEO";
@@ -20,10 +21,41 @@ export default function StaticPage() {
         () => getPage(slug, language),
         [slug, language]
     );
+    const safeHtml = useMemo(() => (page ? sanitizeHtml(page.bodyHtml) : ""), [page]);
 
-    if (loading) return <p>{t('common.loading')}</p>;
-    if (error) return <p className="error">{t('static.loadError')}</p>;
-    if (!page) return <p>{t('static.notFound')}</p>;
+    if (loading) {
+        return (
+            <section className="section">
+                <div className="container">
+                    <div className="static-page-card">
+                        <p>{t('common.loading')}</p>
+                    </div>
+                </div>
+            </section>
+        );
+    }
+    if (error) {
+        return (
+            <section className="section">
+                <div className="container">
+                    <div className="static-page-card">
+                        <p className="error">{t('static.loadError')}</p>
+                    </div>
+                </div>
+            </section>
+        );
+    }
+    if (!page) {
+        return (
+            <section className="section">
+                <div className="container">
+                    <div className="static-page-card">
+                        <p>{t('static.notFound')}</p>
+                    </div>
+                </div>
+            </section>
+        );
+    }
 
     const plainText = page.bodyHtml.replace(/<[^>]*>/g, "").trim();
     const description =
@@ -40,19 +72,21 @@ export default function StaticPage() {
             />
             <section className="section">
                 <div className="container">
-                    <h1>{page.title}</h1>
-                    {/* Дата обновления для важных страниц */}
-                    {["tariffs", "contracts", "legislation", "safety", "services"].includes(page.slug) && page.updatedAt && (
-                        <div className="page-updated">
-                            {t('common.updated')}: {new Date(page.updatedAt).toLocaleDateString(dateLocale(language), {
-                                day: "2-digit", month: "long", year: "numeric",
-                            })}
-                        </div>
-                    )}
-                    <div
-                        className="content-body"
-                        dangerouslySetInnerHTML={{ __html: sanitizeHtml(page.bodyHtml) }}
-                    />
+                    <div className="static-page-card">
+                        <h1>{page.title}</h1>
+                        {/* Дата обновления для важных страниц */}
+                        {["tariffs", "contracts", "legislation", "safety", "services"].includes(page.slug) && page.updatedAt && (
+                            <div className="page-updated">
+                                {t('common.updated')}: {new Date(page.updatedAt).toLocaleDateString(dateLocale(language), {
+                                    day: "2-digit", month: "long", year: "numeric",
+                                })}
+                            </div>
+                        )}
+                        <div
+                            className="content-body"
+                            dangerouslySetInnerHTML={{ __html: safeHtml }}
+                        />
+                    </div>
                 </div>
             </section>
         </>

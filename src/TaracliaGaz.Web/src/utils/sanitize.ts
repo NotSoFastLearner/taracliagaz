@@ -1,4 +1,5 @@
 import DOMPurify from "dompurify";
+import { resolveUploadUrl } from "./urls";
 
 /**
  * Санитизация HTML для защиты от XSS.
@@ -9,13 +10,26 @@ import DOMPurify from "dompurify";
 // «Видео-инструкция» — embeds YouTube, мигрированные с Joomla).
 // Всё остальное (произвольные src, javascript: и т.п.) вырезается.
 const TRUSTED_IFRAME_SRC = /^https:\/\/(www\.)?(youtube\.com|youtube-nocookie\.com)\/embed\//i;
+const RELATIVE_MEDIA_RE = /^\/?(images|uploads|static)\//i;
 
 DOMPurify.addHook("uponSanitizeElement", (node, data) => {
+    const el = node as Element;
     if (data.tagName === "iframe") {
-        const el = node as Element;
         const src = el.getAttribute("src") ?? "";
         if (!TRUSTED_IFRAME_SRC.test(src)) {
             el.remove();
+        }
+    } else if (data.tagName === "img") {
+        const src = el.getAttribute("src");
+        if (src && RELATIVE_MEDIA_RE.test(src)) {
+            const resolved = resolveUploadUrl(src);
+            if (resolved) el.setAttribute("src", resolved);
+        }
+    } else if (data.tagName === "a") {
+        const href = el.getAttribute("href");
+        if (href && RELATIVE_MEDIA_RE.test(href)) {
+            const resolved = resolveUploadUrl(href);
+            if (resolved) el.setAttribute("href", resolved);
         }
     }
 });

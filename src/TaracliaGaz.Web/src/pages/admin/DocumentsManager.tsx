@@ -7,7 +7,19 @@ import {
 } from "../../api/adminApi";
 import type { Document } from "../../types/content";
 import FileUpload from "../../components/FileUpload";
+import AdminLangFilter, { type AdminLangFilterValue } from "../../components/AdminLangFilter";
 import { resolveUploadUrl } from "../../utils/urls";
+
+const DOCUMENT_CATEGORIES = [
+    { slug: "prozrachnost", label: "Прозрачность (prozrachnost)" },
+    { slug: "ustav", label: "Устав (ustav)" },
+    { slug: "tekhniko-ekonomicheskie-pokazateli", label: "Технико-экономические показатели" },
+    { slug: "investitsionnyj-plan", label: "Инвестиционный план" },
+    { slug: "programma-sootvetstviya", label: "Программа соответствия" },
+    { slug: "finansovye-otchety", label: "Финансовые отчёты" },
+    { slug: "audit-report", label: "Отчёт независимого аудитора" },
+    { slug: "vnutrennyaya-informatsiya", label: "Внутренняя информация" },
+];
 
 type EditingDoc = Partial<Document> | null;
 
@@ -17,19 +29,19 @@ export default function DocumentsManager() {
     const [error, setError] = useState<string | null>(null);
     const [editing, setEditing] = useState<EditingDoc>(null);
     const [showForm, setShowForm] = useState(false);
+    const [langFilter, setLangFilter] = useState<AdminLangFilterValue>("all");
 
-    const loadDocs = async () => {
-        setLoading(true);
-        try {
-            const data = await getDocumentsAdmin();
-            setDocuments(data);
-            setError(null);
-        } catch (err) {
-            setError("Ошибка загрузки документов");
-            console.error(err);
-        } finally {
-            setLoading(false);
-        }
+    const loadDocs = () => {
+        getDocumentsAdmin()
+            .then((data) => {
+                setDocuments(data);
+                setError(null);
+            })
+            .catch((err) => {
+                setError("Ошибка загрузки документов");
+                console.error(err);
+            })
+            .finally(() => setLoading(false));
     };
 
     useEffect(() => {
@@ -43,8 +55,8 @@ export default function DocumentsManager() {
         try {
             const payload = {
                 title: editing.title || "",
-                categorySlug: editing.categorySlug || "general",
-                fileUrl: editing.fileUrl || "",
+                categorySlug: editing.categorySlug || "prozrachnost",
+                fileUrl: (editing.fileUrl || "").trim(),
                 publishedAt: editing.publishedAt || new Date().toISOString(),
                 languageCode: editing.languageCode || "ru",
                 isPublished: editing.isPublished ?? true,
@@ -83,7 +95,7 @@ export default function DocumentsManager() {
     const handleNew = () => {
         setEditing({
             title: "",
-            categorySlug: "general",
+            categorySlug: "prozrachnost",
             fileUrl: "",
             publishedAt: new Date().toISOString(),
             languageCode: "ru",
@@ -104,6 +116,11 @@ export default function DocumentsManager() {
             return iso;
         }
     };
+
+    const isLocalUpload = Boolean(
+        editing?.fileUrl &&
+        (editing.fileUrl.startsWith("/") || /^(images|uploads|static)\//.test(editing.fileUrl))
+    );
 
     if (loading) return <p>Загрузка...</p>;
     if (error) return <p className="error">{error}</p>;
@@ -130,22 +147,82 @@ export default function DocumentsManager() {
                     </div>
 
                     <div className="form-group">
-                        <label>Категория (slug)</label>
-                        <input
-                            type="text"
-                            value={editing.categorySlug || ""}
+                        <label>Категория *</label>
+                        <select
+                            value={editing.categorySlug || "prozrachnost"}
                             onChange={(e) => setEditing({ ...editing, categorySlug: e.target.value })}
-                            placeholder="general, reports, contracts..."
                             required
-                        />
+                        >
+                            {DOCUMENT_CATEGORIES.map((cat) => (
+                                <option key={cat.slug} value={cat.slug}>
+                                    {cat.label}
+                                </option>
+                            ))}
+                            {editing.categorySlug &&
+                                !DOCUMENT_CATEGORIES.some((cat) => cat.slug === editing.categorySlug) && (
+                                    <option value={editing.categorySlug}>{editing.categorySlug}</option>
+                                )}
+                        </select>
                     </div>
 
-                    <FileUpload
-                        type="document"
-                        value={editing.fileUrl || ""}
-                        onChange={(url) => setEditing({ ...editing, fileUrl: url })}
-                        label="Файл (PDF, DOCX, XLSX)"
-                    />
+                    <div style={{
+                        background: "white",
+                        padding: "15px",
+                        borderRadius: "6px",
+                        border: "1px solid #dee2e6",
+                        marginBottom: "15px"
+                    }}>
+                        <h4 style={{ margin: "0 0 10px 0", fontSize: "16px" }}>📎 Файл документа или внешняя ссылка</h4>
+                        <p style={{ fontSize: "13px", color: "#666", margin: "0 0 15px 0" }}>
+                            Загрузите файл на сайт или вставьте ссылку на внешний документ:
+                        </p>
+
+                        <div style={{ marginBottom: "15px" }}>
+                            <FileUpload
+                                type="document"
+                                value={isLocalUpload ? (editing.fileUrl || "") : ""}
+                                onChange={(url) => setEditing({ ...editing, fileUrl: url })}
+                                label="📥 Вариант 1: Загрузить файл (PDF, DOCX, XLSX)"
+                            />
+                        </div>
+
+                        <div style={{ textAlign: "center", margin: "10px 0", color: "#999", fontWeight: 500 }}>
+                            — или —
+                        </div>
+
+                        <div className="form-group" style={{ margin: 0 }}>
+                            <label>🔗 Вариант 2: Ссылка на внешний документ</label>
+                            <input
+                                type="url"
+                                value={isLocalUpload ? "" : (editing.fileUrl || "")}
+                                onChange={(e) => setEditing({ ...editing, fileUrl: e.target.value })}
+                                placeholder="https://drive.google.com/... или https://..."
+                            />
+                            <small style={{ color: "#666", fontSize: "12px", display: "block", marginTop: "4px" }}>
+                                Например, ссылка на Google Drive, Google Docs или другой внешний ресурс
+                            </small>
+                            {!isLocalUpload && editing.fileUrl?.trim() && (
+                                <div style={{ display: "flex", alignItems: "center", gap: "10px", marginTop: "8px" }}>
+                                    {resolveUploadUrl(editing.fileUrl) && (
+                                        <a
+                                            href={resolveUploadUrl(editing.fileUrl)}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                        >
+                                            🔗 Проверить ссылку
+                                        </a>
+                                    )}
+                                    <button
+                                        type="button"
+                                        className="secondary"
+                                        onClick={() => setEditing({ ...editing, fileUrl: "" })}
+                                    >
+                                        Очистить ссылку
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    </div>
 
                     <div className="form-group">
                         <label>Дата публикации</label>
@@ -185,21 +262,30 @@ export default function DocumentsManager() {
                 </form>
             )}
 
+            <AdminLangFilter value={langFilter} onChange={setLangFilter} items={documents} />
+
             <ul className="admin-list">
-                {documents.length === 0 && <li>Нет документов</li>}
-                {documents.map((doc) => (
+                {documents.filter((d) => langFilter === "all" || d.languageCode === langFilter).length === 0 && (
+                    <li>Нет документов</li>
+                )}
+                {documents
+                    .filter((d) => langFilter === "all" || d.languageCode === langFilter)
+                    .map((doc) => (
                     <li key={doc.id}>
                         <div>
                             <div className="item-title">📄 {doc.title}</div>
                             <small>
-                                Категория: <code>{doc.categorySlug}</code> |
-                                Дата: {formatDate(doc.publishedAt)} |
+                                🌐 {doc.languageCode.toUpperCase()} |{" "}
+                                Категория: <code>{doc.categorySlug}</code> |{" "}
+                                Дата: {formatDate(doc.publishedAt)} |{" "}
                                 {doc.isPublished ? " ✓ Опубликовано" : " Скрыто"}
                             </small>
                             {doc.fileUrl && (
                                 <div style={{ marginTop: "5px" }}>
                                     <a href={resolveUploadUrl(doc.fileUrl)} target="_blank" rel="noopener noreferrer">
-                                        🔗 Открыть файл
+                                        {/^https?:\/\//i.test(doc.fileUrl.trim())
+                                            ? "🔗 Открыть внешнюю ссылку"
+                                            : "📥 Открыть файл"}
                                     </a>
                                 </div>
                             )}

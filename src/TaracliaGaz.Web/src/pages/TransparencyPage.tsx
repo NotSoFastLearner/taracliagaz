@@ -1,26 +1,22 @@
-import { useEffect, useState, useMemo } from "react";
+import { useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { getDocuments } from "../api/contentApi";
-import type { Document } from "../types/content";
 import SEO from "../components/SEO";
 import { resolveUploadUrl } from "../utils/urls";
 import { IconDocument, IconDownload } from "../components/icons";
 import { useLanguage, dateLocale } from "../context/LanguageContext";
+import { useCachedFetch } from "../hooks/useCachedFetch";
 
 export default function TransparencyPage() {
     const { slug } = useParams<{ slug?: string }>();
     const navigate = useNavigate();
     const { language, t } = useLanguage();
-    const [documents, setDocuments] = useState<Document[]>([]);
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        setLoading(true);
-        getDocuments(undefined, language)
-            .then(setDocuments)
-            .catch(console.error)
-            .finally(() => setLoading(false));
-    }, [language]);
+    const { data: docsData, loading } = useCachedFetch(
+        `documents:${language}`,
+        () => getDocuments(undefined, language),
+        [language]
+    );
+    const documents = useMemo(() => docsData ?? [], [docsData]);
 
     // Категории строятся из реальных документов, а не захардкожены
     const categories = useMemo(() => {
@@ -37,7 +33,7 @@ export default function TransparencyPage() {
     }, [documents, t]);
 
     const activeSlug = useMemo(() => {
-        if (slug && categories.some((c) => c.slug === slug)) return slug;
+        if (slug) return slug;
         return categories[0]?.slug ?? "";
     }, [slug, categories]);
 
@@ -52,11 +48,21 @@ export default function TransparencyPage() {
         } catch { return iso; }
     };
 
-    const activeName = categories.find((c) => c.slug === activeSlug)?.name ?? "";
+    const activeName = useMemo(() => {
+        if (!activeSlug) return "";
+        const key = `cat.${activeSlug}`;
+        const translated = t(key);
+        if (translated !== key) return translated;
+        return categories.find((c) => c.slug === activeSlug)?.name ?? activeSlug;
+    }, [categories, activeSlug, t]);
 
     return (
         <>
-            <SEO title={t('transparency.title')} description={t('seo.transparencyDesc')} path="/transparency" />
+            <SEO
+                title={slug && slug !== "all" ? `${activeName} — ${t('transparency.title')}` : t('transparency.title')}
+                description={t('seo.transparencyDesc')}
+                path={slug && slug !== "all" ? `/transparency/${slug}` : "/transparency"}
+            />
             <section className="section">
                 <div className="container">
                     <h1>{t('transparency.title')}</h1>
@@ -84,25 +90,30 @@ export default function TransparencyPage() {
                         </p>
                     ) : (
                         <ul className="document-list">
-                            {filteredDocs.map((doc) => (
-                                <li key={doc.id}>
-                                    <div>
-                                        <strong><IconDocument /> {doc.title}</strong>
-                                        <br />
-                                        <small>{formatDate(doc.publishedAt)}</small>
-                                    </div>
-                                    {doc.fileUrl && (
-                                        <a
-                                            href={resolveUploadUrl(doc.fileUrl)}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="btn btn-secondary btn-sm"
-                                        >
-                                            <IconDownload /> {t('transparency.open')}
-                                        </a>
-                                    )}
-                                </li>
-                            ))}
+                            {filteredDocs.map((doc) => {
+                                const fileHref = resolveUploadUrl(doc.fileUrl);
+                                return (
+                                    <li key={doc.id}>
+                                        <div>
+                                            <strong><IconDocument /> {doc.title}</strong>
+                                            <br />
+                                            <small>{formatDate(doc.publishedAt)}</small>
+                                        </div>
+                                        {fileHref ? (
+                                            <a
+                                                href={fileHref}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="btn btn-secondary btn-sm"
+                                            >
+                                                <IconDownload /> {t('transparency.open')}
+                                            </a>
+                                        ) : (
+                                            <span className="doc-no-file">{t('transparency.noFile')}</span>
+                                        )}
+                                    </li>
+                                );
+                            })}
                         </ul>
                     )}
                 </div>

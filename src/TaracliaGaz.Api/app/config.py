@@ -1,9 +1,14 @@
 """
 Конфигурация приложения через pydantic-settings.
 """
+from pathlib import Path, PurePosixPath, PureWindowsPath
+import warnings
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import Field, field_validator
-import warnings
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+
 
 
 class Settings(BaseSettings):
@@ -17,7 +22,7 @@ class Settings(BaseSettings):
     ENVIRONMENT: str = "development"  # development | production
 
     # Database
-    DATABASE_URL: str = "sqlite:///./taracliagaz.db"
+    DATABASE_URL: str = "sqlite:///./data/taracliagaz.db"
 
     # Security — ОБЯЗАТЕЛЬНЫЙ ключ с валидацией
     SECRET_KEY: str = Field(
@@ -31,10 +36,19 @@ class Settings(BaseSettings):
 
     # Uploads
     UPLOAD_DIR: str = "uploads"
+    IMAGES_DIR: str = "images"
     MAX_UPLOAD_SIZE_MB: int = Field(default=10, ge=1, le=100)
 
     # Site
     SITE_URL: str = "https://taraclia-gaz.md"
+
+    # SMTP Email Notifications (optional; if SMTP_HOST is empty, email sending is skipped)
+    SMTP_HOST: str = ""
+    SMTP_PORT: int = 587
+    SMTP_USER: str = ""
+    SMTP_PASSWORD: str = ""
+    SMTP_FROM: str = "noreply@taraclia-gaz.md"
+    NOTIFY_EMAIL: str = "office@taraclia-gaz.md"
 
     # Rate limiting
     RATE_LIMIT_STORAGE_URI: str = "memory://"  # или "redis://localhost:6379/0"
@@ -57,7 +71,7 @@ class Settings(BaseSettings):
     def validate_secret_key(cls, v: str | None, info) -> str:
         environment = info.data.get("ENVIRONMENT", "development")
 
-        if not v or v == "change-me-in-production":
+        if not v:
             if environment == "production":
                 raise ValueError(
                     "SECRET_KEY must be set in production. "
@@ -66,6 +80,17 @@ class Settings(BaseSettings):
             # Dev — генерируем случайный
             import secrets
             return secrets.token_urlsafe(32)
+
+        v_lower = v.lower()
+        if (
+            v == "taracliagaz_super_secret_key_2026_change_me_later"
+            or "change_me" in v_lower
+            or "change-me" in v_lower
+        ):
+            raise ValueError(
+                "Insecure SECRET_KEY: default placeholder or key containing 'change_me' is not allowed. "
+                "Generate: python -c 'import secrets; print(secrets.token_urlsafe(32))'"
+            )
 
         if len(v) < 32:
             raise ValueError(
@@ -107,6 +132,33 @@ class Settings(BaseSettings):
         if v not in allowed:
             raise ValueError(f"ENVIRONMENT must be one of {allowed}")
         return v
+
+    @field_validator("DATABASE_URL", mode="before")
+    @classmethod
+    def validate_database_url(cls, v: str) -> str:
+        if v and v.startswith("sqlite:///"):
+            prefix = "sqlite:///"
+            db_part = v[len(prefix):]
+            if db_part and db_part != ":memory:":
+                query_part = ""
+                if "?" in db_part:
+                    db_part, query_part = db_part.split("?", 1)
+                    query_part = "?" + query_part
+                is_abs = PurePosixPath(db_part).is_absolute() or PureWindowsPath(db_part).is_absolute()
+                if not is_abs:
+                    abs_path = (BASE_DIR / db_part).resolve()
+                    return f"sqlite:///{abs_path.as_posix()}{query_part}"
+        return v
+
+    @field_validator("UPLOAD_DIR", "IMAGES_DIR", mode="before")
+    @classmethod
+    def validate_upload_dir(cls, v: str) -> str:
+        if v:
+            is_abs = PurePosixPath(v).is_absolute() or PureWindowsPath(v).is_absolute()
+            if not is_abs:
+                return str((BASE_DIR / v).resolve())
+        return v
+
 
 
 _settings: Settings | None = None

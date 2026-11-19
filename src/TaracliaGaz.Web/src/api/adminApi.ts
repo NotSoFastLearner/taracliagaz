@@ -1,4 +1,5 @@
 import { http } from "./http";
+import { invalidateCache } from "../hooks/useCachedFetch";
 import type {
     Announcement,
     Document,
@@ -9,96 +10,102 @@ import type {
     MenuCategory,
 } from "../types/content";
 
+const invalidateAfter = <T>(prefix: string, promise: Promise<T>): Promise<T> =>
+    promise.then((res) => {
+        invalidateCache(prefix);
+        return res;
+    });
+
 // ===== GALLERY =====
 export const getGalleryAdmin = () =>
-    http.get<GalleryImage[]>("/admin/gallery"); // ✅ Было /public/gallery
+    http.get<GalleryImage[]>("/admin/gallery");
 
 export const createGalleryImage = (data: Omit<GalleryImage, "id" | "createdAt" | "updatedAt">) =>
-    http.post<GalleryImage>("/admin/gallery", data);
+    invalidateAfter("gallery", http.post<GalleryImage>("/admin/gallery", data));
 
 export const updateGalleryImage = (id: number, data: Partial<GalleryImage>) =>
-    http.put<GalleryImage>(`/admin/gallery/${id}`, data);
+    invalidateAfter("gallery", http.put<GalleryImage>(`/admin/gallery/${id}`, data));
 
 export const deleteGalleryImage = (id: number) =>
-    http.delete<void>(`/admin/gallery/${id}`);
+    invalidateAfter("gallery", http.delete<void>(`/admin/gallery/${id}`));
 
 // ===== PAGES =====
-export const getPagesAdmin = (lang = "ru") =>
-    http.get<Page[]>(`/admin/pages?lang=${lang}`); // ✅ Было /public/pages
+export const getPagesAdmin = (lang?: string) =>
+    http.get<Page[]>(lang ? `/admin/pages?lang=${lang}` : "/admin/pages");
 
 export const createPage = (data: Omit<Page, "id" | "createdAt" | "updatedAt">) =>
-    http.post<Page>("/admin/pages", data);
+    invalidateAfter("page:", http.post<Page>("/admin/pages", data));
 
 export const updatePage = (id: number, data: Partial<Page>) =>
-    http.put<Page>(`/admin/pages/${id}`, data);
+    invalidateAfter("page:", http.put<Page>(`/admin/pages/${id}`, data));
 
 export const deletePage = (id: number) =>
-    http.delete<void>(`/admin/pages/${id}`);
+    invalidateAfter("page:", http.delete<void>(`/admin/pages/${id}`));
 
 // ===== NEWS =====
-export const getNewsAdmin = (lang = "ru") =>
-    http.get<NewsPostDetail[]>(`/admin/news?lang=${lang}`); // ✅ Было /public/news
+export const getNewsAdmin = (lang?: string) =>
+    http.get<NewsPostDetail[]>(lang ? `/admin/news?lang=${lang}` : "/admin/news");
 
 export const createNews = (data: Omit<NewsPostDetail, "id" | "createdAt" | "updatedAt">) =>
-    http.post<NewsPostDetail>("/admin/news", data);
+    invalidateAfter("news", http.post<NewsPostDetail>("/admin/news", data));
 
 export const updateNews = (id: number, data: Partial<NewsPostDetail>) =>
-    http.put<NewsPostDetail>(`/admin/news/${id}`, data);
+    invalidateAfter("news", http.put<NewsPostDetail>(`/admin/news/${id}`, data));
 
 export const deleteNews = (id: number) =>
-    http.delete<void>(`/admin/news/${id}`);
+    invalidateAfter("news", http.delete<void>(`/admin/news/${id}`));
 
 // ===== DOCUMENTS =====
-export const getDocumentsAdmin = (lang = "ru") =>
-    http.get<Document[]>(`/admin/documents?lang=${lang}`); // ✅ Было /public/documents
+export const getDocumentsAdmin = (lang?: string) =>
+    http.get<Document[]>(lang ? `/admin/documents?lang=${lang}` : "/admin/documents");
 
 export const createDocument = (data: Omit<Document, "id" | "createdAt" | "updatedAt">) =>
-    http.post<Document>("/admin/documents", data);
+    invalidateAfter("documents:", http.post<Document>("/admin/documents", data));
 
 export const updateDocument = (id: number, data: Partial<Document>) =>
-    http.put<Document>(`/admin/documents/${id}`, data);
+    invalidateAfter("documents:", http.put<Document>(`/admin/documents/${id}`, data));
 
 export const deleteDocument = (id: number) =>
-    http.delete<void>(`/admin/documents/${id}`);
+    invalidateAfter("documents:", http.delete<void>(`/admin/documents/${id}`));
 
 // ===== ANNOUNCEMENTS =====
-export const getAnnouncementsAdmin = (lang = "ru") =>
-    http.get<Announcement[]>(`/admin/announcements?lang=${lang}`); // ✅ Было /public/announcements
+export const getAnnouncementsAdmin = (lang?: string) =>
+    http.get<Announcement[]>(lang ? `/admin/announcements?lang=${lang}` : "/admin/announcements");
 
 export const createAnnouncement = (data: Omit<Announcement, "id" | "createdAt" | "updatedAt">) =>
-    http.post<Announcement>("/admin/announcements", data);
+    invalidateAfter("announcements:", http.post<Announcement>("/admin/announcements", data));
 
 export const updateAnnouncement = (id: number, data: Partial<Announcement>) =>
-    http.put<Announcement>(`/admin/announcements/${id}`, data);
+    invalidateAfter("announcements:", http.put<Announcement>(`/admin/announcements/${id}`, data));
 
 export const deleteAnnouncement = (id: number) =>
-    http.delete<void>(`/admin/announcements/${id}`);
+    invalidateAfter("announcements:", http.delete<void>(`/admin/announcements/${id}`));
 
 // ===== TENDERS =====
-export const getTendersAdmin = (lang = "ru") =>
-    http.get<Tender[]>(`/admin/tenders?lang=${lang}`); // ✅ Было /public/tenders
+export const getTendersAdmin = (lang?: string) =>
+    http.get<Tender[]>(lang ? `/admin/tenders?lang=${lang}` : "/admin/tenders");
 
 export const createTender = (data: Omit<Tender, "id" | "createdAt" | "updatedAt">) =>
-    http.post<Tender>("/admin/tenders", data);
+    invalidateAfter("tender", http.post<Tender>("/admin/tenders", data));
 
 export const updateTender = (id: number, data: Partial<Tender>) =>
-    http.put<Tender>(`/admin/tenders/${id}`, data);
+    invalidateAfter("tender", http.put<Tender>(`/admin/tenders/${id}`, data));
 
 export const deleteTender = (id: number) =>
-    http.delete<void>(`/admin/tenders/${id}`);
+    invalidateAfter("tender", http.delete<void>(`/admin/tenders/${id}`));
 
 // ===== MENU =====
 export const getMenuAdmin = (lang = "ru") =>
-    http.get<MenuCategory[]>(`/admin/menu?lang=${lang}`); // ✅ Было /public/menu
+    http.get<MenuCategory[]>(`/admin/menu?lang=${lang}`);
 
 export const createMenuCategory = (data: Omit<MenuCategory, "id" | "createdAt" | "updatedAt">) =>
-    http.post<MenuCategory>("/admin/menu", data);
+    invalidateAfter("menu:", http.post<MenuCategory>("/admin/menu", data));
 
 export const updateMenuCategory = (id: number, data: Partial<MenuCategory>) =>
-    http.put<MenuCategory>(`/admin/menu/${id}`, data);
+    invalidateAfter("menu:", http.put<MenuCategory>(`/admin/menu/${id}`, data));
 
 export const deleteMenuCategory = (id: number) =>
-    http.delete<void>(`/admin/menu/${id}`);
+    invalidateAfter("menu:", http.delete<void>(`/admin/menu/${id}`));
 
 export interface ContactMessage {
     id: number;
@@ -123,3 +130,28 @@ export const markContactRead = (id: number) =>
 
 export const deleteContact = (id: number) =>
     http.delete<void>(`/admin/contacts/${id}`);
+
+export const downloadDatabaseBackup = async (): Promise<void> => {
+    const token = localStorage.getItem("taracliagaz_auth");
+    const baseUrl = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000/api";
+    const res = await fetch(`${baseUrl}/admin/backup`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    if (res.status === 401) {
+        localStorage.removeItem("taracliagaz_auth");
+        window.location.href = "/admin/login";
+        throw new Error("Сессия истекла. Войдите снова.");
+    }
+    if (!res.ok) {
+        throw new Error("Ошибка скачивания резервной копии БД");
+    }
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `taracliagaz-backup-${new Date().toISOString().slice(0, 10)}.db`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+};

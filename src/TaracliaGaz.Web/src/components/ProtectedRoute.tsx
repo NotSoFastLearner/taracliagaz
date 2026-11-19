@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 
 interface ProtectedRouteProps {
@@ -24,38 +23,27 @@ function decodeJwt(token: string): TokenPayload | null {
     }
 }
 
-export default function ProtectedRoute({ children }: ProtectedRouteProps) {
-    const [status, setStatus] = useState<"loading" | "authorized" | "unauthorized">("loading");
+function isTokenValid(): boolean {
+    const token = localStorage.getItem(AUTH_KEY);
+    if (!token) return false;
 
-    useEffect(() => {
-        const token = localStorage.getItem(AUTH_KEY);
-        if (!token) {
-            setStatus("unauthorized");
-            return;
-        }
-
-        const payload = decodeJwt(token);
-        if (!payload) {
-            localStorage.removeItem(AUTH_KEY);
-            setStatus("unauthorized");
-            return;
-        }
-
-        const nowSec = Math.floor(Date.now() / 1000);
-        if (payload.exp && payload.exp < nowSec) {
-            localStorage.removeItem(AUTH_KEY);
-            setStatus("unauthorized");
-            return;
-        }
-
-        setStatus("authorized");
-    }, []);
-
-    if (status === "loading") {
-        return <p>Проверка авторизации...</p>;
+    const payload = decodeJwt(token);
+    if (!payload) {
+        localStorage.removeItem(AUTH_KEY);
+        return false;
     }
 
-    if (status === "unauthorized") {
+    const nowSec = Math.floor(Date.now() / 1000);
+    if (payload.exp && payload.exp < nowSec) {
+        localStorage.removeItem(AUTH_KEY);
+        return false;
+    }
+
+    return true;
+}
+
+export default function ProtectedRoute({ children }: ProtectedRouteProps) {
+    if (!isTokenValid()) {
         return <Navigate to="/admin/login" replace />;
     }
 

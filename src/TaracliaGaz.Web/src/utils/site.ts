@@ -21,6 +21,6 @@ export const COMPANY_PHONES = {
 
 export const COMPANY_EMAIL = "office@taraclia-gaz.md";
 
-// Текущий домен нового сайта. При переносе на основной домен
-// taraclia-gaz.md поменять здесь (canonical, og:url, sitemap-ссылки)
-export const SITE_URL = "https://new.taraclia-gaz.md";
+// Основной домен сайта (canonical, og:url, schema — подстраивается под текущий origin)
+export const SITE_URL = import.meta.env.VITE_SITE_URL
+    || (typeof window !== "undefined" ? window.location.origin : "https://new.taraclia-gaz.md");

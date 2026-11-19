@@ -7,6 +7,7 @@ import {
 } from "../../api/adminApi";
 import type { Page } from "../../types/content";
 import RichEditor from "../../components/RichEditor";
+import AdminLangFilter, { type AdminLangFilterValue } from "../../components/AdminLangFilter";
 
 type EditingPage = Partial<Page> | null;
 
@@ -16,19 +17,19 @@ export default function PagesManager() {
     const [error, setError] = useState<string | null>(null);
     const [editing, setEditing] = useState<EditingPage>(null);
     const [showForm, setShowForm] = useState(false);
+    const [langFilter, setLangFilter] = useState<AdminLangFilterValue>("all");
 
-    const loadPages = async () => {
-        setLoading(true);
-        try {
-            const data = await getPagesAdmin();
-            setPages(data);
-            setError(null);
-        } catch (err) {
-            setError("Ошибка загрузки страниц");
-            console.error(err);
-        } finally {
-            setLoading(false);
-        }
+    const loadPages = () => {
+        getPagesAdmin()
+            .then((data) => {
+                setPages(data);
+                setError(null);
+            })
+            .catch((err) => {
+                setError("Ошибка загрузки страниц");
+                console.error(err);
+            })
+            .finally(() => setLoading(false));
     };
 
     useEffect(() => {
@@ -275,9 +276,15 @@ export default function PagesManager() {
                 </form>
             )}
 
+            <AdminLangFilter value={langFilter} onChange={setLangFilter} items={pages} />
+
             <ul className="admin-list">
-                {pages.length === 0 && <li>Нет страниц</li>}
-                {pages.map((page) => (
+                {pages.filter((p) => langFilter === "all" || p.languageCode === langFilter).length === 0 && (
+                    <li>Нет страниц</li>
+                )}
+                {pages
+                    .filter((p) => langFilter === "all" || p.languageCode === langFilter)
+                    .map((page) => (
                     <li key={page.id}>
                         <div>
                             <div className="item-title">{page.title}</div>
@@ -289,7 +296,7 @@ export default function PagesManager() {
                         </div>
                         <div className="item-actions">
                             <a
-                                href={`/page/${page.slug}`}
+                                href={`/page/${page.slug}${page.languageCode === "ro" ? "?lang=ro" : ""}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 style={{ padding: "5px 10px", fontSize: "12px" }}

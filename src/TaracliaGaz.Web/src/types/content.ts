@@ -15,6 +15,7 @@ export interface Page extends BaseContent {
 export interface NewsPostSummary extends BaseContent {
     title: string;
     summary: string;
+    bodyHtml?: string;
     publishedAt: string;
     languageCode: string;
     isPublished: boolean;

@@ -47,8 +47,8 @@ export default function ContactsPage() {
 
         setSubmitting(true);
         try {
-            const result = await submitContact(form);
-            setSuccess(result.message);
+            await submitContact(form);
+            setSuccess(t('contacts.successMsg'));
             setForm({ name: "", email: "", phone: "", message: "", websiteUrl: "" });
             setErrors({});
         } catch (err: unknown) {
@@ -92,9 +92,7 @@ export default function ContactsPage() {
                                 <IconMapPin />{" "}
                                 <strong>{t('contacts.address')}:</strong>
                                 <br />
-                                MD-7401, Republica Moldova,
-                                <br />
-                                or. Taraclia, str. Lenin, 110A
+                                {t('contacts.fullAddress')}
                             </p>
 
                             <p>
@@ -154,6 +152,29 @@ export default function ContactsPage() {
                             )}
 
                             <form onSubmit={handleSubmit} noValidate>
+                                {/* Honeypot-поле для защиты от спам-ботов */}
+                                <div
+                                    aria-hidden="true"
+                                    style={{
+                                        position: "absolute",
+                                        left: "-9999px",
+                                        width: "1px",
+                                        height: "1px",
+                                        overflow: "hidden",
+                                    }}
+                                >
+                                    <label htmlFor="contact-website-url">Website</label>
+                                    <input
+                                        id="contact-website-url"
+                                        name="websiteUrl"
+                                        type="text"
+                                        tabIndex={-1}
+                                        autoComplete="off"
+                                        value={form.websiteUrl ?? ""}
+                                        onChange={(e) => updateField("websiteUrl", e.target.value)}
+                                    />
+                                </div>
+
                                 <div className="form-field">
                                     <label htmlFor="contact-name">
                                         {t('form.name')} <span className="required">*</span>

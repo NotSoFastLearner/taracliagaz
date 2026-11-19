@@ -7,6 +7,7 @@ import {
 } from "../../api/adminApi";
 import type { NewsPostDetail } from "../../types/content";
 import RichEditor from "../../components/RichEditor";
+import AdminLangFilter, { type AdminLangFilterValue } from "../../components/AdminLangFilter";
 
 type EditingNews = Partial<NewsPostDetail> | null;
 
@@ -16,19 +17,19 @@ export default function NewsManager() {
     const [error, setError] = useState<string | null>(null);
     const [editing, setEditing] = useState<EditingNews>(null);
     const [showForm, setShowForm] = useState(false);
+    const [langFilter, setLangFilter] = useState<AdminLangFilterValue>("all");
 
-    const loadNews = async () => {
-        setLoading(true);
-        try {
-            const data = await getNewsAdmin();
-            setNews(data);
-            setError(null);
-        } catch (err) {
-            setError("Ошибка загрузки новостей");
-            console.error(err);
-        } finally {
-            setLoading(false);
-        }
+    const loadNews = () => {
+        getNewsAdmin()
+            .then((data) => {
+                setNews(data);
+                setError(null);
+            })
+            .catch((err) => {
+                setError("Ошибка загрузки новостей");
+                console.error(err);
+            })
+            .finally(() => setLoading(false));
     };
 
     useEffect(() => {
@@ -194,9 +195,15 @@ export default function NewsManager() {
                 </form>
             )}
 
+            <AdminLangFilter value={langFilter} onChange={setLangFilter} items={news} />
+
             <ul className="admin-list">
-                {news.length === 0 && <li>Нет новостей</li>}
-                {news.map((post) => (
+                {news.filter((p) => langFilter === "all" || p.languageCode === langFilter).length === 0 && (
+                    <li>Нет новостей</li>
+                )}
+                {news
+                    .filter((p) => langFilter === "all" || p.languageCode === langFilter)
+                    .map((post) => (
                     <li key={post.id}>
                         <div>
                             <div className="item-title">{post.title}</div>

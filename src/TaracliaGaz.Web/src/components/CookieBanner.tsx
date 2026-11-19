@@ -1,14 +1,13 @@
-import { useState } from "react";
+import { Link } from "react-router-dom";
 import { useCookieConsent } from "../hooks/useCookieConsent";
 import { useLanguage } from "../context/LanguageContext";
 import { IconCookie } from "./icons";
 
 export default function CookieBanner() {
     const { consent, acceptAll, rejectAll } = useCookieConsent();
-    const [show, setShow] = useState(!consent);
     const { t } = useLanguage();
 
-    if (!show) return null;
+    if (consent !== null) return null;
 
     return (
         <div className="cookie-banner" role="dialog" aria-label={t('cookie.ariaLabel')}>
@@ -17,18 +16,18 @@ export default function CookieBanner() {
                     <h3><IconCookie /> {t('cookie.title')}</h3>
                     <p>
                         {t('cookie.text')}{" "}
-                        <a href="/page/cookies">{t('cookie.policy')}</a>.
+                        <Link to="/page/cookies">{t('cookie.policy')}</Link>.
                     </p>
                 </div>
                 <div className="cookie-actions">
                     <button
-                        onClick={() => { rejectAll(); setShow(false); }}
+                        onClick={rejectAll}
                         className="btn-cookie btn-reject"
                     >
                         {t('cookie.onlyNecessary')}
                     </button>
                     <button
-                        onClick={() => { acceptAll(); setShow(false); }}
+                        onClick={acceptAll}
                         className="btn-cookie btn-accept"
                     >
                         {t('cookie.acceptAll')}

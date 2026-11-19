@@ -7,6 +7,7 @@ import {
 } from "../../api/adminApi";
 import type { Announcement } from "../../types/content";
 import RichEditor from "../../components/RichEditor";
+import AdminLangFilter, { type AdminLangFilterValue } from "../../components/AdminLangFilter";
 
 type EditingItem = Partial<Announcement> | null;
 
@@ -16,19 +17,19 @@ export default function AnnouncementsManager() {
     const [error, setError] = useState<string | null>(null);
     const [editing, setEditing] = useState<EditingItem>(null);
     const [showForm, setShowForm] = useState(false);
+    const [langFilter, setLangFilter] = useState<AdminLangFilterValue>("all");
 
-    const load = async () => {
-        setLoading(true);
-        try {
-            const data = await getAnnouncementsAdmin();
-            setItems(data);
-            setError(null);
-        } catch (err) {
-            setError("Ошибка загрузки");
-            console.error(err);
-        } finally {
-            setLoading(false);
-        }
+    const load = () => {
+        getAnnouncementsAdmin()
+            .then((data) => {
+                setItems(data);
+                setError(null);
+            })
+            .catch((err) => {
+                setError("Ошибка загрузки");
+                console.error(err);
+            })
+            .finally(() => setLoading(false));
     };
 
     useEffect(() => {
@@ -191,9 +192,15 @@ export default function AnnouncementsManager() {
                 </form>
             )}
 
+            <AdminLangFilter value={langFilter} onChange={setLangFilter} items={items} />
+
             <ul className="admin-list">
-                {items.length === 0 && <li>Нет объявлений</li>}
-                {items.map((item) => (
+                {items.filter((item) => langFilter === "all" || item.languageCode === langFilter).length === 0 && (
+                    <li>Нет объявлений</li>
+                )}
+                {items
+                    .filter((item) => langFilter === "all" || item.languageCode === langFilter)
+                    .map((item) => (
                     <li key={item.id}>
                         <div>
                             <div className="item-title">

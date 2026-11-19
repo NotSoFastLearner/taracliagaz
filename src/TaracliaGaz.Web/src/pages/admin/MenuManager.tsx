@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
     getMenuAdmin,
     createMenuCategory,
@@ -9,6 +9,10 @@ import type { MenuCategory } from "../../types/content";
 
 type EditingMenu = Partial<MenuCategory> | null;
 
+interface MenuTreeNode extends MenuCategory {
+    children: MenuTreeNode[];
+}
+
 export default function MenuManager() {
     const [menu, setMenu] = useState<MenuCategory[]>([]);
     const [loading, setLoading] = useState(true);
@@ -17,28 +21,27 @@ export default function MenuManager() {
     const [showForm, setShowForm] = useState(false);
     const [lang, setLang] = useState("ru");
 
-    const loadMenu = async () => {
-        setLoading(true);
-        try {
-            const data = await getMenuAdmin(lang);
-            setMenu(data);
-            setError(null);
-        } catch (err) {
-            setError("Ошибка загрузки меню");
-            console.error(err);
-        } finally {
-            setLoading(false);
-        }
-    };
+    const loadMenu = useCallback(() => {
+        getMenuAdmin(lang)
+            .then((data) => {
+                setMenu(data);
+                setError(null);
+            })
+            .catch((err) => {
+                setError("Ошибка загрузки меню");
+                console.error(err);
+            })
+            .finally(() => setLoading(false));
+    }, [lang]);
 
     useEffect(() => {
         loadMenu();
-    }, [lang]);
+    }, [loadMenu]);
 
     // Преобразуем плоский список в дерево
-    const buildTree = (items: MenuCategory[]): any[] => {
-        const map = new Map<number, any>();
-        const roots: any[] = [];
+    const buildTree = (items: MenuCategory[]): MenuTreeNode[] => {
+        const map = new Map<number, MenuTreeNode>();
+        const roots: MenuTreeNode[] = [];
 
         items.forEach((item) => {
             map.set(item.id, { ...item, children: [] });
@@ -46,6 +49,7 @@ export default function MenuManager() {
 
         items.forEach((item) => {
             const node = map.get(item.id);
+            if (!node) return;
             if (item.parentId === null) {
                 roots.push(node);
             } else {
@@ -119,7 +123,7 @@ export default function MenuManager() {
     };
 
     // Рекурсивный рендер дерева
-    const renderTree = (nodes: any[], level: number = 0): React.ReactNode => {
+    const renderTree = (nodes: MenuTreeNode[], level: number = 0): React.ReactNode => {
         return nodes.map((node) => (
             <li key={node.id} style={{ marginLeft: level * 30 }}>
                 <div className="menu-item-row">
