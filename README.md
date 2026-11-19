@@ -6,6 +6,7 @@
 
 ## Структура проекта
 
+```text
 taracliagaz/
 ├── src/
 │   ├── TaracliaGaz.Api/                # Backend (FastAPI + SQLite)
@@ -34,3 +35,4 @@ taracliagaz/
 │       ├── verify_upload_compress.mjs  # автоматизированная проверка сжатия фото
 │       └── vite.config.ts
 └── README.md
+```
